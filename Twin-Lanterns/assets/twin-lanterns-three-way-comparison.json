@@ -1,0 +1,42 @@
+{
+  "schema": "lunar-flower-three-way-comparison-v1",
+  "composition": "Vertical thirds copied without resize, filtering, or generated pixels.",
+  "width": 2560,
+  "height": 1440,
+  "pixel_format": "32bpp ARGB after deterministic decode",
+  "output_file": "twin-lanterns-three-way-comparison.png",
+  "output_sha256": "61AD2608D24360781825749F8C2EAC977F37E421F29627151125EC44BFA7E78E",
+  "regions": [
+    {
+      "label": "No Effect",
+      "source_file": "codex-clipboard-b066a3f2-56bb-4861-943f-2f553b9c860e.png",
+      "source_sha256": "2CDF367213271773734C4D94DC16884A23C3C1A93E381824AC84BC829FCAFC0F",
+      "x_start": 0,
+      "x_end_exclusive": 853.0,
+      "decoded_region_sha256": "7EEA81747D58E1A5A9E37C5F91D7F5DB49DDFEE8479C2C9153795D1AE490D07D",
+      "output_region_sha256": "7EEA81747D58E1A5A9E37C5F91D7F5DB49DDFEE8479C2C9153795D1AE490D07D",
+      "exact_match": true
+    },
+    {
+      "label": "Twin Lanterns Only",
+      "source_file": "codex-clipboard-f2b62db6-47a8-43f1-b321-6f3b7a0f3696.png",
+      "source_sha256": "810B5DBC6B586E4F1F36DA09B73670C7AD7AF1B67CA0B61DC0C07D0397A6A31C",
+      "x_start": 853.0,
+      "x_end_exclusive": 1706.0,
+      "decoded_region_sha256": "E4928C008BC08D4006A1003420200DFDBB92404EDBF951F88A5D585F7CA740B6",
+      "output_region_sha256": "E4928C008BC08D4006A1003420200DFDBB92404EDBF951F88A5D585F7CA740B6",
+      "exact_match": true
+    },
+    {
+      "label": "Lazara + Twin Lanterns",
+      "source_file": "codex-clipboard-3097912e-faf8-4c83-9e35-2a0498b27f92.png",
+      "source_sha256": "ADF309BABE4C6B3F4DC6F43F4ABE4790EF3A3305F0A24B1B9C1683866849E28B",
+      "x_start": 1706.0,
+      "x_end_exclusive": 2560.0,
+      "decoded_region_sha256": "277D81B678E7D04AE304CD0B39827A7F12538F021A0445D4F041E35ABB9A43BC",
+      "output_region_sha256": "277D81B678E7D04AE304CD0B39827A7F12538F021A0445D4F041E35ABB9A43BC",
+      "exact_match": true
+    }
+  ],
+  "all_regions_exact": true
+}

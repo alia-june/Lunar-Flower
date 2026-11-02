@@ -10,6 +10,20 @@ configured ceiling and the remaining room in each output channel. It is not an
 ambient-occlusion shader, and it does not contain a denoiser or temporal
 history.
 
+## Visual Comparison
+
+![No Effect, Twin Lanterns Only, and Lazara plus Twin Lanterns](Twin-Lanterns/assets/twin-lanterns-three-way-comparison.png)
+
+Left: **No Effect** · Center: **Twin Lanterns Only** · Right: **Lazara + Twin Lanterns**
+
+This is a deterministic vertical-third stitch of three user-supplied
+2560×1440 captures. No source region was resized, filtered, or generated. The
+[comparison evidence](Twin-Lanterns/assets/twin-lanterns-three-way-comparison.json)
+records source hashes, split coordinates, and exact decoded-pixel checks.
+
+The comparison is documentation evidence containing third-party game imagery;
+that imagery is not included in the repository's MIT software grant.
+
 ## Choose A Build
 
 | Build | Status | Best for |

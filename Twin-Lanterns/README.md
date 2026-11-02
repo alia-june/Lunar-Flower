@@ -4,6 +4,18 @@ Twin Lanterns is Lunar Flower's bounded screen-space indirect-light family for
 ReShade. The project favors visible evidence and controlled reconstruction over
 unbounded brightness or hidden temporal state.
 
+## Visual Comparison
+
+![No Effect, Twin Lanterns Only, and Lazara plus Twin Lanterns](assets/twin-lanterns-three-way-comparison.png)
+
+Left: **No Effect** · Center: **Twin Lanterns Only** · Right: **Lazara + Twin Lanterns**
+
+The comparison is assembled from exact vertical thirds of three aligned source
+captures. Its [evidence manifest](assets/twin-lanterns-three-way-comparison.json)
+records the source hashes and verifies every output region against its source.
+It is documentation evidence containing third-party game imagery, which is not
+included in the repository's MIT software grant.
+
 ## Processing Model
 
 ```text
