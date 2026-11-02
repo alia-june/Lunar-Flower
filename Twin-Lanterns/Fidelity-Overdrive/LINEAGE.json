@@ -1,0 +1,21 @@
+{
+  "source_archive": "TWIN_LANTERN_FINAL_V5_FIDELITY_OVERDRIVE_2026-11-02.zip",
+  "source_archive_sha256": "908039D66A2A0E8913F46A1032873BD9D80EAD29DF377B3552C687A8DFDDE806",
+  "source_effect": "CAMERA_OBSCURA_TwinLantern.fx",
+  "source_effect_sha256": "2A8BB6D7D582344B88AB653385EA4BC059DD1DA50E3964B7CF9CE5D23A313415",
+  "public_effect": "LUNAR_FLOWER_TwinLanterns_FidelityOverdrive.fx",
+  "public_refactor": {
+    "identifier_prefix": "CAMERA_OBSCURA_TwinLantern -> LUNAR_FLOWER_TwinLanterns",
+    "technique_identifier": "CAMERA_OBSCURA_TwinLantern -> LUNAR_FLOWER_TwinLanternsFidelityOverdrive",
+    "ui_category": "Camera Obscura / Twin Lantern -> Lunar Flower / Twin Lanterns",
+    "technique_label": "Camera Obscura - Twin Lantern -> Lunar Flower - Twin Lanterns: Fidelity Overdrive"
+  },
+  "shared_api_and_header_change": "none",
+  "source_validation": "27/27 focused static and API compiler checks passed",
+  "publication_validation": "repository-native structural validation; see PUBLICATION_VALIDATION_RESULTS.json",
+  "pending": [
+    "complete ReShade compile of the public refactor",
+    "target-game runtime measurement",
+    "live visual acceptance"
+  ]
+}

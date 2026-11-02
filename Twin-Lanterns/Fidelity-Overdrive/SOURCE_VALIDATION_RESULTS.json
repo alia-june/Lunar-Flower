@@ -1,0 +1,143 @@
+{
+  "scope": "Twin Lantern production consolidation",
+  "truth_state": "static/API compiler validation only; complete ReShade compile and live visual proof pending",
+  "passed": 27,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "local_include_closure",
+      "passed": true,
+      "detail": "zero missing local includes"
+    },
+    {
+      "name": "flat_fully_initialized_composite_record",
+      "passed": true,
+      "detail": "fields=19; initialized=19"
+    },
+    {
+      "name": "accepted_tl08_core_preserved",
+      "passed": true,
+      "detail": "four unchanged TL08 sampling/evaluation bodies and reconstruction API match immutable package"
+    },
+    {
+      "name": "phase_stable_four_direction_transport",
+      "passed": true,
+      "detail": "four live cardinal directions aggregate per raw sample with no screen-position phase lattice"
+    },
+    {
+      "name": "single_production_effect_surface",
+      "passed": true,
+      "detail": "effects=['CAMERA_OBSCURA_TwinLantern.fx']; final technique count=1"
+    },
+    {
+      "name": "complete_initialized_public_controls",
+      "passed": true,
+      "detail": "initialized production uniforms=16/16"
+    },
+    {
+      "name": "edge_ink_is_optional_and_default_off",
+      "passed": true,
+      "detail": "depth/normal safety remains active while ink controls edge-risk fading and confidence contouring"
+    },
+    {
+      "name": "bounded_same_surface_edge_fill",
+      "passed": true,
+      "detail": "zero strength bypasses four reads; only positive same-surface indirect deficits are filled"
+    },
+    {
+      "name": "independent_fidelity_and_overdrive_intent",
+      "passed": true,
+      "detail": "fidelity alignment and overdrive gain are independent and feed the existing bounded composite"
+    },
+    {
+      "name": "proof_controls_and_forced_inputs_removed",
+      "passed": true,
+      "detail": "no proof selector, forced capability mode, or TL-09 user-facing surface remains"
+    },
+    {
+      "name": "depth_aware_full_resolution_upsample",
+      "passed": true,
+      "detail": "four half-resolution taps are surface-gated before the full-resolution composite"
+    },
+    {
+      "name": "denoiser_separate_and_custody_retained",
+      "passed": true,
+      "detail": "active denoise files=0; custody ZIP hash retained"
+    },
+    {
+      "name": "no_temporal_or_discriminator_return_path",
+      "passed": true,
+      "detail": "TL09 contains no denoiser, history, D1, or T1 return path"
+    },
+    {
+      "name": "three_half_resolution_point_resources",
+      "passed": true,
+      "detail": "textures=3; samplers=3"
+    },
+    {
+      "name": "ordered_raw_h_v_composite_graph",
+      "passed": true,
+      "detail": "pass order=['TwinLanternTransport', 'TwinLanternResolveHorizontal', 'TwinLanternResolveVertical', 'TwinLanternComposite']"
+    },
+    {
+      "name": "source_preserving_failure_gates",
+      "passed": true,
+      "detail": "disabled, invalid, zero-evidence, and zero-strength paths multiply contribution to exact zero"
+    },
+    {
+      "name": "nonnegative_explicit_energy_and_room_bounds",
+      "passed": true,
+      "detail": "contribution is nonnegative and bounded by both maximum contribution and remaining SDR room"
+    },
+    {
+      "name": "required_debug_truth_views",
+      "passed": true,
+      "detail": "views=['Final Image', 'Source Image', 'Bounded Indirect Light', 'Evidence Confidence', 'Applied Light', 'Rejection Reason', 'Remaining Channel Room', 'Containment Activity', 'Source Difference', 'Bound Verification', 'Edge Fill Target', 'Edge Fill Added', 'Fidelity Guard Activity', 'Overdrive Pressure']"
+    },
+    {
+      "name": "debug_precedes_artistic_controls",
+      "passed": true,
+      "detail": "debug selector appears before enable, strength, and maximum contribution controls"
+    },
+    {
+      "name": "explicit_rejection_taxonomy",
+      "passed": true,
+      "detail": "disabled, invalid, zero-evidence, zero-strength, no-room, and zero-energy states are distinct"
+    },
+    {
+      "name": "synthetic_energy_and_failure_invariants",
+      "passed": true,
+      "detail": "5000 deterministic cases preserve nonnegative bounds, channel room, and exact denied source"
+    },
+    {
+      "name": "synthetic_edge_fill_invariants",
+      "passed": true,
+      "detail": "5000 deterministic cases remain nonnegative, bounded by neighboring signal, and exactly monotonic"
+    },
+    {
+      "name": "synthetic_fidelity_overdrive_invariants",
+      "passed": true,
+      "detail": "5000 deterministic cases keep intent color normalized, gains bounded, and the zero-zero legacy path exact"
+    },
+    {
+      "name": "isolated_from_api_umbrella_and_manual_memory",
+      "passed": true,
+      "detail": "Twin Lantern remains isolated from the API umbrella and uses ReShade-managed resources"
+    },
+    {
+      "name": "fresh_compatibility_compile",
+      "passed": true,
+      "detail": "FXC /Gec pass with no warnings"
+    },
+    {
+      "name": "fresh_strict_compile",
+      "passed": true,
+      "detail": "FXC /Ges /WX pass with no warnings"
+    },
+    {
+      "name": "frozen_ver_0001_unchanged",
+      "passed": true,
+      "detail": "baseline files=79; current files=79"
+    }
+  ]
+}

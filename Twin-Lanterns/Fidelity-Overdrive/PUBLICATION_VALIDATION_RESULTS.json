@@ -1,0 +1,73 @@
+{
+  "scope": "Lunar Flower Twin Lanterns public staging",
+  "truth_state": "reproducible structural publication validation; full ReShade compile, runtime performance, and Fidelity Overdrive live visual acceptance pending",
+  "passed": 13,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "publication_surface_complete",
+      "passed": true,
+      "detail": "required files present=10/10"
+    },
+    {
+      "name": "stable_local_include_closure",
+      "passed": true,
+      "detail": "zero missing or escaping local includes"
+    },
+    {
+      "name": "fidelity_overdrive_local_include_closure",
+      "passed": true,
+      "detail": "zero missing or escaping local includes"
+    },
+    {
+      "name": "stable_1_4_identity_preserved",
+      "passed": true,
+      "detail": "stable public identifiers retained and fidelity/overdrive controls absent"
+    },
+    {
+      "name": "fidelity_overdrive_public_identity",
+      "passed": true,
+      "detail": "initialized Lunar Flower controls=16/16"
+    },
+    {
+      "name": "public_refactor_matches_recorded_source",
+      "passed": true,
+      "detail": "reverse-mapped source sha256=2A8BB6D7D582344B88AB653385EA4BC059DD1DA50E3964B7CF9CE5D23A313415"
+    },
+    {
+      "name": "fidelity_overdrive_diagnostics",
+      "passed": true,
+      "detail": "diagnostic views=14/14"
+    },
+    {
+      "name": "independent_bounded_render_intent",
+      "passed": true,
+      "detail": "fidelity and overdrive remain independent before the hard composite ceiling"
+    },
+    {
+      "name": "same_surface_edge_fill_retained",
+      "passed": true,
+      "detail": "zero bypass and four-tap positive indirect deficit fill retained"
+    },
+    {
+      "name": "source_and_channel_bounds_retained",
+      "passed": true,
+      "detail": "final contribution remains additive, nonnegative, and channel-room bounded"
+    },
+    {
+      "name": "denoiser_remains_external",
+      "passed": true,
+      "detail": "no temporal history or denoiser return path in Twin Lanterns"
+    },
+    {
+      "name": "ordered_four_pass_graph",
+      "passed": true,
+      "detail": "pass order=['TwinLanternTransport', 'TwinLanternResolveHorizontal', 'TwinLanternResolveVertical', 'TwinLanternComposite']"
+    },
+    {
+      "name": "shared_api_lineage_unchanged",
+      "passed": true,
+      "detail": "source-identical shared API/header files=8/8"
+    }
+  ]
+}
