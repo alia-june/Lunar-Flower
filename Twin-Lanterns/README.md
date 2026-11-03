@@ -16,6 +16,29 @@ records the source hashes and verifies every output region against its source.
 It is documentation evidence containing third-party game imagery, which is not
 included in the repository's MIT software grant.
 
+## Gallery
+
+These additional user-supplied captures are preserved byte-for-byte. No effect,
+preset, or variant assignment was supplied, so they are intentionally presented
+as unlabeled gallery images rather than as a controlled comparison. The
+[gallery manifest](assets/twin-lanterns-gallery.json) records their source
+filenames, dimensions, and matching source/repository hashes.
+
+### Capture 01
+
+![Twin Lanterns unlabeled gallery capture 01](assets/twin-lanterns-gallery-01.png)
+
+### Capture 02
+
+![Twin Lanterns unlabeled gallery capture 02](assets/twin-lanterns-gallery-02.png)
+
+### Capture 03
+
+![Twin Lanterns unlabeled gallery capture 03](assets/twin-lanterns-gallery-03.png)
+
+Like the comparison above, these captures contain third-party game imagery and
+are not included in the repository's MIT software grant.
+
 ## Architecture
 
 Twin Lanterns is an ordered four-pass frame graph. Both builds use the same

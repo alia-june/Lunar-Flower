@@ -1,0 +1,39 @@
+{
+  "schema": "lunar-flower-source-gallery-v1",
+  "description": "User-supplied gallery captures preserved as byte-identical PNG copies.",
+  "semantic_status": "Effect, preset, and variant assignments were not supplied and remain unknown.",
+  "transformation": "None. Repository files are direct byte copies of the supplied sources.",
+  "captures": [
+    {
+      "gallery_id": "01",
+      "repository_file": "twin-lanterns-gallery-01.png",
+      "source_file": "codex-clipboard-67827052-6ae3-48d6-8269-131cc896833f.png",
+      "width": 2560,
+      "height": 1440,
+      "source_sha256": "69187A20C0290E085D9A3EB3F739CE59B44081827272A5157BEC6FBFAF318F7E",
+      "repository_sha256": "69187A20C0290E085D9A3EB3F739CE59B44081827272A5157BEC6FBFAF318F7E",
+      "exact_copy": true
+    },
+    {
+      "gallery_id": "02",
+      "repository_file": "twin-lanterns-gallery-02.png",
+      "source_file": "codex-clipboard-3bffc289-6cf0-4eb8-8831-4ef3fc79b0c5.png",
+      "width": 2560,
+      "height": 1440,
+      "source_sha256": "F9BDDDAE12722EBAB861603ECDC7AF8749AF603CFA8C06C0C096C3CDE781E186",
+      "repository_sha256": "F9BDDDAE12722EBAB861603ECDC7AF8749AF603CFA8C06C0C096C3CDE781E186",
+      "exact_copy": true
+    },
+    {
+      "gallery_id": "03",
+      "repository_file": "twin-lanterns-gallery-03.png",
+      "source_file": "codex-clipboard-1e798e95-3ad8-475c-a0ec-6c96a92a8057.png",
+      "width": 2560,
+      "height": 1440,
+      "source_sha256": "1E7F03B0595BEF2DF8591EEB4728C475324D6C20E4A0FD2573BD67763DFAE1D1",
+      "repository_sha256": "1E7F03B0595BEF2DF8591EEB4728C475324D6C20E4A0FD2573BD67763DFAE1D1",
+      "exact_copy": true
+    }
+  ],
+  "all_files_exact": true
+}
