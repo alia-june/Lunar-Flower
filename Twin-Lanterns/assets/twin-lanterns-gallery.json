@@ -1,7 +1,7 @@
 {
   "schema": "lunar-flower-source-gallery-v1",
   "description": "User-supplied gallery captures preserved as byte-identical PNG copies.",
-  "semantic_status": "Capture 01 is identified by the user as using FlexAgX by El-Greco1541. Effect, preset, and variant assignments for captures 02 and 03 remain unknown.",
+  "semantic_status": "User-supplied assignments: capture 01 uses FlexAgX by El-Greco1541; capture 02 is No Effects; capture 03 is Light Controlled Twin Lanterns.",
   "transformation": "None. Repository files are direct byte copies of the supplied sources.",
   "captures": [
     {
@@ -24,6 +24,8 @@
       "height": 1440,
       "source_sha256": "F9BDDDAE12722EBAB861603ECDC7AF8749AF603CFA8C06C0C096C3CDE781E186",
       "repository_sha256": "F9BDDDAE12722EBAB861603ECDC7AF8749AF603CFA8C06C0C096C3CDE781E186",
+      "effect_context": "No Effects",
+      "presentation_role": "Two-way baseline",
       "exact_copy": true
     },
     {
@@ -34,6 +36,8 @@
       "height": 1440,
       "source_sha256": "1E7F03B0595BEF2DF8591EEB4728C475324D6C20E4A0FD2573BD67763DFAE1D1",
       "repository_sha256": "1E7F03B0595BEF2DF8591EEB4728C475324D6C20E4A0FD2573BD67763DFAE1D1",
+      "effect_context": "Light Controlled Twin Lanterns",
+      "presentation_role": "Two-way effect state",
       "exact_copy": true
     }
   ],

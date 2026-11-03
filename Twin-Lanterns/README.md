@@ -20,11 +20,11 @@ included in the repository's MIT software grant.
 
 These additional user-supplied captures are preserved byte-for-byte. Capture 01
 is identified as using [FlexAgX by
-El-Greco1541](https://github.com/El-Greco1541/FlexAgX). Captures 02 and 03 have
-no supplied effect, preset, or variant assignment, so the gallery is not
-presented as a controlled comparison. The [gallery
-manifest](assets/twin-lanterns-gallery.json) records the supplied assignment,
-source filenames, dimensions, and matching source/repository hashes.
+El-Greco1541](https://github.com/El-Greco1541/FlexAgX). Capture 02 is identified
+as **No Effects**, and Capture 03 as **Light Controlled Twin Lanterns**. The
+[gallery manifest](assets/twin-lanterns-gallery.json) records these supplied
+assignments, source filenames, dimensions, and matching source/repository
+hashes.
 
 ### Capture 01 — using FlexAgX by El-Greco1541
 
@@ -33,13 +33,19 @@ source filenames, dimensions, and matching source/repository hashes.
 FlexAgX is credited and linked as part of this capture's effect context; it is
 not bundled or vendored by Lunar Flower.
 
-### Capture 02
+### Two-way presentation
 
-![Twin Lanterns unlabeled gallery capture 02](assets/twin-lanterns-gallery-02.png)
+Captures 02 and 03 show the supplied No Effects and Light Controlled Twin
+Lanterns states. They are presented as complete frames, not as a registered
+pixel-level A/B comparison.
 
-### Capture 03
+#### Capture 02 — No Effects
 
-![Twin Lanterns unlabeled gallery capture 03](assets/twin-lanterns-gallery-03.png)
+![No Effects](assets/twin-lanterns-gallery-02.png)
+
+#### Capture 03 — Light Controlled Twin Lanterns
+
+![Light Controlled Twin Lanterns](assets/twin-lanterns-gallery-03.png)
 
 Like the comparison above, these captures contain third-party game imagery and
 are not included in the repository's MIT software grant.
