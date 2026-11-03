@@ -18,15 +18,20 @@ included in the repository's MIT software grant.
 
 ## Gallery
 
-These additional user-supplied captures are preserved byte-for-byte. No effect,
-preset, or variant assignment was supplied, so they are intentionally presented
-as unlabeled gallery images rather than as a controlled comparison. The
-[gallery manifest](assets/twin-lanterns-gallery.json) records their source
-filenames, dimensions, and matching source/repository hashes.
+These additional user-supplied captures are preserved byte-for-byte. Capture 01
+is identified as using [FlexAgX by
+El-Greco1541](https://github.com/El-Greco1541/FlexAgX). Captures 02 and 03 have
+no supplied effect, preset, or variant assignment, so the gallery is not
+presented as a controlled comparison. The [gallery
+manifest](assets/twin-lanterns-gallery.json) records the supplied assignment,
+source filenames, dimensions, and matching source/repository hashes.
 
-### Capture 01
+### Capture 01 — using FlexAgX by El-Greco1541
 
-![Twin Lanterns unlabeled gallery capture 01](assets/twin-lanterns-gallery-01.png)
+[![Twin Lanterns gallery capture 01 using FlexAgX by El-Greco1541](assets/twin-lanterns-gallery-01.png)](https://github.com/El-Greco1541/FlexAgX)
+
+FlexAgX is credited and linked as part of this capture's effect context; it is
+not bundled or vendored by Lunar Flower.
 
 ### Capture 02
 

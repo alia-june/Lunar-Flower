@@ -1,7 +1,7 @@
 {
   "schema": "lunar-flower-source-gallery-v1",
   "description": "User-supplied gallery captures preserved as byte-identical PNG copies.",
-  "semantic_status": "Effect, preset, and variant assignments were not supplied and remain unknown.",
+  "semantic_status": "Capture 01 is identified by the user as using FlexAgX by El-Greco1541. Effect, preset, and variant assignments for captures 02 and 03 remain unknown.",
   "transformation": "None. Repository files are direct byte copies of the supplied sources.",
   "captures": [
     {
@@ -12,6 +12,8 @@
       "height": 1440,
       "source_sha256": "69187A20C0290E085D9A3EB3F739CE59B44081827272A5157BEC6FBFAF318F7E",
       "repository_sha256": "69187A20C0290E085D9A3EB3F739CE59B44081827272A5157BEC6FBFAF318F7E",
+      "effect_context": "Uses FlexAgX by El-Greco1541",
+      "effect_link": "https://github.com/El-Greco1541/FlexAgX",
       "exact_copy": true
     },
     {
