@@ -52,28 +52,31 @@ are not included in the repository's MIT software grant.
 
 ## Architecture
 
-Twin Lanterns is an ordered four-pass frame graph. Both builds use the same
-transport, reconstruction, and composite contracts, the same three
-half-resolution working textures, and the same surface-evidence tests. The
-Fidelity Overdrive build adds a rendering-intent transform after
-reconstruction; it does not replace the shared light-transport path or the
-final composite bound.
+Stable 1.4 and Fidelity Overdrive use an ordered four-pass frame graph with
+three half-resolution working fields. Full Resolution Dual Ray Alpha is a separate
+five-pass candidate: it first builds a current-frame view-frustum voxel proxy,
+then runs the same three working fields at full resolution with a variable
+opposing-ray schedule. All three builds retain the same surface-evidence and
+bounded-composite contracts.
 
 ```mermaid
 flowchart TD
-    A["Back buffer + depth"] --> B["Pass 1: four-direction donor transport<br/>half-resolution raw field"]
-    B --> C["Pass 2: horizontal surface resolve"]
-    C --> D["Pass 3: vertical surface resolve"]
-    D --> E["Pass 4: depth-aware full-resolution reconstruction"]
+    A["Back buffer + depth"] --> B["Stable / Fidelity<br/>Pass 1: four cardinal rays<br/>half-resolution raw field"]
+    A --> V["Full Resolution Dual Ray Alpha<br/>Pass 1: build 64 x 36 x 32<br/>view-frustum voxel proxy"]
+    V --> R["Pass 2: 1-4 opposing ray pairs<br/>full-resolution raw field"]
+    B --> C["Separable surface resolve"]
+    R --> C
+    C --> E["Full-resolution reconstruction"]
     E --> F["Optional same-surface edge fill"]
-    F --> G["Rendering intent<br/>Stable: unchanged<br/>Overdrive: Fidelity Guard + gain"]
+    F --> G["Rendering intent"]
     G --> H["Bounded additive composite"]
     H --> I["ReShade output or diagnostic view"]
 ```
 
-The reconstruction, edge-fill, intent, and composite stages all execute inside
-the fourth ReShade pass. They are shown separately above to make data ownership
-and the order of operations visible.
+For Stable and Fidelity Overdrive, reconstruction, edge fill, intent, and
+composition execute inside pass four. For Full Resolution Dual Ray Alpha they execute
+inside pass five, after the voxel build, full-resolution transport, and two
+resolve passes.
 
 ### Frame graph
 
@@ -84,10 +87,23 @@ and the order of operations visible.
 | 3. Vertical resolve | Horizontal field, depth | Vertical field | Apply the same evidence-gated resolve on the second axis. |
 | 4. Composite | Vertical field, back buffer, depth | ReShade output | Reconstruct at full resolution, optionally fill supported edge deficits, apply build-specific intent, enforce the contribution bounds, and select the requested diagnostic view. |
 
-The raw, horizontal, and vertical fields are half-resolution `RGBA16F`
-textures with point-clamped samplers. RGB carries reconstructed donor color;
-alpha carries its evidence. They are current-frame working fields, not temporal
-history.
+Full Resolution Dual Ray Alpha prepends a compute voxel-build pass and shifts the
+four operations above to passes 2-5. Its raw and resolve fields are
+full-resolution `RGBA16F`; the other builds retain half resolution. In every
+build RGB carries donor color and alpha carries its evidence. These are
+current-frame working fields, not temporal history.
+
+### Voxel proxy boundary
+
+Full Resolution Dual Ray Alpha builds a `64 x 36 x 32` `RGBA16F` 3D texture. Each
+proxy column stores the visible back-buffer color in the depth-quantized cell
+supported by the current depth buffer. Scheduled rays may trace that proxy as
+an additional radiance provider.
+
+This is **view-frustum voxel lighting**, not world voxelization. It contains no
+hidden or off-screen geometry, does not persist across frames, and makes no
+claim of complete or multi-bounce GI. The pass requires ReShade compute and
+`storage3D` support.
 
 ### Transport and evidence
 
@@ -97,10 +113,13 @@ formed from hit confidence, donor depth confidence, receiver/donor normal
 compatibility, and distance falloff. Invalid receivers, rays, hits, or donors
 therefore contribute no usable evidence.
 
-The effect evaluates the four cardinal directions and averages only their
-evidence-weighted donor samples. Reconstruction preserves that explicit
-evidence channel: unsupported neighbors are excluded rather than being treated
-as valid black light.
+Stable and Fidelity Overdrive evaluate four cardinal directions. Full
+Resolution Dual Ray evaluates one to four opposing pairs: two pairs reproduce
+the cardinals, while pairs three and four add both diagonals. Each direction
+still runs the DDA and parametric-march providers independently, then may admit
+voxel-proxy radiance. Reconstruction preserves the explicit evidence channel:
+unsupported providers and neighbors are excluded rather than treated as valid
+black light.
 
 ### Reconstruction and edge fill
 
@@ -109,22 +128,24 @@ image blurs. Every neighboring tap must remain compatible with the center
 surface under the configured depth, normal, coverage, and edge-protection
 tests. If no supported weight remains, the resolve emits an empty field.
 
-The fourth pass then evaluates the four surrounding half-resolution cells for
-each full-resolution receiver and applies the same surface tests during
-upsampling. Edge Fill, when enabled, samples only this reconstructed field. It
-adds a positive same-surface deficit near eligible edges; it does not read new
-light from the back buffer, cross a rejected surface boundary, or subtract from
-the indirect field. A zero Edge Fill strength is an immediate bypass.
+Stable and Fidelity Overdrive evaluate the four surrounding half-resolution
+cells for each full-resolution receiver. Full Resolution Dual Ray Alpha already has
+a one-to-one full-resolution transport field and therefore reads the resolved
+receiver directly. Edge Fill, when enabled, samples only the reconstructed
+field. It adds a positive same-surface deficit near eligible edges; it does not
+read new light from the back buffer, cross a rejected surface boundary, or
+subtract from the indirect field. A zero Edge Fill strength is an immediate
+bypass.
 
 ### Intent and bounded composition
 
 Stable 1.4 passes the reconstructed indirect field to the composite unchanged.
-Fidelity Overdrive can first align that field toward the receiver's current
-color direction, reduce pressure near occupied highlights, and request up to
-`3x` gain. This intent stage does not grant authority to bypass admission or
-output limits.
+Fidelity Overdrive and Full Resolution Dual Ray Alpha can first align that field
+toward the receiver's current color direction, reduce pressure near occupied
+highlights, and request up to `3x` gain. This intent stage does not grant
+authority to bypass admission or output limits.
 
-For both builds, the composite follows the same contract:
+For every build, the composite follows the same contract:
 
 ```text
 admission = enabled * valid receiver * usable evidence * nonzero strength
@@ -171,21 +192,32 @@ candidate. It adds two independent rendering-intent controls:
 Both controls may run together. At zero/zero, their intent stage reproduces the
 pre-overdrive path.
 
+### Full Resolution Dual Ray Alpha
+
+[Full-Resolution-Dual-Ray-Alpha](Full-Resolution-Dual-Ray-Alpha/) is a public
+alpha candidate. It adds full-resolution working fields, `1-4`
+opposing ray pairs (`2-8` rays), and a compute-built view-frustum voxel-radiance
+proxy. Its dedicated static validator passes, but full ReShade compilation,
+performance measurement, voxel correctness, and live visual acceptance remain
+pending.
+
 ## Source Ownership
 
 The public builds deliberately separate effect identity from shared behavior:
 
 | Layer | Owner | Change policy |
 |---|---|---|
-| Public effect, uniforms, technique, diagnostics | [Stable effect](Stable-1.4/reshade-shaders/shaders/camera_obscura/effects/CAMERA_OBSCURA_TwinLantern.fx) and [Fidelity Overdrive effect](Fidelity-Overdrive/reshade-shaders/Shaders/camera_obscura/effects/LUNAR_FLOWER_TwinLanterns_FidelityOverdrive.fx) | Stable identifiers stay fixed; candidate identifiers remain distinct. |
+| Public effect, uniforms, technique, diagnostics | [Stable effect](Stable-1.4/reshade-shaders/shaders/camera_obscura/effects/CAMERA_OBSCURA_TwinLantern.fx), [Fidelity Overdrive effect](Fidelity-Overdrive/reshade-shaders/Shaders/camera_obscura/effects/LUNAR_FLOWER_TwinLanterns_FidelityOverdrive.fx), and [Full Resolution Dual Ray Alpha effect](Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/effects/LUNAR_FLOWER_TwinLanterns_FullResolutionDualRayAlpha.fx) | Stable identifiers stay fixed; candidate identifiers remain distinct. |
+| View-frustum voxel proxy | [Voxel-proxy API](Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/api/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh) | Exists only in the full-resolution candidate and remains explicitly camera-visible/current-frame. |
 | Transport | [Transport API](Stable-1.4/reshade-shaders/shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternTransport.fxh) and [provider-proof API](Stable-1.4/reshade-shaders/shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh) | Shared and source-identical between builds. |
 | Reconstruction | [Reconstruction API](Stable-1.4/reshade-shaders/shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternReconstruction.fxh) | Shared and source-identical between builds. |
 | Composite bounds | [Composite API](Stable-1.4/reshade-shaders/shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh) | Shared and source-identical between builds. |
 | Atomic, debug, capability, and traversal support | [Four Camera Obscura headers](Stable-1.4/reshade-shaders/shaders/camera_obscura/header/) | Shared and source-identical between builds. |
 
-This yields eight source-identical API/header files in each package. Fidelity
-Overdrive refactors only its public identity and its post-reconstruction intent
-stage; Stable 1.4 remains the rollback baseline.
+This yields eight source-identical Camera Obscura API/header files in each
+package. Full Resolution Dual Ray Alpha adds one Lunar Flower voxel-proxy API beside
+them; it does not silently amend the shared contracts. Stable 1.4 remains the
+rollback baseline.
 
 The denoiser is deliberately absent. Run external denoising or stabilization as
 a separate ReShade technique so Twin Lanterns remains inspectable and can be
@@ -209,18 +241,32 @@ Fidelity Overdrive technique:
 Lunar Flower - Twin Lanterns: Fidelity Overdrive
 ```
 
+Full Resolution Dual Ray Alpha technique:
+
+```text
+Lunar Flower - Twin Lanterns: Full Resolution Dual Ray Alpha
+```
+
+The full-resolution build requires a compute-capable backend with 3D storage
+support. Do not select it as a compatibility fallback for D3D9 or D3D10.
+
 ## Validation Boundary
 
-The repository validator confirms local include closure, initialized public
-controls, diagnostic coverage, the ordered four-pass graph, source/channel
-bounds, same-surface edge-fill behavior, absence of active denoiser resources,
-and the eight unchanged shared API/header files. Stable exposes 14 controls and
-12 diagnostic views; Fidelity Overdrive exposes 16 controls and 14 diagnostic
-views.
+`tools/validate_publication.py` confirms the Stable/Fidelity publication
+surface, controls, diagnostics, ordered four-pass graph, source/channel bounds,
+edge-fill behavior, and eight unchanged shared files. Stable exposes 14
+controls and 12 diagnostic views; Fidelity Overdrive exposes 16 controls and
+14 diagnostic views.
 
-It does not establish full ReShade compilation, game-specific depth behavior,
-acceptable frame time, or visual acceptance. Those remain live gates described
-inside each build.
+`tools/validate_full_resolution_dual_ray_alpha.py` separately confirms the new
+candidate's local include closure, full-resolution fields, variable opposing
+ray schedule, DDA/march parity, voxel storage/build/trace surface, ordered
+five-pass graph, 16 diagnostics, unchanged shared contracts, hard composite
+bounds, and absence of temporal resources.
+
+Neither structural validator establishes full ReShade compilation,
+game-specific depth or voxel behavior, acceptable frame time, or visual
+acceptance. Those remain live gates described inside each build.
 
 ## Development Rules
 

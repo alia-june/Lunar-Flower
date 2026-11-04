@@ -1,0 +1,5 @@
+timestamp,game,renderer,reshade_version,resolution,gpu,compile_result,ray_pairs,total_rays,voxel_strength,voxel_steps,bound_verification,voxel_occupancy_valid,cross_surface_leak,frame_time_ms,visual_result,notes
+,,,,,,PENDING,1,2,0.35,16,PENDING,PENDING,PENDING,,PENDING,
+,,,,,,PENDING,2,4,0.35,16,PENDING,PENDING,PENDING,,PENDING,
+,,,,,,PENDING,3,6,0.35,16,PENDING,PENDING,PENDING,,PENDING,
+,,,,,,PENDING,4,8,0.35,16,PENDING,PENDING,PENDING,,PENDING,

@@ -1,0 +1,652 @@
+#include "ReShade.fxh"
+#include "../api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh"
+#include "../api/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh"
+
+uniform int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView
+< ui_type = "combo"; ui_category = "Lunar Flower / Twin Lanterns / 00 Diagnostics"; ui_label = "Output View"; ui_items = "Final Image\0Source Image\0Bounded Indirect Light\0Evidence Confidence\0Applied Light\0Rejection Reason\0Remaining Channel Room\0Containment Activity\0Source Difference\0Bound Verification\0Edge Fill Target\0Edge Fill Added\0Fidelity Guard Activity\0Overdrive Pressure\0Voxel Surface Occupancy\0Voxel Surface Radiance\0"; ui_tooltip = "Final Image is the production output.\nDiagnostic views expose reconstructed light, admission evidence, containment, rendering intent, and the current-frame view-frustum voxel proxy.\nBound Verification must remain green."; > = 0;
+
+uniform bool LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEnabled
+< ui_type = "checkbox"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Enable Indirect Light"; ui_tooltip = "Applies bounded reconstructed indirect light.\nOff returns the source image exactly while diagnostics remain available."; > = true;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Indirect Light Strength"; ui_min = 0.00; ui_max = 4.00; ui_step = 0.01; ui_tooltip = "Scales admitted indirect light after transport normalization and reconstruction evidence.\nZero returns the source image exactly."; > = 1.00;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaMaximumContribution
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Maximum Added Light"; ui_min = 0.00; ui_max = 0.50; ui_step = 0.005; ui_tooltip = "Hard per-channel ceiling for added normalized SDR light.\nThe result is also limited by the remaining room in each source channel."; > = 0.20;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayLengthPixels
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Transport Distance"; ui_min = 4.0; ui_max = 24.0; ui_step = 1.0; ui_tooltip = "Maximum screen-space travel in pixels for each scheduled transport direction.\nLonger travel reaches farther donors and costs more work."; > = 24.0;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthSlope
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Ray Depth Slope"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.01; ui_tooltip = "Controls how quickly transport rays move through screen depth.\nHigher values search more aggressively across depth."; > = 0.16;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Front Surface Bias"; ui_min = 0.0000; ui_max = 0.0100; ui_step = 0.0001; ui_tooltip = "Moves the accepted hit interval slightly toward the camera.\nUse only enough bias to avoid self-intersection."; > = 0.0005;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBackThickness
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Back Surface Thickness"; ui_min = 0.0000; ui_max = 0.0200; ui_step = 0.0001; ui_tooltip = "Extends the accepted hit interval behind the ray.\nLarger values admit thicker surfaces but can increase leakage."; > = 0.0035;
+
+uniform int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayPairs
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Opposing Ray Pairs"; ui_min = 1; ui_max = 4; ui_step = 1; ui_tooltip = "Casts one to four opposing direction pairs per full-resolution pixel.\nTwo pairs reproduce the cardinal direction schedule; four pairs add both diagonals for eight rays total."; > = 2;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Voxel Proxy Lighting"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.01; ui_tooltip = "Blends admitted radiance from the current-frame view-frustum voxel proxy into each ray direction.\nThis proxy contains camera-visible depth evidence only and is not world voxel lighting."; > = 0.35;
+
+uniform int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelTraceSteps
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Voxel Trace Steps"; ui_min = 4; ui_max = 32; ui_step = 1; ui_tooltip = "Maximum voxel cells tested along each scheduled ray.\nHigher values improve reach through the proxy and increase transport cost."; > = 16;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthTolerance
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 91 Reconstruction"; ui_label = "Surface Depth Agreement"; ui_min = 0.0001; ui_max = 0.0500; ui_step = 0.0001; ui_tooltip = "Maximum depth disagreement admitted during reconstruction.\nLower values protect boundaries more strictly."; > = 0.0050;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaNormalMinimum
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 91 Reconstruction"; ui_label = "Surface Direction Agreement"; ui_min = 0.00; ui_max = 0.99; ui_step = 0.01; ui_tooltip = "Minimum agreement between reconstructed surface directions.\nHigher values preserve edges but may reduce support."; > = 0.80;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeProtection
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 91 Reconstruction"; ui_label = "Depth Edge Protection"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.01; ui_tooltip = "Rejects reconstruction support near depth discontinuities.\nOne provides maximum protection against cross-surface light carry."; > = 1.00;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeInkStrength
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 92 Style"; ui_label = "Edge Ink Strength"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.01; ui_tooltip = "Adds the contour-heavy look created when rejected edge taps reduce visible light confidence.\nZero keeps surface rejection active without the AO-like edge emphasis.\nOne restores the original Twin Lantern edge treatment."; > = 0.00;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeFillStrength
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 92 Style"; ui_label = "Edge Fill Strength"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.01; ui_tooltip = "Fills only positive deficits in the reconstructed indirect-light field near depth edges.\nThe source image is never blurred and depth/normal agreement prevents cross-surface carry.\nZero bypasses all edge-fill sampling."; > = 0.20;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeFillRadiusPixels
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 92 Style"; ui_label = "Edge Fill Radius"; ui_min = 1.00; ui_max = 4.00; ui_step = 0.25; ui_tooltip = "Distance in full-resolution pixels used to find same-surface indirect light around an edge.\nLarger values close wider dark troughs and cost the same four additional reads when fill is active."; > = 2.00;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFidelityGuard
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 93 Intent"; ui_label = "Fidelity Guard"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.01; ui_tooltip = "Aligns transported light toward the receiver's existing color and reduces pressure near occupied highlight channels.\nIt protects the full-stack image without weakening dark-surface transport as strongly."; > = 0.65;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaOverdrive
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 93 Intent"; ui_label = "Overdrive"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.01; ui_tooltip = "Raises admitted Twin Lantern energy up to three times before hard contribution and channel-room bounds.\nOverdrive and Fidelity Guard can run together."; > = 0.00;
+
+texture2D LUNAR_FLOWER_TLFRRawTex
+{
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = RGBA16F;
+};
+
+texture2D LUNAR_FLOWER_TLFRResolveHTex
+{
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = RGBA16F;
+};
+
+texture2D LUNAR_FLOWER_TLFRResolveVTex
+{
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = RGBA16F;
+};
+
+sampler2D LUNAR_FLOWER_TLFRRawSampler
+{
+    Texture = LUNAR_FLOWER_TLFRRawTex;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+};
+
+sampler2D LUNAR_FLOWER_TLFRResolveHSampler
+{
+    Texture = LUNAR_FLOWER_TLFRResolveHTex;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+};
+
+sampler2D LUNAR_FLOWER_TLFRResolveVSampler
+{
+    Texture = LUNAR_FLOWER_TLFRResolveVTex;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+};
+
+float2 LUNAR_FLOWER_TLFRFullTexel()
+{
+    return float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT);
+}
+
+float LUNAR_FLOWER_TLFRRequestedCoverage(float2 requestedUv)
+{
+    return
+        step(0.0, requestedUv.x) *
+        step(requestedUv.x, 1.0) *
+        step(0.0, requestedUv.y) *
+        step(requestedUv.y, 1.0);
+}
+
+float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStyledEdgeProtection()
+{
+    return saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeProtection) *
+        saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeInkStrength);
+}
+
+CAMERA_OBSCURA_API_TL08ResolveEvidence LUNAR_FLOWER_TLFREvaluateHorizontal(
+    float2 uv)
+{
+    CAMERA_OBSCURA_API_TL08ResolveEvidence denied =
+        CAMERA_OBSCURA_API_DefaultTL08ResolveEvidence();
+    CAMERA_OBSCURA_SurfaceGuide centerGuide =
+        CAMERA_OBSCURA_API_BuildTL08Guide(uv);
+    [branch]
+    if (centerGuide.valid < 0.5)
+    {
+        return denied;
+    }
+
+    float2 offset = float2(LUNAR_FLOWER_TLFRFullTexel().x, 0.0);
+    float2 negativeRequested = uv - offset;
+    float2 positiveRequested = uv + offset;
+    float negativeAvailable = LUNAR_FLOWER_TLFRRequestedCoverage(negativeRequested);
+    float positiveAvailable = LUNAR_FLOWER_TLFRRequestedCoverage(positiveRequested);
+    float4 negativeValue = float4(0.0, 0.0, 0.0, 0.0);
+    float4 positiveValue = float4(0.0, 0.0, 0.0, 0.0);
+    CAMERA_OBSCURA_SurfaceGuide negativeGuide =
+        CAMERA_OBSCURA_API_DefaultTL08Guide();
+    CAMERA_OBSCURA_SurfaceGuide positiveGuide =
+        CAMERA_OBSCURA_API_DefaultTL08Guide();
+    float4 centerValue = tex2D(LUNAR_FLOWER_TLFRRawSampler, uv);
+
+    [branch]
+    if (negativeAvailable > 0.5)
+    {
+        negativeValue = tex2D(
+            LUNAR_FLOWER_TLFRRawSampler, negativeRequested);
+        negativeGuide = CAMERA_OBSCURA_API_BuildTL08Guide(negativeRequested);
+    }
+    [branch]
+    if (positiveAvailable > 0.5)
+    {
+        positiveValue = tex2D(
+            LUNAR_FLOWER_TLFRRawSampler, positiveRequested);
+        positiveGuide = CAMERA_OBSCURA_API_BuildTL08Guide(positiveRequested);
+    }
+
+    return CAMERA_OBSCURA_API_ResolveTL08Axis(
+        negativeValue,
+        centerValue,
+        positiveValue,
+        negativeGuide,
+        centerGuide,
+        positiveGuide,
+        negativeAvailable,
+        positiveAvailable,
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthTolerance,
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaNormalMinimum,
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStyledEdgeProtection());
+}
+
+CAMERA_OBSCURA_API_TL08ResolveEvidence LUNAR_FLOWER_TLFREvaluateVertical(
+    float2 uv)
+{
+    CAMERA_OBSCURA_API_TL08ResolveEvidence denied =
+        CAMERA_OBSCURA_API_DefaultTL08ResolveEvidence();
+    CAMERA_OBSCURA_SurfaceGuide centerGuide =
+        CAMERA_OBSCURA_API_BuildTL08Guide(uv);
+    [branch]
+    if (centerGuide.valid < 0.5)
+    {
+        return denied;
+    }
+
+    float2 offset = float2(0.0, LUNAR_FLOWER_TLFRFullTexel().y);
+    float2 negativeRequested = uv - offset;
+    float2 positiveRequested = uv + offset;
+    float negativeAvailable = LUNAR_FLOWER_TLFRRequestedCoverage(negativeRequested);
+    float positiveAvailable = LUNAR_FLOWER_TLFRRequestedCoverage(positiveRequested);
+    float4 negativeValue = float4(0.0, 0.0, 0.0, 0.0);
+    float4 positiveValue = float4(0.0, 0.0, 0.0, 0.0);
+    CAMERA_OBSCURA_SurfaceGuide negativeGuide =
+        CAMERA_OBSCURA_API_DefaultTL08Guide();
+    CAMERA_OBSCURA_SurfaceGuide positiveGuide =
+        CAMERA_OBSCURA_API_DefaultTL08Guide();
+    float4 centerValue = tex2D(LUNAR_FLOWER_TLFRResolveHSampler, uv);
+
+    [branch]
+    if (negativeAvailable > 0.5)
+    {
+        negativeValue = tex2D(
+            LUNAR_FLOWER_TLFRResolveHSampler, negativeRequested);
+        negativeGuide = CAMERA_OBSCURA_API_BuildTL08Guide(negativeRequested);
+    }
+    [branch]
+    if (positiveAvailable > 0.5)
+    {
+        positiveValue = tex2D(
+            LUNAR_FLOWER_TLFRResolveHSampler, positiveRequested);
+        positiveGuide = CAMERA_OBSCURA_API_BuildTL08Guide(positiveRequested);
+    }
+
+    return CAMERA_OBSCURA_API_ResolveTL08Axis(
+        negativeValue,
+        centerValue,
+        positiveValue,
+        negativeGuide,
+        centerGuide,
+        positiveGuide,
+        negativeAvailable,
+        positiveAvailable,
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthTolerance,
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaNormalMinimum,
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStyledEdgeProtection());
+}
+
+float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaPairDirection(int pairIndex)
+{
+    if (pairIndex == 0) return 0.0;
+    if (pairIndex == 1) return 2.0;
+    if (pairIndex == 2) return 1.0;
+    return 3.0;
+}
+
+void LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaAccumulateDirection(
+    float2 uv,
+    float directionIndex,
+    inout float3 weightedDonor,
+    inout float evidenceSum)
+{
+    CAMERA_OBSCURA_API_TwinLanternTransportEvidence screenEvidence =
+        CAMERA_OBSCURA_API_BuildTwinLanternTransportEvidence(
+            uv, directionIndex, CAMERA_OBSCURA_API_TL45_INPUT_LIVE,
+            CAMERA_OBSCURA_API_TL07_MODE_COMPLEMENTARY,
+            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayLengthPixels,
+            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthSlope,
+            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias,
+            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBackThickness);
+    LUNAR_FLOWER_API_TwinLanternVoxelEvidence voxelEvidence =
+        LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy(
+            uv,
+            directionIndex,
+            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayLengthPixels,
+            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthSlope,
+            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias,
+            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBackThickness,
+            (float)LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelTraceSteps);
+    float screenWeight = saturate(screenEvidence.evidence_strength);
+    float voxelWeight = saturate(voxelEvidence.evidence) *
+        saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength);
+    float donorWeight = screenWeight + voxelWeight;
+    float hasDonor = step(0.000001, donorWeight);
+    float3 donor = (
+        screenEvidence.combined_donor_rgb * screenWeight +
+        voxelEvidence.radiance_rgb * voxelWeight) *
+        CAMERA_OBSCURA_SafeRcp(donorWeight, 0.0) * hasDonor;
+    float directionEvidence = saturate(
+        screenWeight + voxelWeight * (1.0 - screenWeight));
+
+    weightedDonor += donor * directionEvidence;
+    evidenceSum += directionEvidence;
+}
+
+float4 LUNAR_FLOWER_TLFRRaw_PS(
+    float4 position : SV_Position,
+    float2 uv : TEXCOORD) : SV_Target
+{
+    float3 weightedDonor = float3(0.0, 0.0, 0.0);
+    float evidenceSum = 0.0;
+    int pairCount = min(max(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayPairs, 1), 4);
+
+    [loop]
+    for (int pairIndex = 0; pairIndex < 4; ++pairIndex)
+    {
+        if (pairIndex >= pairCount)
+        {
+            break;
+        }
+
+        float directionIndex =
+            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaPairDirection(pairIndex);
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaAccumulateDirection(
+            uv,
+            directionIndex,
+            weightedDonor,
+            evidenceSum);
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaAccumulateDirection(
+            uv,
+            directionIndex + 4.0,
+            weightedDonor,
+            evidenceSum);
+    }
+
+    float hasEvidence = step(0.000001, evidenceSum);
+    float3 donor = weightedDonor *
+        CAMERA_OBSCURA_SafeRcp(evidenceSum, 0.0) * hasEvidence;
+    float activeRayCount = max((float)(pairCount * 2), 1.0);
+    float averagedEvidence = saturate(evidenceSum / activeRayCount);
+    return float4(donor, averagedEvidence);
+}
+
+float LUNAR_FLOWER_TLFRVisibleConfidence(
+    CAMERA_OBSCURA_API_TL08ResolveEvidence evidence)
+{
+    float negativeCapacity = 0.5 *
+        evidence.negative_depth_support *
+        evidence.negative_normal_support *
+        evidence.negative_edge_support;
+    float positiveCapacity = 0.5 *
+        evidence.positive_depth_support *
+        evidence.positive_normal_support *
+        evidence.positive_edge_support;
+    float admittedCapacity =
+        evidence.center_valid + negativeCapacity + positiveCapacity;
+    float hasCapacity = step(0.000001, admittedCapacity);
+    float neutralConfidence = saturate(
+        evidence.weight_sum *
+        CAMERA_OBSCURA_SafeRcp(admittedCapacity, 0.0)) * hasCapacity;
+    float visibleConfidence = lerp(
+        neutralConfidence,
+        evidence.trusted_weight,
+        saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeInkStrength));
+    return saturate(visibleConfidence);
+}
+
+float4 LUNAR_FLOWER_TLFRResolveH_PS(
+    float4 position : SV_Position,
+    float2 uv : TEXCOORD) : SV_Target
+{
+    CAMERA_OBSCURA_API_TL08ResolveEvidence evidence =
+        LUNAR_FLOWER_TLFREvaluateHorizontal(uv);
+    return float4(
+        evidence.resolved_rgb,
+        LUNAR_FLOWER_TLFRVisibleConfidence(evidence));
+}
+
+float4 LUNAR_FLOWER_TLFRResolveV_PS(
+    float4 position : SV_Position,
+    float2 uv : TEXCOORD) : SV_Target
+{
+    CAMERA_OBSCURA_API_TL08ResolveEvidence evidence =
+        LUNAR_FLOWER_TLFREvaluateVertical(uv);
+    return float4(
+        evidence.resolved_rgb,
+        LUNAR_FLOWER_TLFRVisibleConfidence(evidence));
+}
+
+float4 LUNAR_FLOWER_TLFRFullResolutionReconstruct(float2 uv)
+{
+    CAMERA_OBSCURA_SurfaceGuide centerGuide =
+        CAMERA_OBSCURA_API_BuildTL08Guide(uv);
+    if (centerGuide.valid < 0.5)
+    {
+        return float4(0.0, 0.0, 0.0, 0.0);
+    }
+
+    float4 resolved = tex2D(LUNAR_FLOWER_TLFRResolveVSampler, uv);
+    float trustedEvidence = saturate(resolved.a) *
+        saturate(centerGuide.depth_confidence);
+    return float4(saturate(resolved.rgb), trustedEvidence);
+}
+
+void LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(
+    float2 requestedUv,
+    CAMERA_OBSCURA_SurfaceGuide centerGuide,
+    inout float3 signalSum,
+    inout float evidenceSum,
+    inout float supportSum)
+{
+    float coverage = LUNAR_FLOWER_TLFRRequestedCoverage(requestedUv);
+    [branch]
+    if (coverage > 0.5)
+    {
+        CAMERA_OBSCURA_SurfaceGuide tapGuide =
+            CAMERA_OBSCURA_API_BuildTL08Guide(requestedUv);
+        float depthSupport = CAMERA_OBSCURA_API_TL08DepthSupport(
+            centerGuide, tapGuide, LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthTolerance);
+        float normalSupport = CAMERA_OBSCURA_API_TL08NormalSupport(
+            centerGuide, tapGuide, LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaNormalMinimum);
+        float surfaceSupport = coverage * depthSupport * normalSupport;
+        float4 sampleValue = tex2D(
+            LUNAR_FLOWER_TLFRResolveVSampler, requestedUv);
+        float sampleEvidence = saturate(sampleValue.a);
+
+        signalSum += saturate(sampleValue.rgb) *
+            sampleEvidence * surfaceSupport;
+        evidenceSum += sampleEvidence * surfaceSupport;
+        supportSum += surfaceSupport;
+    }
+}
+
+float4 LUNAR_FLOWER_TLFRApplyEdgeFill(
+    float2 uv,
+    float4 baseIndirect,
+    out float edgeFillTarget,
+    out float3 edgeFillAdded)
+{
+    edgeFillTarget = 0.0;
+    edgeFillAdded = float3(0.0, 0.0, 0.0);
+    float safeStrength = saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeFillStrength);
+    [branch]
+    if (safeStrength <= 0.000001)
+    {
+        return baseIndirect;
+    }
+
+    CAMERA_OBSCURA_SurfaceGuide centerGuide =
+        CAMERA_OBSCURA_API_BuildTL08Guide(uv);
+    [branch]
+    if (centerGuide.valid < 0.5)
+    {
+        return baseIndirect;
+    }
+
+    float safeRadius = clamp(
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeFillRadiusPixels, 1.0, 4.0);
+    float2 offset = float2(
+        BUFFER_RCP_WIDTH * safeRadius,
+        BUFFER_RCP_HEIGHT * safeRadius);
+    float3 signalSum = float3(0.0, 0.0, 0.0);
+    float evidenceSum = 0.0;
+    float supportSum = 0.0;
+
+    LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(
+        uv - float2(offset.x, 0.0), centerGuide,
+        signalSum, evidenceSum, supportSum);
+    LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(
+        uv + float2(offset.x, 0.0), centerGuide,
+        signalSum, evidenceSum, supportSum);
+    LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(
+        uv - float2(0.0, offset.y), centerGuide,
+        signalSum, evidenceSum, supportSum);
+    LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(
+        uv + float2(0.0, offset.y), centerGuide,
+        signalSum, evidenceSum, supportSum);
+
+    float hasSupport = step(0.000001, supportSum);
+    float inverseSupport = CAMERA_OBSCURA_SafeRcp(supportSum, 0.0);
+    float3 neighborSignal = signalSum * inverseSupport * hasSupport;
+    float neighborEvidence = saturate(
+        evidenceSum * inverseSupport * hasSupport);
+    float baseEvidence = saturate(baseIndirect.a);
+    float3 baseSignal = saturate(baseIndirect.rgb) * baseEvidence;
+    float3 positiveDeficit = max(neighborSignal - baseSignal, 0.0.xxx);
+    float edgeMask = saturate(centerGuide.edge_risk);
+    float fillAuthority = safeStrength * edgeMask;
+    float3 filledSignal = baseSignal + positiveDeficit * fillAuthority;
+    float filledEvidence = lerp(
+        baseEvidence,
+        max(baseEvidence, neighborEvidence),
+        fillAuthority);
+    float hasFilledEvidence = step(0.000001, filledEvidence);
+    float3 filledColor = filledSignal *
+        CAMERA_OBSCURA_SafeRcp(filledEvidence, 0.0) * hasFilledEvidence;
+
+    edgeFillTarget = edgeMask * hasSupport;
+    edgeFillAdded = max(filledSignal - baseSignal, 0.0.xxx);
+    return float4(saturate(filledColor), saturate(filledEvidence));
+}
+
+float4 LUNAR_FLOWER_TLFRApplyRenderIntent(
+    float3 source,
+    float4 reconstructed,
+    out float fidelityActivity,
+    out float overdrivePressure,
+    out float effectiveStrength)
+{
+    fidelityActivity = 0.0;
+    overdrivePressure = 0.0;
+    effectiveStrength = max(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength, 0.0);
+    float safeFidelity = saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFidelityGuard);
+    float safeOverdrive = saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaOverdrive);
+    float3 safeSource = saturate(source);
+    float3 safeIndirect = saturate(reconstructed.rgb);
+    float sourceLuma = CAMERA_OBSCURA_Luma(safeSource);
+    float indirectLuma = CAMERA_OBSCURA_Luma(safeIndirect);
+    float sourcePeak = max(max(safeSource.r, safeSource.g), safeSource.b);
+    float receiverAvailable = smoothstep(0.02, 0.15, sourceLuma);
+    float3 receiverAligned = safeSource * indirectLuma *
+        CAMERA_OBSCURA_SafeRcp(sourceLuma, 0.0);
+    receiverAligned = lerp(
+        indirectLuma.xxx,
+        saturate(receiverAligned),
+        receiverAvailable);
+    float3 fidelityIndirect = lerp(
+        safeIndirect,
+        receiverAligned,
+        safeFidelity);
+    float highlightRisk = smoothstep(0.65, 0.98, sourcePeak);
+    float highlightGain = 1.0 - safeFidelity * highlightRisk * 0.85;
+    float overdriveGain = 1.0 + safeOverdrive * 2.0;
+    effectiveStrength = max(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength, 0.0) *
+        highlightGain * overdriveGain;
+    fidelityActivity = saturate(
+        safeFidelity *
+        (highlightRisk + CAMERA_OBSCURA_Luma(
+            abs(fidelityIndirect - safeIndirect))));
+    overdrivePressure = saturate(
+        safeOverdrive *
+        CAMERA_OBSCURA_Luma(fidelityIndirect) *
+        saturate(reconstructed.a) * 2.0);
+    return float4(saturate(fidelityIndirect), saturate(reconstructed.a));
+}
+
+CAMERA_OBSCURA_API_TL09CompositeEvidence
+LUNAR_FLOWER_TLFREvaluateComposite(
+    float2 uv,
+    out float edgeFillTarget,
+    out float3 edgeFillAdded,
+    out float fidelityActivity,
+    out float overdrivePressure)
+{
+    float4 vertical = LUNAR_FLOWER_TLFRFullResolutionReconstruct(uv);
+    float4 reconstructed = LUNAR_FLOWER_TLFRApplyEdgeFill(
+        uv, vertical, edgeFillTarget, edgeFillAdded);
+    float3 source = saturate(tex2D(ReShade::BackBuffer, uv).rgb);
+    float effectiveStrength = 0.0;
+    float4 intended = LUNAR_FLOWER_TLFRApplyRenderIntent(
+        source,
+        reconstructed,
+        fidelityActivity,
+        overdrivePressure,
+        effectiveStrength);
+    float receiverValid = CAMERA_OBSCURA_DepthConfidence(
+        CAMERA_OBSCURA_LoadDepth(uv));
+    return CAMERA_OBSCURA_API_BuildTL09Composite(
+        source,
+        intended.rgb,
+        intended.a,
+        receiverValid,
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEnabled ? 1.0 : 0.0,
+        effectiveStrength,
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaMaximumContribution);
+}
+
+float3 LUNAR_FLOWER_TLFRRejectionColor(float rejectionCode)
+{
+    if (rejectionCode < 0.5) return float3(0.05, 0.95, 0.18);
+    if (rejectionCode < 1.5) return float3(0.10, 0.25, 0.95);
+    if (rejectionCode < 2.5) return float3(0.95, 0.05, 0.03);
+    if (rejectionCode < 3.5) return float3(0.95, 0.05, 0.75);
+    if (rejectionCode < 4.5) return float3(0.95, 0.55, 0.05);
+    if (rejectionCode < 5.5) return float3(0.05, 0.90, 0.90);
+    return float3(0.45, 0.45, 0.45);
+}
+
+float4 LUNAR_FLOWER_TLFRDisplay_PS(
+    float4 position : SV_Position,
+    float2 uv : TEXCOORD) : SV_Target
+{
+    float edgeFillTarget = 0.0;
+    float3 edgeFillAdded = float3(0.0, 0.0, 0.0);
+    float fidelityActivity = 0.0;
+    float overdrivePressure = 0.0;
+    CAMERA_OBSCURA_API_TL09CompositeEvidence evidence =
+        LUNAR_FLOWER_TLFREvaluateComposite(
+            uv,
+            edgeFillTarget,
+            edgeFillAdded,
+            fidelityActivity,
+            overdrivePressure);
+    float view = (float)LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView;
+    if (view < 0.5) return float4(evidence.final_rgb, 1.0);
+    if (view < 1.5) return float4(evidence.source_rgb, 1.0);
+    if (view < 2.5) return float4(evidence.bounded_indirect_rgb, 1.0);
+    if (view < 3.5) return float4(
+        CAMERA_OBSCURA_DebugHeat(evidence.evidence), 1.0);
+    if (view < 4.5) return float4(
+        evidence.bounded_contribution_rgb, 1.0);
+    if (view < 5.5) return float4(
+        LUNAR_FLOWER_TLFRRejectionColor(evidence.rejection_code), 1.0);
+    if (view < 6.5) return float4(evidence.remaining_room_rgb, 1.0);
+    if (view < 7.5) return float4(
+        CAMERA_OBSCURA_DebugHeat(evidence.containment_activity), 1.0);
+    if (view < 8.5) return float4(
+        CAMERA_OBSCURA_DebugHeat(evidence.source_preserve_delta), 1.0);
+    if (view < 9.5) return float4(evidence.bounds_valid > 0.5 ?
+        float3(0.05, 0.95, 0.18) : float3(0.95, 0.05, 0.03), 1.0);
+    if (view < 10.5) return float4(
+        CAMERA_OBSCURA_DebugHeat(edgeFillTarget), 1.0);
+    if (view < 11.5) return float4(saturate(edgeFillAdded * 8.0), 1.0);
+    if (view < 12.5) return float4(
+        CAMERA_OBSCURA_DebugHeat(fidelityActivity), 1.0);
+    if (view < 13.5) return float4(
+        CAMERA_OBSCURA_DebugHeat(overdrivePressure), 1.0);
+    float4 voxelSurface =
+        LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface(uv);
+    if (view < 14.5) return float4(
+        CAMERA_OBSCURA_DebugHeat(voxelSurface.a), 1.0);
+    return float4(saturate(voxelSurface.rgb), 1.0);
+}
+
+technique LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlpha
+< ui_label = "Lunar Flower - Twin Lanterns: Full Resolution Dual Ray Alpha"; ui_tooltip = "Full-resolution indirect light from one to four opposing ray pairs plus a current-frame view-frustum voxel-radiance proxy.\nThe proxy contains camera-visible depth evidence only; fidelity and overdrive remain inside the bounded source-preserving composite.\nRequires ReShade compute and 3D storage support; no denoiser or temporal history is included."; >
+{
+    pass TwinLanternVoxelBuild
+    {
+        ComputeShader = LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS<8, 8, 4>;
+        DispatchSizeX = 8;
+        DispatchSizeY = 5;
+        DispatchSizeZ = 8;
+    }
+    pass TwinLanternTransport
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = LUNAR_FLOWER_TLFRRaw_PS;
+        RenderTarget = LUNAR_FLOWER_TLFRRawTex;
+    }
+    pass TwinLanternResolveHorizontal
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = LUNAR_FLOWER_TLFRResolveH_PS;
+        RenderTarget = LUNAR_FLOWER_TLFRResolveHTex;
+    }
+    pass TwinLanternResolveVertical
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = LUNAR_FLOWER_TLFRResolveV_PS;
+        RenderTarget = LUNAR_FLOWER_TLFRResolveVTex;
+    }
+    pass TwinLanternComposite
+    {
+        VertexShader = PostProcessVS;
+        PixelShader = LUNAR_FLOWER_TLFRDisplay_PS;
+    }
+}

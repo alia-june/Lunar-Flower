@@ -1,0 +1,74 @@
+{
+  "status": "public alpha; static structural validation only; full ReShade compile and live acceptance pending",
+  "passed": 13,
+  "failed": 0,
+  "effect_sha256": "9EBCA720579C0680F911B96402F7B2F352CAD949F624A3A43B593E61D7B2154F",
+  "voxel_api_sha256": "582949851DF9C49736981BE7CB0DFE2C9A512B3327118881B04957402C0B6612",
+  "checks": [
+    {
+      "name": "candidate_surface_complete",
+      "passed": true,
+      "detail": "required files present=14/14"
+    },
+    {
+      "name": "local_include_closure",
+      "passed": true,
+      "detail": "zero missing or escaping local includes"
+    },
+    {
+      "name": "distinct_public_identity",
+      "passed": true,
+      "detail": "candidate technique and controls are distinct"
+    },
+    {
+      "name": "full_resolution_transport_fields",
+      "passed": true,
+      "detail": "full-resolution RGBA fields=3/3"
+    },
+    {
+      "name": "variable_opposing_ray_pairs",
+      "passed": true,
+      "detail": "one to four pairs schedule two to eight rays"
+    },
+    {
+      "name": "dual_provider_per_direction",
+      "passed": true,
+      "detail": "DDA and parametric march remain independently evaluated"
+    },
+    {
+      "name": "view_frustum_voxel_proxy",
+      "passed": true,
+      "detail": "64x36x32 storage3D build and trace surface present"
+    },
+    {
+      "name": "ordered_five_pass_graph",
+      "passed": true,
+      "detail": "pass order=['TwinLanternVoxelBuild', 'TwinLanternTransport', 'TwinLanternResolveHorizontal', 'TwinLanternResolveVertical', 'TwinLanternComposite']"
+    },
+    {
+      "name": "voxel_truth_boundary",
+      "passed": true,
+      "detail": "proxy is explicitly bounded away from world-voxel claims"
+    },
+    {
+      "name": "candidate_diagnostics",
+      "passed": true,
+      "detail": "diagnostic views=16/16"
+    },
+    {
+      "name": "shared_api_lineage_unchanged",
+      "passed": true,
+      "detail": "source-identical shared files=8/8"
+    },
+    {
+      "name": "bounded_composite_unchanged",
+      "passed": true,
+      "detail": "nonnegative contribution and channel-room ceiling retained"
+    },
+    {
+      "name": "no_temporal_history",
+      "passed": true,
+      "detail": "candidate adds no history or motion-vector resource"
+    }
+  ]
+}

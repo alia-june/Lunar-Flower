@@ -1,0 +1,23 @@
+{
+  "status": "public alpha; static validation only",
+  "parent_build": "Twin-Lanterns/Fidelity-Overdrive",
+  "parent_effect": "LUNAR_FLOWER_TwinLanterns_FidelityOverdrive.fx",
+  "parent_effect_sha256": "77CA22C51F91FD3E730BE684823D724A33610D58DF12CFD6E32E1D2B2DBE521A",
+  "public_effect": "LUNAR_FLOWER_TwinLanterns_FullResolutionDualRayAlpha.fx",
+  "shared_camera_obscura_files": 8,
+  "shared_camera_obscura_change": "none; source-identical copies retained",
+  "generated_changes": [
+    "full-resolution raw and separable resolve fields",
+    "one to four opposing ray pairs",
+    "64 x 36 x 32 current-frame view-frustum voxel-radiance proxy",
+    "compute voxel-build pass and voxel diagnostics",
+    "distinct public effect and technique identity"
+  ],
+  "representation_boundary": "camera-visible depth shell only; not world voxels, hidden geometry, off-screen geometry, or complete GI",
+  "pending": [
+    "full ReShade compile on a compute-capable backend",
+    "voxel occupancy and trace correctness",
+    "target-game frame-time measurement",
+    "live visual acceptance"
+  ]
+}
