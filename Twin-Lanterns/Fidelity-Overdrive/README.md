@@ -45,7 +45,7 @@ Flower Twin Lanterns identity.
 
 ## Public API
 
-This build carries the shared [Twin Lanterns Public API 0.1.0](../API.md).
+This build carries the shared [Twin Lanterns Public API 0.1.0](../API/0.1.0/).
 Its four API files and four support headers are source-identical to the Stable
 1.4 contract; Fidelity Guard and Overdrive remain effect-level rendering-intent
 controls rather than silent API changes.

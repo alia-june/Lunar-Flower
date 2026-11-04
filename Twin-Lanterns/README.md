@@ -248,8 +248,9 @@ rollback baseline.
 ## Public API
 
 The shared shader surface is now documented as the
-[Twin Lanterns Public API](API.md), version **0.1.0**, with a
-machine-readable [API registry](PUBLIC_API.json). Consumers can include the
+[Twin Lanterns Public API](API/0.1.0/), version **0.1.0**, with a
+machine-readable [API registry](API/0.1.0/PUBLIC_API.json), integrity hashes,
+and a self-contained copy of the eight shared sources. Consumers can include the
 composite API as an umbrella entrypoint to the provider-evidence, transport,
 reconstruction, and bounded-composite contracts. The published registry names
 the supported types and entrypoints, records the canonical Stable source, and

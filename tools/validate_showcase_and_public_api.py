@@ -25,6 +25,12 @@ def sha256_file(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
 
 
+def sha256_public_text(path: Path) -> str:
+    """Hash the LF-normalized bytes stored in public Git text blobs."""
+
+    return sha256_bytes(path.read_bytes().replace(b"\r\n", b"\n"))
+
+
 def paeth(left: int, above: int, upper_left: int) -> int:
     estimate = left + above - upper_left
     left_distance = abs(estimate - left)
@@ -211,13 +217,26 @@ def main() -> int:
         f"source/output regions exact={sum(region_results)}/{len(region_results)}",
     )
 
-    registry_path = TWIN / "PUBLIC_API.json"
-    api_doc_path = TWIN / "API.md"
+    api_root = TWIN / "API" / "0.1.0"
+    registry_path = api_root / "PUBLIC_API.json"
+    api_doc_path = api_root / "README.md"
+    version_path = api_root / "VERSION"
+    sums_path = api_root / "SHA256SUMS.txt"
+    api_index_path = TWIN / "API" / "README.md"
     registry = json.loads(registry_path.read_text(encoding="utf-8"))
     record(
         "public_api_surface_complete",
-        registry_path.is_file() and api_doc_path.is_file(),
-        "API.md and PUBLIC_API.json present",
+        all(
+            path.is_file()
+            for path in (
+                registry_path,
+                api_doc_path,
+                version_path,
+                sums_path,
+                api_index_path,
+            )
+        ),
+        "version index, 0.1.0 guide, registry, marker, and hash inventory present",
     )
 
     stable_root = TWIN / "Stable-1.4" / "reshade-shaders" / "shaders" / "camera_obscura"
@@ -232,30 +251,55 @@ def main() -> int:
     )
     record(
         "api_version_matches_source",
-        version == registry["api_version"] == "0.1.0",
-        f"source and registry version={version}",
+        version
+        == registry["api_version"]
+        == version_path.read_text(encoding="utf-8").strip()
+        == "0.1.0",
+        f"source, registry, and marker version={version}",
     )
 
-    entry = TWIN / registry["entry_include"]
-    closure = local_include_closure(entry, stable_root)
+    package_shader_root = api_root / "reshade-shaders" / "Shaders" / "camera_obscura"
+    shared_entries = registry["shared_files"]
+    shared_paths = [api_root / item["path"] for item in shared_entries]
+    sums = {}
+    for line in sums_path.read_text(encoding="utf-8").splitlines():
+        digest_value, relative = line.split("  ", 1)
+        sums[relative] = digest_value
+    hash_results = [
+        path.is_file()
+        and sha256_public_text(path) == item["sha256"]
+        and sums.get(item["path"]) == item["sha256"]
+        for path, item in zip(shared_paths, shared_entries)
+    ]
+    record(
+        "versioned_api_hash_inventory",
+        all(hash_results) and len(sums) == 9,
+        f"shared package hashes verified={sum(hash_results)}/{len(hash_results)}; inventory entries={len(sums)}",
+    )
+
+    entry = api_root / registry["entry_include"]
+    closure = local_include_closure(entry, package_shader_root)
     record(
         "public_include_closure",
-        len(closure) == len(registry["shared_files"]) == 8,
+        len(closure) == len(shared_entries) == 8,
         f"closed local include surface={len(closure)} files",
     )
 
     identical_count = 0
-    for relative in registry["shared_files"]:
+    prefix = "reshade-shaders/Shaders/camera_obscura/"
+    for package_path, item in zip(shared_paths, shared_entries):
+        relative = Path(item["path"].removeprefix(prefix))
         stable_source = (stable_root / relative).read_text(encoding="utf-8")
         if (
-            (fidelity_root / relative).read_text(encoding="utf-8") == stable_source
+            package_path.read_text(encoding="utf-8") == stable_source
+            and (fidelity_root / relative).read_text(encoding="utf-8") == stable_source
             and (alpha_root / relative).read_text(encoding="utf-8") == stable_source
         ):
             identical_count += 1
     record(
-        "shared_api_sources_identical",
-        identical_count == len(registry["shared_files"]),
-        f"source-identical shared files={identical_count}/{len(registry['shared_files'])}",
+        "versioned_api_source_lineage",
+        identical_count == len(shared_entries),
+        f"package/Stable/Fidelity/Alpha source identity={identical_count}/{len(shared_entries)}",
     )
 
     canonical_text = "\n".join(path.read_text(encoding="utf-8") for path in closure)
@@ -275,7 +319,7 @@ def main() -> int:
     )
 
     extension = registry["experimental_extensions"][0]
-    extension_path = TWIN / extension["path"]
+    extension_path = api_root / extension["path"]
     extension_text = extension_path.read_text(encoding="utf-8")
     extension_symbols = [extension["type"], *extension["entrypoints"]]
     extension_present = all(
@@ -287,7 +331,10 @@ def main() -> int:
         extension_present
         and "experimental" in boundary_text
         and "excluded" in boundary_text
-        and "not claim world voxelization" in boundary_text
+        and (
+            "not claim world voxelization" in boundary_text
+            or "not world voxelization" in boundary_text
+        )
     )
     record(
         "experimental_voxel_api_bounded",
@@ -295,18 +342,44 @@ def main() -> int:
         f"experimental symbols present={sum(symbol in extension_text for symbol in extension_symbols)}/{len(extension_symbols)}",
     )
 
+    alpha_extension = (
+        alpha_root / "api" / "LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh"
+    )
+    extension_identity = (
+        sha256_public_text(extension_path) == extension["sha256"]
+        == sums.get(extension["path"])
+        == sha256_public_text(alpha_extension)
+    )
+    record(
+        "experimental_voxel_source_identity",
+        extension_identity,
+        f"packaged Alpha extension sha256={extension['sha256']}",
+    )
+
     root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
     twin_readme = (TWIN / "README.md").read_text(encoding="utf-8")
+    variant_readmes = "\n".join(
+        (TWIN / build / "README.md").read_text(encoding="utf-8")
+        for build in (
+            "Stable-1.4",
+            "Fidelity-Overdrive",
+            "Full-Resolution-Dual-Ray-Alpha",
+        )
+    )
     docs_linked = all(
-        token in root_readme + twin_readme
+        token in root_readme + twin_readme + variant_readmes
         for token in (
             "twin-lanterns-full-lazara-comparison.png",
             "twin-lanterns-full-lazara-comparison.json",
-            "API.md",
-            "PUBLIC_API.json",
+            "API/0.1.0/",
+            "API/0.1.0/PUBLIC_API.json",
         )
+    ) and "0.1.0" in api_index_path.read_text(encoding="utf-8")
+    record(
+        "readme_publication_links",
+        docs_linked,
+        "showcase and versioned API linked from public and variant READMEs",
     )
-    record("readme_publication_links", docs_linked, "showcase and API linked from public READMEs")
 
     failures = 0
     for name, passed, detail in checks:

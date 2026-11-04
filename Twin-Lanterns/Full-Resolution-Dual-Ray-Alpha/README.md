@@ -106,7 +106,7 @@ is a rejection condition.
 
 ## Public API
 
-This Alpha carries the shared [Twin Lanterns Public API 0.1.0](../API.md)
+This Alpha carries the shared [Twin Lanterns Public API 0.1.0](../API/0.1.0/)
 without changing its eight common source files. It also exposes the separate
 `LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh` extension. The voxel extension is
 experimental and excluded from the shared 0.1.0 stability promise until a

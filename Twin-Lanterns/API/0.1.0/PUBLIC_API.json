@@ -1,0 +1,104 @@
+{
+  "schema": "lunar-flower-twin-lanterns-public-api-v1",
+  "api_version": "0.1.0",
+  "status": "public pre-1.0 ReShade FX include API; packaged and structurally validated; downstream compile integration not attested",
+  "canonical_source_build": "../../Stable-1.4",
+  "package_root": ".",
+  "entry_include": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
+  "required_preinclude": "ReShade.fxh",
+  "requirements": [
+    "ReShade FX consumer",
+    "compatible ReShade.fxh supplied by the target installation",
+    "ReShade::BackBuffer",
+    "usable ReShade linearized depth buffer"
+  ],
+  "shared_files": [
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
+      "sha256": "E36A82A2506D3313B54E0E1FB0BA9DDE11109C01E02A42177323C744FE1E2378"
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh",
+      "sha256": "24E6C1C4FE58FF1B3D099A9E18957A408E6F4D0D67B0F7470E5FE17C7C834C45"
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternReconstruction.fxh",
+      "sha256": "3CB3606F4AEDB02B745D4ADCED76DF6768DE2E651A102DC2825D66A457D15170"
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternTransport.fxh",
+      "sha256": "939323E2A04B8B5EEB06F7DD2AAB0B64CF283D9D76E637B2266DF05F54DC5E13"
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_AtomicCommon.fxh",
+      "sha256": "CAA8E32BA3F84262A605F63B5A24C2758C882D39EFD9126BC87FEDCC8D9B66E0"
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_AtomicDebug.fxh",
+      "sha256": "68EF49D68C664753375DF0410DBA34561CEC805D3E519EE4290843C4B917527B"
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_EntryCapability.fxh",
+      "sha256": "D2C7A5D0C1040CC8783E76A492F838199BDACC294437B6940F207E8A9A8E885E"
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_EntryTraversal.fxh",
+      "sha256": "53D65015779448B3F092D9C46CFFB56B83011550104B6A32E2B9281933F106F3"
+    }
+  ],
+  "public_contracts": [
+    {
+      "stage": "provider evidence",
+      "type": "CAMERA_OBSCURA_API_TwinLanternProviderEvidence",
+      "default_constructor": "CAMERA_OBSCURA_API_DefaultTwinLanternProviderEvidence",
+      "entrypoint": "CAMERA_OBSCURA_API_BuildTL45Evidence"
+    },
+    {
+      "stage": "dual-provider transport",
+      "type": "CAMERA_OBSCURA_API_TwinLanternTransportEvidence",
+      "default_constructor": "CAMERA_OBSCURA_API_DefaultTwinLanternTransportEvidence",
+      "entrypoint": "CAMERA_OBSCURA_API_BuildTwinLanternTransportEvidence"
+    },
+    {
+      "stage": "surface reconstruction",
+      "type": "CAMERA_OBSCURA_API_TL08ResolveEvidence",
+      "default_constructor": "CAMERA_OBSCURA_API_DefaultTL08ResolveEvidence",
+      "entrypoint": "CAMERA_OBSCURA_API_ResolveTL08Axis"
+    },
+    {
+      "stage": "bounded composite",
+      "type": "CAMERA_OBSCURA_API_TL09CompositeEvidence",
+      "default_constructor": "CAMERA_OBSCURA_API_DefaultTL09CompositeEvidence",
+      "entrypoint": "CAMERA_OBSCURA_API_BuildTL09Composite"
+    }
+  ],
+  "source_lineage": {
+    "canonical_build": "Stable-1.4",
+    "matching_builds": [
+      "Fidelity-Overdrive",
+      "Full-Resolution-Dual-Ray-Alpha"
+    ],
+    "shared_file_count": 8,
+    "comparison_rule": "UTF-8 source text identity; SHA-256 records LF-normalized public Git blob bytes"
+  },
+  "experimental_extensions": [
+    {
+      "name": "view-frustum voxel proxy",
+      "status": "experimental alpha; distributed beside but excluded from the 0.1.0 shared stability contract",
+      "path": "experimental/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh",
+      "sha256": "582949851DF9C49736981BE7CB0DFE2C9A512B3327118881B04957402C0B6612",
+      "type": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",
+      "entrypoints": [
+        "LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence",
+        "LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface",
+        "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy"
+      ]
+    }
+  ],
+  "stability": {
+    "guaranteed": "This immutable version directory, its eight listed shared files, their hashes, and the 12 listed shared contract symbols define the published 0.1.0 surface.",
+    "not_guaranteed": "Other visible helpers, struct layout across a future version, target-game depth behavior, backend support, compile success in an untested consumer, and experimental Lunar Flower extensions.",
+    "change_rule": "A breaking shared-contract change requires a new version directory and migration note; the 0.1.0 source payload, registry, marker, and hash inventory remain unchanged."
+  },
+  "validation_boundary": "Static checks establish package presence, hashes, local include closure, source lineage, registered symbols, and documented experimental separation. They do not establish downstream ReShade compilation, runtime performance, target-game behavior, or visual acceptance."
+}

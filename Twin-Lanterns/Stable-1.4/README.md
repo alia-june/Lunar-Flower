@@ -31,7 +31,7 @@ The effect includes no temporal history or denoiser.
 ## Public API
 
 Stable 1.4 is the canonical source for the shared
-[Twin Lanterns Public API 0.1.0](../API.md). Its provider-evidence, transport,
+[Twin Lanterns Public API 0.1.0](../API/0.1.0/). Its provider-evidence, transport,
 reconstruction, and bounded-composite includes are the published rollback
 contract. Exposing the API does not change this build's effect, technique, or
 uniform identifiers.
