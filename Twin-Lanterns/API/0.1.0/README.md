@@ -20,7 +20,19 @@ was observed, admitted, rejected, weighted, and bounded—not only a final color
 - Four published stage contracts with twelve registered type, constructor, and
   entrypoint symbols.
 - A machine-readable [contract registry](PUBLIC_API.json), a literal
-  [version marker](VERSION), and [SHA-256 inventory](SHA256SUMS.txt).
+  [version marker](VERSION), [SHA-256 inventory](SHA256SUMS.txt), and
+  [declaration index](SYMBOLS.json).
+
+## Documentation Map
+
+- [Architecture and integration guide](README.md) — lifecycle, stages,
+  installation, examples, diagnostics, stability, and validation boundary.
+- [Complete declaration reference](REFERENCE.md) — every packaged macro,
+  struct, scoped field, function signature, resource, and experimental symbol.
+- [Machine-readable symbol index](SYMBOLS.json) — deterministic declaration
+  inventory for review and tooling.
+- [Contract registry](PUBLIC_API.json) — the twelve stable shared symbols,
+  source lineage, experimental boundary, and package metadata.
 
 It is not a binary ABI, a web API, a complete effect, a preset, a denoiser, a
 temporal accumulator, or a promise of game-specific depth compatibility.
@@ -54,6 +66,8 @@ rays, hits, donors, or reconstruction taps remain inspectable rejection states.
 ```text
 API/0.1.0/
   README.md
+  REFERENCE.md
+  SYMBOLS.json
   VERSION
   PUBLIC_API.json
   SHA256SUMS.txt
@@ -295,12 +309,13 @@ success, runtime correctness, authorship identity, or visual acceptance.
 ## Versioning Policy
 
 - `0.1.0` is public but pre-1.0.
-- The versioned source payload, registry, marker, and hash inventory are
-  immutable after publication.
+- The versioned source payload, stable contract declarations, marker, and hash
+  inventory are immutable after publication.
 - A breaking symbol, path, signature, semantic, or struct-contract change
   requires a new version directory and migration note.
-- Additive documentation corrections may clarify the contract without changing
-  the versioned source payload or redefining the published surface.
+- Additive documentation and documentation metadata may clarify the contract
+  without changing the versioned source payload or redefining the published
+  surface.
 - Visible helpers not listed in `PUBLIC_API.json` remain implementation-accessible
   but are not yet stable promises.
 - Experimental `LUNAR_FLOWER_API_*` surfaces may change before promotion.
@@ -311,6 +326,8 @@ From the repository root:
 
 ```powershell
 python -B tools/validate_showcase_and_public_api.py
+python -B tools/build_api_symbol_index.py --check
+python -B tools/build_api_reference.py --check
 python -B tools/validate_publication.py
 python -B tools/validate_full_resolution_dual_ray_alpha.py
 ```
@@ -322,6 +339,9 @@ The API validator checks:
 - local umbrella-include closure;
 - source identity against Stable, Fidelity Overdrive, and Alpha;
 - all twelve registered contract symbols;
+- deterministic declaration-index currency and registry coverage counts;
+- complete reference coverage for every packaged macro, struct, scoped field,
+  function, and resource;
 - experimental voxel-extension identity and boundary;
 - public README links.
 

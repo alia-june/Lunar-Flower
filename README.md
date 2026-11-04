@@ -46,8 +46,10 @@ replacing it.
 
 Twin Lanterns now publishes its ReShade FX include contract as
 [API 0.1.0](Twin-Lanterns/API/0.1.0/), with a machine-readable
-[surface registry](Twin-Lanterns/API/0.1.0/PUBLIC_API.json). The versioned
-package carries the source includes, integrity hashes, and architecture guide.
+[surface registry](Twin-Lanterns/API/0.1.0/PUBLIC_API.json) and
+[complete declaration reference](Twin-Lanterns/API/0.1.0/REFERENCE.md). The
+versioned package carries the source includes, integrity hashes, architecture
+guide, and machine-readable symbol inventory.
 Its umbrella include exposes
 provider evidence, dual-provider transport, evidence-gated reconstruction, and
 the bounded composite. The shared API sources are identical across all three
@@ -110,7 +112,7 @@ python -B tools/validate_showcase_and_public_api.py
 
 The Stable/Fidelity publication result is **13/13 passed**. The separate Full
 Resolution Dual Ray structural result is also **13/13 passed**. The showcase
-provenance and versioned public API result is **14/14 passed**.
+provenance and versioned public API result is **17/17 passed**.
 
 Structural validation is not a substitute for a clean ReShade compile, frame
 time measurement, or live visual acceptance in the target game. Each build

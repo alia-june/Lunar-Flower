@@ -11,6 +11,9 @@ import sys
 import zlib
 from pathlib import Path
 
+from build_api_reference import build_reference
+from build_api_symbol_index import build_index
+
 
 ROOT = Path(__file__).resolve().parents[1]
 TWIN = ROOT / "Twin-Lanterns"
@@ -220,6 +223,8 @@ def main() -> int:
     api_root = TWIN / "API" / "0.1.0"
     registry_path = api_root / "PUBLIC_API.json"
     api_doc_path = api_root / "README.md"
+    reference_path = api_root / "REFERENCE.md"
+    symbol_index_path = api_root / "SYMBOLS.json"
     version_path = api_root / "VERSION"
     sums_path = api_root / "SHA256SUMS.txt"
     api_index_path = TWIN / "API" / "README.md"
@@ -231,12 +236,50 @@ def main() -> int:
             for path in (
                 registry_path,
                 api_doc_path,
+                reference_path,
+                symbol_index_path,
                 version_path,
                 sums_path,
                 api_index_path,
             )
         ),
-        "version index, 0.1.0 guide, registry, marker, and hash inventory present",
+        "version index, guide, complete reference, symbol index, registry, marker, and hash inventory present",
+    )
+
+    expected_index = build_index(api_root)
+    stored_index = json.loads(symbol_index_path.read_text(encoding="utf-8"))
+    index_current = stored_index == expected_index
+    record(
+        "api_symbol_index_current",
+        index_current,
+        "declaration index matches all packaged sources",
+    )
+
+    documented_coverage = registry["documentation"]["reference_coverage"]
+    record(
+        "api_registry_reference_coverage",
+        documented_coverage == stored_index["summary"],
+        "registry coverage="
+        + ", ".join(f"{key}={value}" for key, value in stored_index["summary"].items()),
+    )
+
+    reference_text = reference_path.read_text(encoding="utf-8")
+    reference_current = reference_text == build_reference(api_root)
+    declaration_tokens = []
+    for source in stored_index["sources"]:
+        declaration_tokens.extend(item["name"] for item in source["macros"])
+        declaration_tokens.extend(item["name"] for item in source["resources"])
+        declaration_tokens.extend(item["name"] for item in source["functions"])
+        for struct in source["structs"]:
+            declaration_tokens.append(struct["name"])
+            declaration_tokens.extend(
+                f"{struct['name']}.{field['name']}" for field in struct["fields"]
+            )
+    covered_tokens = sum(token in reference_text for token in declaration_tokens)
+    record(
+        "api_reference_declaration_coverage",
+        reference_current and covered_tokens == len(declaration_tokens),
+        f"deterministic reference current={reference_current}; declarations covered={covered_tokens}/{len(declaration_tokens)}",
     )
 
     stable_root = TWIN / "Stable-1.4" / "reshade-shaders" / "shaders" / "camera_obscura"

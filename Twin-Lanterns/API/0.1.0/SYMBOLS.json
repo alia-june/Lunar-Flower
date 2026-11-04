@@ -1,0 +1,1667 @@
+{
+  "schema": "lunar-flower-twin-lanterns-symbol-index-v1",
+  "api_version": "0.1.0",
+  "scope": "all top-level declarations in the eight shared files and experimental voxel extension",
+  "summary": {
+    "source_files": 9,
+    "macros": 69,
+    "structs": 15,
+    "struct_fields": 208,
+    "functions": 60,
+    "resources": 3
+  },
+  "sources": [
+    {
+      "path": "experimental/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh",
+      "macros": [
+        {
+          "name": "LUNAR_FLOWER_API_TWIN_LANTERN_VOXEL_PROXY_FXH",
+          "value": "",
+          "include_guard": true
+        },
+        {
+          "name": "LUNAR_FLOWER_TL_VOXEL_WIDTH",
+          "value": "64",
+          "include_guard": false
+        },
+        {
+          "name": "LUNAR_FLOWER_TL_VOXEL_HEIGHT",
+          "value": "36",
+          "include_guard": false
+        },
+        {
+          "name": "LUNAR_FLOWER_TL_VOXEL_DEPTH",
+          "value": "32",
+          "include_guard": false
+        },
+        {
+          "name": "LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS",
+          "value": "32",
+          "include_guard": false
+        }
+      ],
+      "structs": [
+        {
+          "name": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",
+          "fields": [
+            {
+              "type": "float3",
+              "name": "radiance_rgb"
+            },
+            {
+              "type": "float",
+              "name": "evidence"
+            },
+            {
+              "type": "float",
+              "name": "hit"
+            },
+            {
+              "type": "float",
+              "name": "normalized_distance"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "return_type": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",
+          "name": "LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence",
+          "parameters": ""
+        },
+        {
+          "return_type": "void",
+          "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS",
+          "parameters": "uint3 id : SV_DispatchThreadID"
+        },
+        {
+          "return_type": "float4",
+          "name": "LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface",
+          "parameters": "float2 uv"
+        },
+        {
+          "return_type": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",
+          "name": "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy",
+          "parameters": "float2 uv, float directionIndex, float rayLengthPixels, float depthSlope, float frontBias, float backThickness, float requestedSteps"
+        }
+      ],
+      "resources": [
+        {
+          "kind": "texture3D",
+          "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex"
+        },
+        {
+          "kind": "storage3D",
+          "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage"
+        },
+        {
+          "kind": "sampler3D",
+          "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler"
+        }
+      ]
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
+      "macros": [
+        {
+          "name": "CAMERA_OBSCURA_API_TWIN_LANTERN_COMPOSITE_FXH",
+          "value": "",
+          "include_guard": true
+        }
+      ],
+      "structs": [
+        {
+          "name": "CAMERA_OBSCURA_API_TL09CompositeEvidence",
+          "fields": [
+            {
+              "type": "float3",
+              "name": "source_rgb"
+            },
+            {
+              "type": "float3",
+              "name": "indirect_rgb"
+            },
+            {
+              "type": "float3",
+              "name": "weighted_indirect_rgb"
+            },
+            {
+              "type": "float3",
+              "name": "bounded_indirect_rgb"
+            },
+            {
+              "type": "float3",
+              "name": "remaining_room_rgb"
+            },
+            {
+              "type": "float3",
+              "name": "bounded_contribution_rgb"
+            },
+            {
+              "type": "float3",
+              "name": "final_rgb"
+            },
+            {
+              "type": "float",
+              "name": "evidence"
+            },
+            {
+              "type": "float",
+              "name": "receiver_valid"
+            },
+            {
+              "type": "float",
+              "name": "enabled"
+            },
+            {
+              "type": "float",
+              "name": "strength"
+            },
+            {
+              "type": "float",
+              "name": "maximum_contribution"
+            },
+            {
+              "type": "float",
+              "name": "admission"
+            },
+            {
+              "type": "float",
+              "name": "application"
+            },
+            {
+              "type": "float",
+              "name": "rejection"
+            },
+            {
+              "type": "float",
+              "name": "rejection_code"
+            },
+            {
+              "type": "float",
+              "name": "containment_activity"
+            },
+            {
+              "type": "float",
+              "name": "source_preserve_delta"
+            },
+            {
+              "type": "float",
+              "name": "bounds_valid"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "return_type": "CAMERA_OBSCURA_API_TL09CompositeEvidence",
+          "name": "CAMERA_OBSCURA_API_DefaultTL09CompositeEvidence",
+          "parameters": ""
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_API_TL09CompositeEvidence",
+          "name": "CAMERA_OBSCURA_API_BuildTL09Composite",
+          "parameters": "float3 sourceRgb, float3 resolvedIndirectRgb, float trustedWeight, float receiverValid, float enabled, float strength, float maximumContribution"
+        }
+      ],
+      "resources": []
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh",
+      "macros": [
+        {
+          "name": "CAMERA_OBSCURA_API_TWIN_LANTERN_PROVIDER_PROOF_COMMON_FXH",
+          "value": "",
+          "include_guard": true
+        },
+        {
+          "name": "CAMERA_OBSCURA_API_TL45_INPUT_LIVE",
+          "value": "0.0",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_API_TL45_INPUT_INVALID_RECEIVER",
+          "value": "1.0",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_API_TL45_INPUT_ZERO_DIRECTION",
+          "value": "2.0",
+          "include_guard": false
+        }
+      ],
+      "structs": [
+        {
+          "name": "CAMERA_OBSCURA_API_TwinLanternProviderEvidence",
+          "fields": [
+            {
+              "type": "float",
+              "name": "provider_backend"
+            },
+            {
+              "type": "float",
+              "name": "requested_steps"
+            },
+            {
+              "type": "float",
+              "name": "receiver_valid"
+            },
+            {
+              "type": "float",
+              "name": "receiver_edge_risk"
+            },
+            {
+              "type": "float",
+              "name": "ray_valid"
+            },
+            {
+              "type": "float2",
+              "name": "direction_uv"
+            },
+            {
+              "type": "float",
+              "name": "hit"
+            },
+            {
+              "type": "float",
+              "name": "reason"
+            },
+            {
+              "type": "float2",
+              "name": "hit_uv"
+            },
+            {
+              "type": "float",
+              "name": "step_index"
+            },
+            {
+              "type": "float",
+              "name": "terminal_depth"
+            },
+            {
+              "type": "float",
+              "name": "interval_min"
+            },
+            {
+              "type": "float",
+              "name": "interval_max"
+            },
+            {
+              "type": "float",
+              "name": "interval_support"
+            },
+            {
+              "type": "float",
+              "name": "thickness_used"
+            },
+            {
+              "type": "float",
+              "name": "coarse_residual"
+            },
+            {
+              "type": "float",
+              "name": "refined_residual"
+            },
+            {
+              "type": "float",
+              "name": "refinement_not_worse"
+            },
+            {
+              "type": "float",
+              "name": "refinement_steps"
+            },
+            {
+              "type": "float",
+              "name": "confidence"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "return_type": "CAMERA_OBSCURA_API_TwinLanternProviderEvidence",
+          "name": "CAMERA_OBSCURA_API_DefaultTwinLanternProviderEvidence",
+          "parameters": "float backend"
+        },
+        {
+          "return_type": "float2",
+          "name": "CAMERA_OBSCURA_API_TL45Direction",
+          "parameters": "float requestedIndex"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_SurfaceGuide",
+          "name": "CAMERA_OBSCURA_API_BuildTL45Receiver",
+          "parameters": "float2 uv, float inputMode"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_Ray",
+          "name": "CAMERA_OBSCURA_API_BuildTL45Ray",
+          "parameters": "float2 uv, float directionIndex, float inputMode, float requestedSteps, float rayLengthPixels, float depthSlope, float frontBias, float backThickness, out CAMERA_OBSCURA_TraceControls controls, out CAMERA_OBSCURA_SurfaceGuide receiver"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_API_TwinLanternProviderEvidence",
+          "name": "CAMERA_OBSCURA_API_BuildTL45Evidence",
+          "parameters": "CAMERA_OBSCURA_Ray ray, CAMERA_OBSCURA_TraceControls controls, CAMERA_OBSCURA_SurfaceGuide receiver, CAMERA_OBSCURA_Hit coarse, CAMERA_OBSCURA_Hit refined, float backend"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_API_TL45Status",
+          "parameters": "float value"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_API_TL45Signal",
+          "parameters": "CAMERA_OBSCURA_API_TwinLanternProviderEvidence evidence, float view"
+        }
+      ],
+      "resources": []
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternReconstruction.fxh",
+      "macros": [
+        {
+          "name": "CAMERA_OBSCURA_API_TWIN_LANTERN_RECONSTRUCTION_FXH",
+          "value": "",
+          "include_guard": true
+        }
+      ],
+      "structs": [
+        {
+          "name": "CAMERA_OBSCURA_API_TL08ResolveEvidence",
+          "fields": [
+            {
+              "type": "float3",
+              "name": "resolved_rgb"
+            },
+            {
+              "type": "float",
+              "name": "trusted_weight"
+            },
+            {
+              "type": "float",
+              "name": "weight_sum"
+            },
+            {
+              "type": "float",
+              "name": "kernel_capacity"
+            },
+            {
+              "type": "float",
+              "name": "center_valid"
+            },
+            {
+              "type": "float",
+              "name": "center_evidence"
+            },
+            {
+              "type": "float",
+              "name": "negative_available"
+            },
+            {
+              "type": "float",
+              "name": "positive_available"
+            },
+            {
+              "type": "float",
+              "name": "negative_depth_support"
+            },
+            {
+              "type": "float",
+              "name": "positive_depth_support"
+            },
+            {
+              "type": "float",
+              "name": "negative_normal_support"
+            },
+            {
+              "type": "float",
+              "name": "positive_normal_support"
+            },
+            {
+              "type": "float",
+              "name": "negative_edge_support"
+            },
+            {
+              "type": "float",
+              "name": "positive_edge_support"
+            },
+            {
+              "type": "float",
+              "name": "negative_admitted_weight"
+            },
+            {
+              "type": "float",
+              "name": "center_admitted_weight"
+            },
+            {
+              "type": "float",
+              "name": "positive_admitted_weight"
+            },
+            {
+              "type": "float",
+              "name": "minimum_depth_support"
+            },
+            {
+              "type": "float",
+              "name": "minimum_normal_support"
+            },
+            {
+              "type": "float",
+              "name": "minimum_edge_support"
+            },
+            {
+              "type": "float",
+              "name": "zero_weight"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "return_type": "CAMERA_OBSCURA_API_TL08ResolveEvidence",
+          "name": "CAMERA_OBSCURA_API_DefaultTL08ResolveEvidence",
+          "parameters": ""
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_SurfaceGuide",
+          "name": "CAMERA_OBSCURA_API_DefaultTL08Guide",
+          "parameters": ""
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_SurfaceGuide",
+          "name": "CAMERA_OBSCURA_API_BuildTL08Guide",
+          "parameters": "float2 uv"
+        },
+        {
+          "return_type": "float",
+          "name": "CAMERA_OBSCURA_API_TL08DepthSupport",
+          "parameters": "CAMERA_OBSCURA_SurfaceGuide center, CAMERA_OBSCURA_SurfaceGuide tapGuide, float depthTolerance"
+        },
+        {
+          "return_type": "float",
+          "name": "CAMERA_OBSCURA_API_TL08NormalSupport",
+          "parameters": "CAMERA_OBSCURA_SurfaceGuide center, CAMERA_OBSCURA_SurfaceGuide tapGuide, float normalMinimum"
+        },
+        {
+          "return_type": "float",
+          "name": "CAMERA_OBSCURA_API_TL08EdgeSupport",
+          "parameters": "CAMERA_OBSCURA_SurfaceGuide center, CAMERA_OBSCURA_SurfaceGuide tapGuide, float edgeProtection"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_API_TL08ResolveEvidence",
+          "name": "CAMERA_OBSCURA_API_ResolveTL08Axis",
+          "parameters": "float4 negativeValue, float4 centerValue, float4 positiveValue, CAMERA_OBSCURA_SurfaceGuide negativeGuide, CAMERA_OBSCURA_SurfaceGuide centerGuide, CAMERA_OBSCURA_SurfaceGuide positiveGuide, float negativeAvailable, float positiveAvailable, float depthTolerance, float normalMinimum, float edgeProtection"
+        }
+      ],
+      "resources": []
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternTransport.fxh",
+      "macros": [
+        {
+          "name": "CAMERA_OBSCURA_API_TWIN_LANTERN_TRANSPORT_FXH",
+          "value": "",
+          "include_guard": true
+        },
+        {
+          "name": "CAMERA_OBSCURA_API_TL07_MODE_PARITY",
+          "value": "0.0",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_API_TL07_MODE_COMPLEMENTARY",
+          "value": "1.0",
+          "include_guard": false
+        }
+      ],
+      "structs": [
+        {
+          "name": "CAMERA_OBSCURA_API_TwinLanternTransportEvidence",
+          "fields": [
+            {
+              "type": "float",
+              "name": "transport_mode"
+            },
+            {
+              "type": "float",
+              "name": "transport_enabled"
+            },
+            {
+              "type": "float",
+              "name": "ray_valid"
+            },
+            {
+              "type": "float",
+              "name": "receiver_valid"
+            },
+            {
+              "type": "float",
+              "name": "dda_hit"
+            },
+            {
+              "type": "float",
+              "name": "dda_reason"
+            },
+            {
+              "type": "float",
+              "name": "dda_donor_valid"
+            },
+            {
+              "type": "float3",
+              "name": "dda_donor_rgb"
+            },
+            {
+              "type": "float",
+              "name": "dda_distance_pixels"
+            },
+            {
+              "type": "float",
+              "name": "dda_distance_weight"
+            },
+            {
+              "type": "float",
+              "name": "dda_receiver_facing"
+            },
+            {
+              "type": "float",
+              "name": "dda_donor_facing"
+            },
+            {
+              "type": "float",
+              "name": "dda_normal_compatibility"
+            },
+            {
+              "type": "float",
+              "name": "dda_hit_confidence"
+            },
+            {
+              "type": "float",
+              "name": "dda_raw_weight"
+            },
+            {
+              "type": "float",
+              "name": "dda_normalized_weight"
+            },
+            {
+              "type": "float",
+              "name": "march_hit"
+            },
+            {
+              "type": "float",
+              "name": "march_reason"
+            },
+            {
+              "type": "float",
+              "name": "march_donor_valid"
+            },
+            {
+              "type": "float3",
+              "name": "march_donor_rgb"
+            },
+            {
+              "type": "float",
+              "name": "march_distance_pixels"
+            },
+            {
+              "type": "float",
+              "name": "march_distance_weight"
+            },
+            {
+              "type": "float",
+              "name": "march_receiver_facing"
+            },
+            {
+              "type": "float",
+              "name": "march_donor_facing"
+            },
+            {
+              "type": "float",
+              "name": "march_normal_compatibility"
+            },
+            {
+              "type": "float",
+              "name": "march_hit_confidence"
+            },
+            {
+              "type": "float",
+              "name": "march_raw_weight"
+            },
+            {
+              "type": "float",
+              "name": "march_normalized_weight"
+            },
+            {
+              "type": "float",
+              "name": "dda_weight_active"
+            },
+            {
+              "type": "float",
+              "name": "march_weight_active"
+            },
+            {
+              "type": "float",
+              "name": "both_weight_active"
+            },
+            {
+              "type": "float",
+              "name": "dda_only_weight_active"
+            },
+            {
+              "type": "float",
+              "name": "march_only_weight_active"
+            },
+            {
+              "type": "float",
+              "name": "neither_weight_active"
+            },
+            {
+              "type": "float",
+              "name": "one_provider_bound_ok"
+            },
+            {
+              "type": "float",
+              "name": "provider_count"
+            },
+            {
+              "type": "float",
+              "name": "total_raw_weight"
+            },
+            {
+              "type": "float",
+              "name": "normalized_weight_sum"
+            },
+            {
+              "type": "float",
+              "name": "evidence_strength"
+            },
+            {
+              "type": "float3",
+              "name": "combined_donor_rgb"
+            },
+            {
+              "type": "float3",
+              "name": "raw_radiance_rgb"
+            },
+            {
+              "type": "float",
+              "name": "zero_contribution"
+            }
+          ]
+        },
+        {
+          "name": "CAMERA_OBSCURA_API_TL07ProviderSample",
+          "fields": [
+            {
+              "type": "float",
+              "name": "valid"
+            },
+            {
+              "type": "float3",
+              "name": "donor_rgb"
+            },
+            {
+              "type": "float",
+              "name": "distance_pixels"
+            },
+            {
+              "type": "float",
+              "name": "distance_weight"
+            },
+            {
+              "type": "float",
+              "name": "receiver_facing"
+            },
+            {
+              "type": "float",
+              "name": "donor_facing"
+            },
+            {
+              "type": "float",
+              "name": "normal_compatibility"
+            },
+            {
+              "type": "float",
+              "name": "hit_confidence"
+            },
+            {
+              "type": "float",
+              "name": "raw_weight"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "return_type": "CAMERA_OBSCURA_API_TwinLanternTransportEvidence",
+          "name": "CAMERA_OBSCURA_API_DefaultTwinLanternTransportEvidence",
+          "parameters": ""
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_API_TL07ProviderSample",
+          "name": "CAMERA_OBSCURA_API_DefaultTL07ProviderSample",
+          "parameters": ""
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_SurfaceGuide",
+          "name": "CAMERA_OBSCURA_API_BuildTL07DonorGuide",
+          "parameters": "float2 uv"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_API_TL07ProviderSample",
+          "name": "CAMERA_OBSCURA_API_BuildTL07ProviderSample",
+          "parameters": "CAMERA_OBSCURA_Ray ray, CAMERA_OBSCURA_SurfaceGuide receiver, CAMERA_OBSCURA_Hit hit, float maximumDistancePixels"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_API_TwinLanternTransportEvidence",
+          "name": "CAMERA_OBSCURA_API_BuildTwinLanternTransportEvidence",
+          "parameters": "float2 uv, float directionIndex, float inputMode, float transportMode, float rayLengthPixels, float depthSlope, float frontBias, float backThickness"
+        }
+      ],
+      "resources": []
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_AtomicCommon.fxh",
+      "macros": [
+        {
+          "name": "CAMERA_OBSCURA_ATOMIC_COMMON_FXH",
+          "value": "",
+          "include_guard": true
+        },
+        {
+          "name": "CAMERA_OBSCURA_API_VERSION_MAJOR",
+          "value": "0",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_API_VERSION_MINOR",
+          "value": "1",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_API_VERSION_PATCH",
+          "value": "0",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_CAP_TIER_C0",
+          "value": "0",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_CAP_TIER_C1",
+          "value": "1",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_CAP_TIER_C2",
+          "value": "2",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_CAP_TIER_C3",
+          "value": "3",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEPTH_METRIC_NONE",
+          "value": "0",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEPTH_METRIC_LINEAR01",
+          "value": "1",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_BACKEND_NONE",
+          "value": "0",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_BACKEND_DDA",
+          "value": "1",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_BACKEND_MARCH",
+          "value": "2",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_HIT",
+          "value": "0",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_MAX_STEPS",
+          "value": "1",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_SCREEN_EXIT",
+          "value": "2",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_INVALID_DEPTH",
+          "value": "3",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_NO_INTERVAL",
+          "value": "4",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_NEAR_CLIP",
+          "value": "5",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_MAX_DISTANCE",
+          "value": "6",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_NUMERIC_INVALID",
+          "value": "7",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_SELF_HIT",
+          "value": "8",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_UNSUPPORTED_TIER",
+          "value": "9",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REASON_INVALID_RAY",
+          "value": "10",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DDA_MAX_STEPS",
+          "value": "24",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_MARCH_MAX_STEPS",
+          "value": "16",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_REFINE_STEPS",
+          "value": "2",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_MARCH_STEP_JITTER_STRENGTH",
+          "value": "0.65",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_MARCH_DONOR_PREFILTER_STRENGTH",
+          "value": "0.45",
+          "include_guard": false
+        }
+      ],
+      "structs": [
+        {
+          "name": "CAMERA_OBSCURA_Capabilities",
+          "fields": [
+            {
+              "type": "float",
+              "name": "tier"
+            },
+            {
+              "type": "float",
+              "name": "has_color"
+            },
+            {
+              "type": "float",
+              "name": "has_depth"
+            },
+            {
+              "type": "float",
+              "name": "has_linear_view_z"
+            },
+            {
+              "type": "float",
+              "name": "has_projection"
+            },
+            {
+              "type": "float",
+              "name": "has_inverse_projection"
+            },
+            {
+              "type": "float",
+              "name": "has_history"
+            },
+            {
+              "type": "float",
+              "name": "has_motion_vectors"
+            },
+            {
+              "type": "float",
+              "name": "depth_metric"
+            }
+          ]
+        },
+        {
+          "name": "CAMERA_OBSCURA_SurfaceGuide",
+          "fields": [
+            {
+              "type": "float",
+              "name": "valid"
+            },
+            {
+              "type": "float",
+              "name": "depth"
+            },
+            {
+              "type": "float3",
+              "name": "normal"
+            },
+            {
+              "type": "float",
+              "name": "depth_confidence"
+            },
+            {
+              "type": "float",
+              "name": "edge_risk"
+            },
+            {
+              "type": "float",
+              "name": "luma"
+            }
+          ]
+        },
+        {
+          "name": "CAMERA_OBSCURA_RayRequest",
+          "fields": [
+            {
+              "type": "float2",
+              "name": "direction_uv"
+            },
+            {
+              "type": "float",
+              "name": "ray_length_uv"
+            },
+            {
+              "type": "float",
+              "name": "ray_depth_slope"
+            },
+            {
+              "type": "float",
+              "name": "front_bias"
+            },
+            {
+              "type": "float",
+              "name": "back_thickness"
+            },
+            {
+              "type": "float",
+              "name": "confidence_min"
+            },
+            {
+              "type": "float",
+              "name": "self_hit_pixels"
+            },
+            {
+              "type": "float",
+              "name": "distance_fade"
+            },
+            {
+              "type": "float",
+              "name": "pixel_stride"
+            },
+            {
+              "type": "float",
+              "name": "refinement_steps"
+            },
+            {
+              "type": "float",
+              "name": "spatial_phase"
+            },
+            {
+              "type": "float",
+              "name": "requested_steps"
+            }
+          ]
+        },
+        {
+          "name": "CAMERA_OBSCURA_TraceControls",
+          "fields": [
+            {
+              "type": "float",
+              "name": "ray_length_uv"
+            },
+            {
+              "type": "float",
+              "name": "ray_depth_slope"
+            },
+            {
+              "type": "float",
+              "name": "front_bias"
+            },
+            {
+              "type": "float",
+              "name": "back_thickness"
+            },
+            {
+              "type": "float",
+              "name": "confidence_min"
+            },
+            {
+              "type": "float",
+              "name": "self_hit_pixels"
+            },
+            {
+              "type": "float",
+              "name": "distance_fade"
+            },
+            {
+              "type": "float",
+              "name": "pixel_stride"
+            },
+            {
+              "type": "float",
+              "name": "refinement_steps"
+            },
+            {
+              "type": "float",
+              "name": "steps"
+            },
+            {
+              "type": "float",
+              "name": "spatial_phase"
+            }
+          ]
+        },
+        {
+          "name": "CAMERA_OBSCURA_Ray",
+          "fields": [
+            {
+              "type": "float",
+              "name": "valid"
+            },
+            {
+              "type": "float",
+              "name": "capability_tier"
+            },
+            {
+              "type": "float2",
+              "name": "origin_uv"
+            },
+            {
+              "type": "float2",
+              "name": "step_uv"
+            },
+            {
+              "type": "float",
+              "name": "origin_depth"
+            },
+            {
+              "type": "float",
+              "name": "step_depth"
+            },
+            {
+              "type": "float",
+              "name": "t_min"
+            },
+            {
+              "type": "float",
+              "name": "t_max"
+            },
+            {
+              "type": "float",
+              "name": "front_bias"
+            },
+            {
+              "type": "float",
+              "name": "back_thickness"
+            },
+            {
+              "type": "float",
+              "name": "confidence_min"
+            },
+            {
+              "type": "float",
+              "name": "steps"
+            },
+            {
+              "type": "float",
+              "name": "distance_fade"
+            }
+          ]
+        },
+        {
+          "name": "CAMERA_OBSCURA_Hit",
+          "fields": [
+            {
+              "type": "float",
+              "name": "valid"
+            },
+            {
+              "type": "float",
+              "name": "hit"
+            },
+            {
+              "type": "float2",
+              "name": "uv"
+            },
+            {
+              "type": "float2",
+              "name": "previous_uv"
+            },
+            {
+              "type": "float",
+              "name": "ray_t"
+            },
+            {
+              "type": "float",
+              "name": "previous_ray_z"
+            },
+            {
+              "type": "float",
+              "name": "ray_z"
+            },
+            {
+              "type": "float",
+              "name": "scene_z"
+            },
+            {
+              "type": "float",
+              "name": "delta"
+            },
+            {
+              "type": "float",
+              "name": "interval_min"
+            },
+            {
+              "type": "float",
+              "name": "interval_max"
+            },
+            {
+              "type": "float",
+              "name": "thickness_used"
+            },
+            {
+              "type": "float",
+              "name": "confidence"
+            },
+            {
+              "type": "float",
+              "name": "step_index"
+            },
+            {
+              "type": "float",
+              "name": "backend"
+            },
+            {
+              "type": "float",
+              "name": "reason"
+            },
+            {
+              "type": "float",
+              "name": "capability_tier"
+            }
+          ]
+        },
+        {
+          "name": "CAMERA_OBSCURA_DualHit",
+          "fields": [
+            {
+              "type": "float",
+              "name": "dda_hit"
+            },
+            {
+              "type": "float",
+              "name": "dda_confidence"
+            },
+            {
+              "type": "float",
+              "name": "dda_reason"
+            },
+            {
+              "type": "float",
+              "name": "march_hit"
+            },
+            {
+              "type": "float",
+              "name": "march_confidence"
+            },
+            {
+              "type": "float",
+              "name": "march_reason"
+            },
+            {
+              "type": "float",
+              "name": "uv_agreement"
+            },
+            {
+              "type": "float",
+              "name": "depth_agreement"
+            },
+            {
+              "type": "float",
+              "name": "distance_agreement"
+            },
+            {
+              "type": "float",
+              "name": "conflict"
+            },
+            {
+              "type": "float",
+              "name": "combined_confidence"
+            }
+          ]
+        },
+        {
+          "name": "CAMERA_OBSCURA_Contribution",
+          "fields": [
+            {
+              "type": "float",
+              "name": "valid"
+            },
+            {
+              "type": "float3",
+              "name": "donor_rgb"
+            },
+            {
+              "type": "float3",
+              "name": "indirect_rgb"
+            },
+            {
+              "type": "float",
+              "name": "weight"
+            },
+            {
+              "type": "float",
+              "name": "coverage"
+            },
+            {
+              "type": "float",
+              "name": "distance_weight"
+            },
+            {
+              "type": "float",
+              "name": "receiver_facing"
+            },
+            {
+              "type": "float",
+              "name": "donor_facing"
+            },
+            {
+              "type": "float",
+              "name": "normal_compatibility"
+            },
+            {
+              "type": "float",
+              "name": "confidence"
+            },
+            {
+              "type": "float",
+              "name": "backend"
+            }
+          ]
+        },
+        {
+          "name": "CAMERA_OBSCURA_Fallback",
+          "fields": [
+            {
+              "type": "float3",
+              "name": "rgb"
+            },
+            {
+              "type": "float",
+              "name": "confidence"
+            },
+            {
+              "type": "float",
+              "name": "class_id"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "return_type": "float",
+          "name": "CAMERA_OBSCURA_SafeRcp",
+          "parameters": "float denominator, float fallback"
+        },
+        {
+          "return_type": "float2",
+          "name": "CAMERA_OBSCURA_PixelSize",
+          "parameters": ""
+        },
+        {
+          "return_type": "float2",
+          "name": "CAMERA_OBSCURA_SaturateUV",
+          "parameters": "float2 uv"
+        },
+        {
+          "return_type": "float",
+          "name": "CAMERA_OBSCURA_StableNoise01",
+          "parameters": "float2 value"
+        },
+        {
+          "return_type": "float",
+          "name": "CAMERA_OBSCURA_Luma",
+          "parameters": "float3 color"
+        },
+        {
+          "return_type": "float",
+          "name": "CAMERA_OBSCURA_DepthConfidence",
+          "parameters": "float depth"
+        },
+        {
+          "return_type": "int",
+          "name": "CAMERA_OBSCURA_ClampSteps",
+          "parameters": "float requested, int maxSteps"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_Hit",
+          "name": "CAMERA_OBSCURA_MakeMiss",
+          "parameters": "float backend, float reason"
+        },
+        {
+          "return_type": "float",
+          "name": "CAMERA_OBSCURA_EffectiveThickness",
+          "parameters": "CAMERA_OBSCURA_Ray ray"
+        },
+        {
+          "return_type": "float",
+          "name": "CAMERA_OBSCURA_HitConfidence",
+          "parameters": "float delta, float frontBias, float thicknessUsed"
+        }
+      ],
+      "resources": []
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_AtomicDebug.fxh",
+      "macros": [
+        {
+          "name": "CAMERA_OBSCURA_ATOMIC_DEBUG_FXH",
+          "value": "",
+          "include_guard": true
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_VIEW_COMPOSITE",
+          "value": "0",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_VIEW_DDA_HIT",
+          "value": "1",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_VIEW_MARCH_HIT",
+          "value": "2",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_VIEW_AGREEMENT",
+          "value": "3",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_VIEW_DDA_CONTRIBUTION",
+          "value": "4",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_VIEW_MARCH_CONTRIBUTION",
+          "value": "5",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_VIEW_REASON",
+          "value": "6",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_VIEW_COMPOSITE_DELTA",
+          "value": "7",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_VIEW_PROVIDER_BALANCE",
+          "value": "8",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_VIEW_SOURCE",
+          "value": "9",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_AGREEMENT_WEAK_WEIGHT",
+          "value": "0.65",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_AGREEMENT_DISPLAY_MIN",
+          "value": "0.20",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_AGREEMENT_DISPLAY_MAX",
+          "value": "1.00",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_AGREEMENT_GREEN_G",
+          "value": "0.035",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_AGREEMENT_GREEN_B",
+          "value": "0.010",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_AGREEMENT_WEAK_R",
+          "value": "0.035",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_AGREEMENT_WEAK_G",
+          "value": "0.025",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_AGREEMENT_ISSUE_BLEND",
+          "value": "0.78",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_AGREEMENT_NO_EVIDENCE_BLEND",
+          "value": "0.35",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_CONTRIBUTION_LUMA_MIN",
+          "value": "0.020",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_CONTRIBUTION_LUMA_MAX",
+          "value": "0.180",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_CONTRIBUTION_WEIGHT_GAIN",
+          "value": "1.00",
+          "include_guard": false
+        },
+        {
+          "name": "CAMERA_OBSCURA_DEBUG_CONTRIBUTION_CONTEXT",
+          "value": "0.25",
+          "include_guard": false
+        }
+      ],
+      "structs": [],
+      "functions": [
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugHeat",
+          "parameters": "float value"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugBackendColor",
+          "parameters": "float backend"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugSourceAnchor",
+          "parameters": "float3 source"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugOverlay",
+          "parameters": "float3 source, float3 signal"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugReasonColor",
+          "parameters": "float reason"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugHit",
+          "parameters": "CAMERA_OBSCURA_Hit hit"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugContribution",
+          "parameters": "CAMERA_OBSCURA_Contribution contribution"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugContributionView",
+          "parameters": "float3 source, CAMERA_OBSCURA_Contribution contribution"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugCompositeDelta",
+          "parameters": "float3 source, float3 composite"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugProviderBalance",
+          "parameters": "float3 source, CAMERA_OBSCURA_Contribution ddaContribution, CAMERA_OBSCURA_Contribution marchContribution"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugAgreement",
+          "parameters": "CAMERA_OBSCURA_DualHit dual"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugAgreementView",
+          "parameters": "float3 source, CAMERA_OBSCURA_DualHit dual"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_DebugView",
+          "parameters": "float view, float3 source, float3 composite, CAMERA_OBSCURA_Hit dda, CAMERA_OBSCURA_Hit march, CAMERA_OBSCURA_DualHit dual, CAMERA_OBSCURA_Contribution ddaContribution, CAMERA_OBSCURA_Contribution marchContribution"
+        }
+      ],
+      "resources": []
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_EntryCapability.fxh",
+      "macros": [
+        {
+          "name": "CAMERA_OBSCURA_ENTRY_CAPABILITY_FXH",
+          "value": "",
+          "include_guard": true
+        }
+      ],
+      "structs": [],
+      "functions": [
+        {
+          "return_type": "float",
+          "name": "CAMERA_OBSCURA_LoadDepth",
+          "parameters": "float2 uv"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_LoadColor",
+          "parameters": "float2 uv"
+        },
+        {
+          "return_type": "float3",
+          "name": "CAMERA_OBSCURA_BuildProxyNormal",
+          "parameters": "float2 uv"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_Capabilities",
+          "name": "CAMERA_OBSCURA_QueryCapabilities",
+          "parameters": ""
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_SurfaceGuide",
+          "name": "CAMERA_OBSCURA_BuildSurfaceGuide",
+          "parameters": "float2 uv"
+        },
+        {
+          "return_type": "float2",
+          "name": "CAMERA_OBSCURA_SelectDirectionC0",
+          "parameters": "float2 pixel, float spatialPhase"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_RayRequest",
+          "name": "CAMERA_OBSCURA_DefaultRayRequest",
+          "parameters": "float2 directionUv"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_TraceControls",
+          "name": "CAMERA_OBSCURA_BuildTraceControls",
+          "parameters": "CAMERA_OBSCURA_RayRequest request"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_Ray",
+          "name": "CAMERA_OBSCURA_BuildRayC0",
+          "parameters": "float2 uv, CAMERA_OBSCURA_SurfaceGuide surface, CAMERA_OBSCURA_RayRequest request, CAMERA_OBSCURA_TraceControls controls"
+        }
+      ],
+      "resources": []
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_EntryTraversal.fxh",
+      "macros": [
+        {
+          "name": "CAMERA_OBSCURA_ENTRY_TRAVERSAL_FXH",
+          "value": "",
+          "include_guard": true
+        }
+      ],
+      "structs": [],
+      "functions": [
+        {
+          "return_type": "CAMERA_OBSCURA_Hit",
+          "name": "CAMERA_OBSCURA_TraceMarch",
+          "parameters": "CAMERA_OBSCURA_Ray ray, CAMERA_OBSCURA_TraceControls controls"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_Hit",
+          "name": "CAMERA_OBSCURA_TraceDDA",
+          "parameters": "CAMERA_OBSCURA_Ray ray, CAMERA_OBSCURA_TraceControls controls"
+        },
+        {
+          "return_type": "CAMERA_OBSCURA_Hit",
+          "name": "CAMERA_OBSCURA_RefineHit",
+          "parameters": "CAMERA_OBSCURA_Ray ray, CAMERA_OBSCURA_Hit coarse, CAMERA_OBSCURA_TraceControls controls"
+        }
+      ],
+      "resources": []
+    }
+  ]
+}

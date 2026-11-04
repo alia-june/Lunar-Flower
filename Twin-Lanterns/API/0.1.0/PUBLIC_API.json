@@ -12,6 +12,19 @@
     "ReShade::BackBuffer",
     "usable ReShade linearized depth buffer"
   ],
+  "documentation": {
+    "guide": "README.md",
+    "reference": "REFERENCE.md",
+    "symbol_index": "SYMBOLS.json",
+    "reference_coverage": {
+      "source_files": 9,
+      "macros": 69,
+      "structs": 15,
+      "struct_fields": 208,
+      "functions": 60,
+      "resources": 3
+    }
+  },
   "shared_files": [
     {
       "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
@@ -96,9 +109,9 @@
     }
   ],
   "stability": {
-    "guaranteed": "This immutable version directory, its eight listed shared files, their hashes, and the 12 listed shared contract symbols define the published 0.1.0 surface.",
+    "guaranteed": "The versioned source payload, its eight listed shared files, their hashes, and the 12 listed shared contract symbols define the published 0.1.0 stable surface.",
     "not_guaranteed": "Other visible helpers, struct layout across a future version, target-game depth behavior, backend support, compile success in an untested consumer, and experimental Lunar Flower extensions.",
-    "change_rule": "A breaking shared-contract change requires a new version directory and migration note; the 0.1.0 source payload, registry, marker, and hash inventory remain unchanged."
+    "change_rule": "A breaking shared-contract change requires a new version directory and migration note; the 0.1.0 source payload, stable contract declarations, marker, and hash inventory remain unchanged. Documentation and documentation metadata may expand without redefining that surface."
   },
-  "validation_boundary": "Static checks establish package presence, hashes, local include closure, source lineage, registered symbols, and documented experimental separation. They do not establish downstream ReShade compilation, runtime performance, target-game behavior, or visual acceptance."
+  "validation_boundary": "Static checks establish package presence, hashes, local include closure, source lineage, registered symbols, exhaustive declaration-reference coverage, and documented experimental separation. They do not establish downstream ReShade compilation, runtime performance, target-game behavior, or visual acceptance."
 }

@@ -249,13 +249,15 @@ rollback baseline.
 
 The shared shader surface is now documented as the
 [Twin Lanterns Public API](API/0.1.0/), version **0.1.0**, with a
-machine-readable [API registry](API/0.1.0/PUBLIC_API.json), integrity hashes,
-and a self-contained copy of the eight shared sources. Consumers can include the
-composite API as an umbrella entrypoint to the provider-evidence, transport,
-reconstruction, and bounded-composite contracts. The published registry names
-the supported types and entrypoints, records the canonical Stable source, and
-separates the experimental Alpha voxel-proxy extension from the shared
-stability promise.
+machine-readable [API registry](API/0.1.0/PUBLIC_API.json),
+[complete declaration reference](API/0.1.0/REFERENCE.md), integrity hashes, and
+a self-contained copy of the eight shared sources. The reference documents all
+packaged macros, structs, fields, function signatures, resources, and the
+experimental voxel extension. Consumers can include the composite API as an
+umbrella entrypoint to the provider-evidence, transport, reconstruction, and
+bounded-composite contracts. The published registry names the supported types
+and entrypoints, records the canonical Stable source, and separates the
+experimental Alpha voxel-proxy extension from the shared stability promise.
 
 The denoiser is deliberately absent. Run external denoising or stabilization as
 a separate ReShade technique so Twin Lanterns remains inspectable and can be
