@@ -1,0 +1,67 @@
+{
+  "schema": "lunar-flower-twin-lanterns-public-api-v1",
+  "api_version": "0.1.0",
+  "status": "public pre-1.0 ReShade FX include API; structural validation available; downstream compile integration not attested",
+  "canonical_build": "Stable-1.4",
+  "entry_include": "Stable-1.4/reshade-shaders/shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
+  "required_preinclude": "ReShade.fxh",
+  "shared_files": [
+    "api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
+    "api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh",
+    "api/CAMERA_OBSCURA_API_TwinLanternReconstruction.fxh",
+    "api/CAMERA_OBSCURA_API_TwinLanternTransport.fxh",
+    "header/CAMERA_OBSCURA_AtomicCommon.fxh",
+    "header/CAMERA_OBSCURA_AtomicDebug.fxh",
+    "header/CAMERA_OBSCURA_EntryCapability.fxh",
+    "header/CAMERA_OBSCURA_EntryTraversal.fxh"
+  ],
+  "public_contracts": [
+    {
+      "stage": "provider evidence",
+      "type": "CAMERA_OBSCURA_API_TwinLanternProviderEvidence",
+      "default_constructor": "CAMERA_OBSCURA_API_DefaultTwinLanternProviderEvidence",
+      "entrypoint": "CAMERA_OBSCURA_API_BuildTL45Evidence"
+    },
+    {
+      "stage": "dual-provider transport",
+      "type": "CAMERA_OBSCURA_API_TwinLanternTransportEvidence",
+      "default_constructor": "CAMERA_OBSCURA_API_DefaultTwinLanternTransportEvidence",
+      "entrypoint": "CAMERA_OBSCURA_API_BuildTwinLanternTransportEvidence"
+    },
+    {
+      "stage": "surface reconstruction",
+      "type": "CAMERA_OBSCURA_API_TL08ResolveEvidence",
+      "default_constructor": "CAMERA_OBSCURA_API_DefaultTL08ResolveEvidence",
+      "entrypoint": "CAMERA_OBSCURA_API_ResolveTL08Axis"
+    },
+    {
+      "stage": "bounded composite",
+      "type": "CAMERA_OBSCURA_API_TL09CompositeEvidence",
+      "default_constructor": "CAMERA_OBSCURA_API_DefaultTL09CompositeEvidence",
+      "entrypoint": "CAMERA_OBSCURA_API_BuildTL09Composite"
+    }
+  ],
+  "shared_builds": [
+    "Stable-1.4",
+    "Fidelity-Overdrive",
+    "Full-Resolution-Dual-Ray-Alpha"
+  ],
+  "experimental_extensions": [
+    {
+      "name": "view-frustum voxel proxy",
+      "status": "experimental alpha; excluded from the 0.1.0 shared stability contract",
+      "path": "Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/api/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh",
+      "type": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",
+      "entrypoints": [
+        "LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence",
+        "LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface",
+        "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy"
+      ]
+    }
+  ],
+  "stability": {
+    "guaranteed": "The listed shared files and public contract symbols are the published 0.1.0 surface.",
+    "not_guaranteed": "Other visible helpers, struct layout across a future version, target-game depth behavior, backend support, compile success in an untested consumer, and experimental Lunar Flower extensions.",
+    "change_rule": "A breaking shared-contract change requires an API version change and migration note; Alpha extensions may change before promotion."
+  }
+}

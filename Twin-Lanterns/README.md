@@ -6,15 +6,41 @@ unbounded brightness or hidden temporal state.
 
 ## Visual Comparison
 
+![No Effects, Twin Lanterns Full, and Twin Lanterns Full plus Lazara](assets/twin-lanterns-full-lazara-comparison.png)
+
+Left: **No Effects** · Center: **Twin Lanterns Full** · Right: **Twin Lanterns Full + Lazara**
+
+The comparison is assembled from exact corresponding vertical thirds of three
+aligned source captures. Its [evidence manifest](assets/twin-lanterns-full-lazara-comparison.json)
+records the byte-identical source copies, composition coordinates, hashes, and
+decoded-region verification. Effect-state labels are user-supplied. The image
+does not establish isolated technique causality, compile success, or
+performance.
+
+### Complete source frames
+
+#### No Effects
+
+![No Effects](assets/twin-lanterns-full-no-effects.png)
+
+#### Twin Lanterns Full
+
+![Twin Lanterns Full](assets/twin-lanterns-full.png)
+
+#### Twin Lanterns Full + Lazara
+
+![Twin Lanterns Full plus Lazara](assets/twin-lanterns-full-plus-lazara.png)
+
+These captures contain third-party game imagery and are not included in the
+repository's MIT software grant.
+
+### Earlier three-state comparison
+
 ![No Effect, Twin Lanterns Only, and Lazara plus Twin Lanterns](assets/twin-lanterns-three-way-comparison.png)
 
-Left: **No Effect** · Center: **Twin Lanterns Only** · Right: **Lazara + Twin Lanterns**
-
-The comparison is assembled from exact vertical thirds of three aligned source
-captures. Its [evidence manifest](assets/twin-lanterns-three-way-comparison.json)
-records the source hashes and verifies every output region against its source.
-It is documentation evidence containing third-party game imagery, which is not
-included in the repository's MIT software grant.
+The earlier **No Effect / Twin Lanterns Only / Lazara + Twin Lanterns** set and
+its [evidence manifest](assets/twin-lanterns-three-way-comparison.json) remain
+available as a separate capture sequence.
 
 ## Gallery
 
@@ -219,6 +245,17 @@ package. Full Resolution Dual Ray Alpha adds one Lunar Flower voxel-proxy API be
 them; it does not silently amend the shared contracts. Stable 1.4 remains the
 rollback baseline.
 
+## Public API
+
+The shared shader surface is now documented as the
+[Twin Lanterns Public API](API.md), version **0.1.0**, with a
+machine-readable [API registry](PUBLIC_API.json). Consumers can include the
+composite API as an umbrella entrypoint to the provider-evidence, transport,
+reconstruction, and bounded-composite contracts. The published registry names
+the supported types and entrypoints, records the canonical Stable source, and
+separates the experimental Alpha voxel-proxy extension from the shared
+stability promise.
+
 The denoiser is deliberately absent. Run external denoising or stabilization as
 a separate ReShade technique so Twin Lanterns remains inspectable and can be
 disabled without retaining history.
@@ -264,7 +301,12 @@ ray schedule, DDA/march parity, voxel storage/build/trace surface, ordered
 five-pass graph, 16 diagnostics, unchanged shared contracts, hard composite
 bounds, and absence of temporal resources.
 
-Neither structural validator establishes full ReShade compilation,
+`tools/validate_showcase_and_public_api.py` confirms the three byte-identical
+source captures, deterministic decoded comparison regions, API 0.1.0 version,
+eight-file include closure and cross-build identity, 12 registered contract
+symbols, and the separate experimental boundary around the voxel extension.
+
+These structural validators do not establish full ReShade compilation,
 game-specific depth or voxel behavior, acceptable frame time, or visual
 acceptance. Those remain live gates described inside each build.
 

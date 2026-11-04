@@ -15,14 +15,17 @@ history.
 
 ## Visual Comparison
 
-![No Effect, Twin Lanterns Only, and Lazara plus Twin Lanterns](Twin-Lanterns/assets/twin-lanterns-three-way-comparison.png)
+![No Effects, Twin Lanterns Full, and Twin Lanterns Full plus Lazara](Twin-Lanterns/assets/twin-lanterns-full-lazara-comparison.png)
 
-Left: **No Effect** · Center: **Twin Lanterns Only** · Right: **Lazara + Twin Lanterns**
+Left: **No Effects** · Center: **Twin Lanterns Full** · Right: **Twin Lanterns Full + Lazara**
 
-This is a deterministic vertical-third stitch of three user-supplied
-2560×1440 captures. No source region was resized, filtered, or generated. The
-[comparison evidence](Twin-Lanterns/assets/twin-lanterns-three-way-comparison.json)
-records source hashes, split coordinates, and exact decoded-pixel checks.
+This is a deterministic vertical-third stitch of three aligned, user-supplied
+2560×1440 captures. All three complete source frames are also preserved in the
+repository. No comparison region was resized, filtered, labeled, or generated.
+The [comparison evidence](Twin-Lanterns/assets/twin-lanterns-full-lazara-comparison.json)
+records source and repository hashes, split coordinates, and exact
+decoded-region checks. Effect-state labels are the user's assignments; the
+image is presentation evidence, not a runtime-isolation or performance claim.
 
 The comparison is documentation evidence containing third-party game imagery;
 that imagery is not included in the repository's MIT software grant.
@@ -38,6 +41,16 @@ that imagery is not included in the repository's MIT software grant.
 `Stable-1.4` is preserved as the user-designated fixed line. Fidelity
 Overdrive and Full Resolution Dual Ray Alpha are staged beside it rather than
 replacing it.
+
+## Public API
+
+Twin Lanterns now publishes its ReShade FX include contract as
+[API 0.1.0](Twin-Lanterns/API.md), with a machine-readable
+[surface registry](Twin-Lanterns/PUBLIC_API.json). The umbrella include exposes
+provider evidence, dual-provider transport, evidence-gated reconstruction, and
+the bounded composite. The shared API sources are identical across all three
+builds; the Alpha voxel-proxy extension remains separately marked
+experimental.
 
 ## Quick Install
 
@@ -75,6 +88,8 @@ and game-specific depth behavior remain practical limits.
 
 ```text
 Twin-Lanterns/
+  API.md              public 0.1.0 include contract
+  PUBLIC_API.json     machine-readable API surface
   Stable-1.4/          fixed baseline
   Fidelity-Overdrive/ independent fidelity and overdrive candidate
   Full-Resolution-Dual-Ray-Alpha/ public full-resolution voxel-proxy alpha
@@ -88,10 +103,12 @@ Run the reproducible publication checks with:
 ```powershell
 python -B tools/validate_publication.py
 python -B tools/validate_full_resolution_dual_ray_alpha.py
+python -B tools/validate_showcase_and_public_api.py
 ```
 
 The Stable/Fidelity publication result is **13/13 passed**. The separate Full
-Resolution Dual Ray structural result is also **13/13 passed**.
+Resolution Dual Ray structural result is also **13/13 passed**. The showcase
+provenance and public API result is **12/12 passed**.
 
 Structural validation is not a substitute for a clean ReShade compile, frame
 time measurement, or live visual acceptance in the target game. Each build

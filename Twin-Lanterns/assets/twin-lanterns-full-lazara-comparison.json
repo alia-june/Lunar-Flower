@@ -1,0 +1,71 @@
+{
+  "schema": "lunar-flower-full-stack-comparison-v1",
+  "description": "User-supplied No Effects, Twin Lanterns Full, and Twin Lanterns Full plus Lazara captures, preserved in full and assembled as a deterministic vertical-third comparison.",
+  "semantic_status": "Effect-state labels are user-supplied. The repository verifies file identity and pixel composition, not effect isolation, performance, or runtime configuration.",
+  "width": 2560,
+  "height": 1440,
+  "sources": [
+    {
+      "label": "No Effects",
+      "repository_file": "twin-lanterns-full-no-effects.png",
+      "source_file": "codex-clipboard-083c68c9-6fd8-48cf-819b-dffc71733438.png",
+      "source_sha256": "475A06D5F5764233CD3C53D7682D9B29581975BECA934482FC2EB71CA150BABE",
+      "repository_sha256": "475A06D5F5764233CD3C53D7682D9B29581975BECA934482FC2EB71CA150BABE",
+      "exact_copy": true
+    },
+    {
+      "label": "Twin Lanterns Full",
+      "repository_file": "twin-lanterns-full.png",
+      "source_file": "codex-clipboard-93dd98cf-6d4b-4846-804f-ecff32c22a4e.png",
+      "source_sha256": "5C95EF8CA48C84566F3CD6323C5798042A238382173E8B777B56877A9F11F89F",
+      "repository_sha256": "5C95EF8CA48C84566F3CD6323C5798042A238382173E8B777B56877A9F11F89F",
+      "exact_copy": true
+    },
+    {
+      "label": "Twin Lanterns Full + Lazara",
+      "repository_file": "twin-lanterns-full-plus-lazara.png",
+      "source_file": "codex-clipboard-4eb4e93d-59a9-4500-906d-4bd9d0217c12.png",
+      "source_sha256": "A979DBB0C4A523932F59DBB3CF5B057A72CC34C33A27C0795FA4081953DFB6A6",
+      "repository_sha256": "A979DBB0C4A523932F59DBB3CF5B057A72CC34C33A27C0795FA4081953DFB6A6",
+      "exact_copy": true
+    }
+  ],
+  "comparison": {
+    "output_file": "twin-lanterns-full-lazara-comparison.png",
+    "output_sha256": "8269A363A24B90B8CED16140A5C5F1CAD0D336333B885AE31F0DA8A38BAD016D",
+    "pixel_format": "decoded 32bpp BGRA with opaque alpha",
+    "composition": "Corresponding vertical thirds copied without resize, filtering, labels, or generated image content.",
+    "build_script": "../../tools/build_twin_lanterns_full_comparison.ps1",
+    "regions": [
+      {
+        "label": "No Effects",
+        "source_file": "twin-lanterns-full-no-effects.png",
+        "x_start": 0,
+        "x_end_exclusive": 853,
+        "decoded_source_region_sha256": "61145552F0DD3D504C395FBBD46D4949A805A73A84824505C7A865FE12D57B91",
+        "decoded_output_region_sha256": "61145552F0DD3D504C395FBBD46D4949A805A73A84824505C7A865FE12D57B91",
+        "exact_match": true
+      },
+      {
+        "label": "Twin Lanterns Full",
+        "source_file": "twin-lanterns-full.png",
+        "x_start": 853,
+        "x_end_exclusive": 1706,
+        "decoded_source_region_sha256": "0B0E80B7AE1EC108B48CA3664FBEBC5987C303A4476009E0A03FF6E24C118DCB",
+        "decoded_output_region_sha256": "0B0E80B7AE1EC108B48CA3664FBEBC5987C303A4476009E0A03FF6E24C118DCB",
+        "exact_match": true
+      },
+      {
+        "label": "Twin Lanterns Full + Lazara",
+        "source_file": "twin-lanterns-full-plus-lazara.png",
+        "x_start": 1706,
+        "x_end_exclusive": 2560,
+        "decoded_source_region_sha256": "30667549107A158C9C2C2F9E7A2A7FC0AD4C0B95EFD153F8984713CD0D2638DC",
+        "decoded_output_region_sha256": "30667549107A158C9C2C2F9E7A2A7FC0AD4C0B95EFD153F8984713CD0D2638DC",
+        "exact_match": true
+      }
+    ],
+    "all_regions_exact": true
+  },
+  "license_boundary": "The captures contain third-party game imagery and are not included in the repository's MIT software grant."
+}

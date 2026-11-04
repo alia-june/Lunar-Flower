@@ -43,6 +43,13 @@ The internal `CAMERA_OBSCURA_TL09` names and APIs are retained as implementation
 lineage. The public filename, technique, categories, and controls use the Lunar
 Flower Twin Lanterns identity.
 
+## Public API
+
+This build carries the shared [Twin Lanterns Public API 0.1.0](../API.md).
+Its four API files and four support headers are source-identical to the Stable
+1.4 contract; Fidelity Guard and Overdrive remain effect-level rendering-intent
+controls rather than silent API changes.
+
 ## Install
 
 1. Merge this directory's `reshade-shaders` folder into the target ReShade
