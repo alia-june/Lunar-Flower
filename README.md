@@ -66,6 +66,10 @@ experimental.
 
 Do not install multiple builds at once unless you intentionally want separate
 techniques and understand their independent resources and control surfaces.
+Keep the repository ZIP and its extracted tree outside ReShade effect search
+paths; merge only the selected build's `reshade-shaders` folder. For duplicate
+Alpha entries or the obsolete non-Alpha compile error, see the
+[Alpha installation repair](Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/README.md#repair-a-duplicate-installation).
 
 ## Design Boundaries
 

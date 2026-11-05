@@ -119,12 +119,53 @@ later promotion decision.
 ## Install
 
 1. Use a target running a compute-capable ReShade backend.
-2. Merge this build's `reshade-shaders` directory into the installation.
+2. Merge only this build's `reshade-shaders` directory into the installation.
+   Keep the repository and extracted release folders outside all ReShade effect
+   search paths. Installing both the repository tree and its flattened shader
+   folder makes ReShade discover Alpha twice.
 3. Keep the installation's known-good `ReShade.fxh`.
 4. Reload effects and enable `Lunar Flower - Twin Lanterns: Full Resolution
-   Dual Ray`.
+   Dual Ray Alpha`.
 5. If the effect does not compile, disable it and preserve the complete ReShade
    error log.
+
+### Repair a duplicate installation
+
+Close the game. With Python 3.9 or newer installed, open a terminal in the
+downloaded repository or the single-build package, outside the game's shader
+search paths. Preview the repair:
+
+```powershell
+py -3 tools/install_twin_lantern_alpha.py --game-dir 'Y:\SteamLibrary\steamapps\common\ELDEN RING\Game'
+```
+
+Apply it:
+
+```powershell
+py -3 tools/install_twin_lantern_alpha.py --game-dir 'Y:\SteamLibrary\steamapps\common\ELDEN RING\Game' --apply
+```
+
+The tool backs up duplicate Alpha effects, the obsolete
+`LUNAR_FLOWER_TwinLanterns_FullResolutionDualRay.fx`, and any replaced includes
+under `<game>/Lunar-Flower-backups/`, outside `reshade-shaders`. It then installs
+one current Alpha at
+`reshade-shaders/Shaders/camera_obscura/effects/`. Other effects, `ReShade.fxh`,
+presets and `ReShade.ini` are preserved. Repeating the repair is a no-op when
+the installation is current. Scope is the standard `reshade-shaders/Shaders`
+tree; separately configured effect search directories need separate inspection.
+
+Reload ReShade, select **Lunar Flower - Twin Lanterns: Full Resolution Dual Ray
+Alpha**, and save the preset without the obsolete non-Alpha technique.
+Compiler X4000 warnings are a separate issue; removing duplicate files does
+not resolve those warnings.
+
+To build a single-effect ZIP from the repository:
+
+```powershell
+py -3 tools/package_twin_lantern_alpha.py --output ../Twin-Lanterns-Alpha.zip
+```
+
+Extract it outside shader search paths, then run the repair command above.
 
 ## Acceptance Gates
 
