@@ -2,7 +2,7 @@
   "status": "public alpha; static structural validation only; full ReShade compile and live acceptance pending",
   "passed": 13,
   "failed": 0,
-  "effect_sha256": "9EBCA720579C0680F911B96402F7B2F352CAD949F624A3A43B593E61D7B2154F",
+  "effect_sha256": "66F260914DF93902D4B2823AE185B650DEE96C7CADC99C319AFCBB066FF6F419",
   "voxel_api_sha256": "582949851DF9C49736981BE7CB0DFE2C9A512B3327118881B04957402C0B6612",
   "checks": [
     {

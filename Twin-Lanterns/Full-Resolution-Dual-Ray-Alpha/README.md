@@ -88,6 +88,10 @@ resource arithmetic, not measured GPU frame time.
 - `Voxel Proxy Lighting`: contribution authority for admitted voxel-proxy
   radiance. Zero leaves only the screen-depth DDA/march providers.
 - `Voxel Trace Steps`: `4-32` proxy cells tested per scheduled direction.
+  This effect sets the shared ray-builder/DDA step limit to 32 so the full
+  voxel step range stays within the configured transport distance. Transport
+  Distance remains `4-24` pixels; more steps increase sampling density rather
+  than extending that distance. The march provider retains its 16-step limit.
 - `Transport Distance`, `Ray Depth Slope`, `Front Surface Bias`, and `Back
   Surface Thickness`: shared ray controls.
 - `Fidelity Guard` and `Overdrive`: post-reconstruction intent controls.
