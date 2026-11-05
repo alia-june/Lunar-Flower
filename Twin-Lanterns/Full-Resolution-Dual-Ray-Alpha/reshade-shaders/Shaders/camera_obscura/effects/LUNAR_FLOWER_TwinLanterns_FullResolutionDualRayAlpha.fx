@@ -1,4 +1,6 @@
 #include "ReShade.fxh"
+// Match the shared ray-builder budget to the voxel trace's 32-step maximum.
+#define CAMERA_OBSCURA_DDA_MAX_STEPS 32
 #include "../api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh"
 #include "../api/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh"
 
