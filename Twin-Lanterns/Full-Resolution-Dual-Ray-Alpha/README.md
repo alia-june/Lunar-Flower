@@ -65,6 +65,38 @@ Lunar Flower - Twin Lanterns: Full Resolution Dual Ray Alpha
 
 No temporal history is retained.
 
+### Screen-depth contour correction candidate
+
+Alpha uses a local surface guide for screen-depth transport, resolve and edge
+fill. Each normal derivative chooses the smaller valid one-sided depth change,
+so an adjacent foreground/background jump does not automatically tilt a flat
+surface's normal. Donor confidence no longer includes a blanket
+`1 - edge_risk` fade. Hit confidence, distance weighting and normal compatibility
+still control transport; depth/normal agreement still gates reconstruction.
+Edge Ink remains a deliberate styling control.
+
+This targets contour gaps observed in Applied Light and Final Image with both
+Edge Ink and Voxel Proxy Lighting set to zero. It does not fill every unsupported
+pixel or establish hidden-surface lighting. Stable, Fidelity and the eight shared
+API 0.1.0 files are unchanged. The new helper is Alpha-local and is not part of
+the versioned API package.
+
+The CPU regression compiles extracted shader functions using C++ vector/math
+and texture shims. It reproduces the old edge hole, checks the candidate's
+same-surface support, rejects cross-depth resolve taps, and checks source and
+contribution bounds. Run it with Python and a C++17 compiler:
+
+```powershell
+python -B -m unittest discover -s tools -p test_twin_lantern_screen_surface.py -v
+```
+
+This is numerical fixture evidence, not native ReShade compilation or GPU visual
+acceptance. The changed Alpha still needs a fresh native compile and the same
+Applied Light / Source Image / Final Image comparison. In particular, inspect
+thin geometry and silhouettes for increased donor contamination or leakage.
+Reconstruction guides now sample five depth points instead of three; GPU cost
+has not been measured for this candidate.
+
 ## Resource And Cost Envelope
 
 Each full-resolution `RGBA16F` working field uses eight bytes per output pixel;

@@ -1,14 +1,15 @@
 {
   "status": "public alpha; static structural validation only; full ReShade compile and live acceptance pending",
-  "passed": 13,
+  "passed": 14,
   "failed": 0,
-  "effect_sha256": "66F260914DF93902D4B2823AE185B650DEE96C7CADC99C319AFCBB066FF6F419",
+  "effect_sha256": "4E25743652031AB095F53837B9D056CFBC4CB617B6560EA82812606C7BA2B951",
   "voxel_api_sha256": "582949851DF9C49736981BE7CB0DFE2C9A512B3327118881B04957402C0B6612",
+  "screen_surface_sha256": "1C719E4F6921B1CA04433BBA8C32ED55C216190C5E43BEAE9BC8009DFADB291C",
   "checks": [
     {
       "name": "candidate_surface_complete",
       "passed": true,
-      "detail": "required files present=14/14"
+      "detail": "required files present=15/15"
     },
     {
       "name": "local_include_closure",
@@ -34,6 +35,11 @@
       "name": "dual_provider_per_direction",
       "passed": true,
       "detail": "DDA and parametric march remain independently evaluated"
+    },
+    {
+      "name": "alpha_surface_guide_wiring",
+      "passed": true,
+      "detail": "Alpha transport/resolve/fill use the local surface guide; CPU fixtures check behavior separately"
     },
     {
       "name": "view_frustum_voxel_proxy",

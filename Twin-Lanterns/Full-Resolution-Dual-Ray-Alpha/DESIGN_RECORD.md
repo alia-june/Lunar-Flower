@@ -28,6 +28,15 @@ The candidate adds one new API and one distinct public effect. The inherited
 eight Camera Obscura files are byte-identical to Fidelity Overdrive. No existing
 public build is edited by the implementation.
 
+## Alpha-local Screen Surface Candidate
+
+The contour correction adds `LUNAR_FLOWER_TwinLanternScreenSurface.fxh` outside
+the shared API contract. It selects depth-consistent one-sided derivatives for
+proxy normals, removes the donor-wide edge-risk attenuation, and uses that guide
+through screen transport, resolve and edge fill. Existing DDA/march traversal
+and the bounded composite remain shared. This is a tested CPU candidate requiring
+fresh native compile and visual validation, not a recovered historical design.
+
 ## Validation State
 
 - Static candidate checks: see `STATIC_VALIDATION_RESULTS.json`.

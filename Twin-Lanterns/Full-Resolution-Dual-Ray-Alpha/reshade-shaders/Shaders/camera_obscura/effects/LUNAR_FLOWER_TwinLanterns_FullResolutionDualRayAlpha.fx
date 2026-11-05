@@ -2,6 +2,7 @@
 // Match the shared ray-builder budget to the voxel trace's 32-step maximum.
 #define CAMERA_OBSCURA_DDA_MAX_STEPS 32
 #include "../api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh"
+#include "../api/LUNAR_FLOWER_TwinLanternScreenSurface.fxh"
 #include "../api/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh"
 
 uniform int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView
@@ -138,7 +139,7 @@ CAMERA_OBSCURA_API_TL08ResolveEvidence LUNAR_FLOWER_TLFREvaluateHorizontal(
     CAMERA_OBSCURA_API_TL08ResolveEvidence denied =
         CAMERA_OBSCURA_API_DefaultTL08ResolveEvidence();
     CAMERA_OBSCURA_SurfaceGuide centerGuide =
-        CAMERA_OBSCURA_API_BuildTL08Guide(uv);
+        LUNAR_FLOWER_TLFRBuildSurfaceGuide(uv);
     [branch]
     if (centerGuide.valid < 0.5)
     {
@@ -163,14 +164,14 @@ CAMERA_OBSCURA_API_TL08ResolveEvidence LUNAR_FLOWER_TLFREvaluateHorizontal(
     {
         negativeValue = tex2D(
             LUNAR_FLOWER_TLFRRawSampler, negativeRequested);
-        negativeGuide = CAMERA_OBSCURA_API_BuildTL08Guide(negativeRequested);
+        negativeGuide = LUNAR_FLOWER_TLFRBuildSurfaceGuide(negativeRequested);
     }
     [branch]
     if (positiveAvailable > 0.5)
     {
         positiveValue = tex2D(
             LUNAR_FLOWER_TLFRRawSampler, positiveRequested);
-        positiveGuide = CAMERA_OBSCURA_API_BuildTL08Guide(positiveRequested);
+        positiveGuide = LUNAR_FLOWER_TLFRBuildSurfaceGuide(positiveRequested);
     }
 
     return CAMERA_OBSCURA_API_ResolveTL08Axis(
@@ -193,7 +194,7 @@ CAMERA_OBSCURA_API_TL08ResolveEvidence LUNAR_FLOWER_TLFREvaluateVertical(
     CAMERA_OBSCURA_API_TL08ResolveEvidence denied =
         CAMERA_OBSCURA_API_DefaultTL08ResolveEvidence();
     CAMERA_OBSCURA_SurfaceGuide centerGuide =
-        CAMERA_OBSCURA_API_BuildTL08Guide(uv);
+        LUNAR_FLOWER_TLFRBuildSurfaceGuide(uv);
     [branch]
     if (centerGuide.valid < 0.5)
     {
@@ -218,14 +219,14 @@ CAMERA_OBSCURA_API_TL08ResolveEvidence LUNAR_FLOWER_TLFREvaluateVertical(
     {
         negativeValue = tex2D(
             LUNAR_FLOWER_TLFRResolveHSampler, negativeRequested);
-        negativeGuide = CAMERA_OBSCURA_API_BuildTL08Guide(negativeRequested);
+        negativeGuide = LUNAR_FLOWER_TLFRBuildSurfaceGuide(negativeRequested);
     }
     [branch]
     if (positiveAvailable > 0.5)
     {
         positiveValue = tex2D(
             LUNAR_FLOWER_TLFRResolveHSampler, positiveRequested);
-        positiveGuide = CAMERA_OBSCURA_API_BuildTL08Guide(positiveRequested);
+        positiveGuide = LUNAR_FLOWER_TLFRBuildSurfaceGuide(positiveRequested);
     }
 
     return CAMERA_OBSCURA_API_ResolveTL08Axis(
@@ -256,10 +257,9 @@ void LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaAccumulateDirection(
     inout float3 weightedDonor,
     inout float evidenceSum)
 {
-    CAMERA_OBSCURA_API_TwinLanternTransportEvidence screenEvidence =
-        CAMERA_OBSCURA_API_BuildTwinLanternTransportEvidence(
-            uv, directionIndex, CAMERA_OBSCURA_API_TL45_INPUT_LIVE,
-            CAMERA_OBSCURA_API_TL07_MODE_COMPLEMENTARY,
+    float4 screenEvidence =
+        LUNAR_FLOWER_TLFRTraceScreen(
+            uv, directionIndex,
             LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayLengthPixels,
             LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthSlope,
             LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias,
@@ -273,13 +273,13 @@ void LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaAccumulateDirection(
             LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias,
             LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBackThickness,
             (float)LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelTraceSteps);
-    float screenWeight = saturate(screenEvidence.evidence_strength);
+    float screenWeight = saturate(screenEvidence.a);
     float voxelWeight = saturate(voxelEvidence.evidence) *
         saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength);
     float donorWeight = screenWeight + voxelWeight;
     float hasDonor = step(0.000001, donorWeight);
     float3 donor = (
-        screenEvidence.combined_donor_rgb * screenWeight +
+        screenEvidence.rgb * screenWeight +
         voxelEvidence.radiance_rgb * voxelWeight) *
         CAMERA_OBSCURA_SafeRcp(donorWeight, 0.0) * hasDonor;
     float directionEvidence = saturate(
@@ -376,7 +376,7 @@ float4 LUNAR_FLOWER_TLFRResolveV_PS(
 float4 LUNAR_FLOWER_TLFRFullResolutionReconstruct(float2 uv)
 {
     CAMERA_OBSCURA_SurfaceGuide centerGuide =
-        CAMERA_OBSCURA_API_BuildTL08Guide(uv);
+        LUNAR_FLOWER_TLFRBuildSurfaceGuide(uv);
     if (centerGuide.valid < 0.5)
     {
         return float4(0.0, 0.0, 0.0, 0.0);
@@ -400,7 +400,7 @@ void LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(
     if (coverage > 0.5)
     {
         CAMERA_OBSCURA_SurfaceGuide tapGuide =
-            CAMERA_OBSCURA_API_BuildTL08Guide(requestedUv);
+            LUNAR_FLOWER_TLFRBuildSurfaceGuide(requestedUv);
         float depthSupport = CAMERA_OBSCURA_API_TL08DepthSupport(
             centerGuide, tapGuide, LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthTolerance);
         float normalSupport = CAMERA_OBSCURA_API_TL08NormalSupport(
@@ -433,7 +433,7 @@ float4 LUNAR_FLOWER_TLFRApplyEdgeFill(
     }
 
     CAMERA_OBSCURA_SurfaceGuide centerGuide =
-        CAMERA_OBSCURA_API_BuildTL08Guide(uv);
+        LUNAR_FLOWER_TLFRBuildSurfaceGuide(uv);
     [branch]
     if (centerGuide.valid < 0.5)
     {

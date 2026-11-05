@@ -11,6 +11,7 @@ BUILD = ROOT / "Twin-Lanterns" / "Full-Resolution-Dual-Ray-Alpha"
 SHADERS = BUILD / "reshade-shaders" / "Shaders" / "camera_obscura"
 EFFECT = SHADERS / "effects" / "LUNAR_FLOWER_TwinLanterns_FullResolutionDualRayAlpha.fx"
 VOXEL = SHADERS / "api" / "LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh"
+SURFACE = SHADERS / "api" / "LUNAR_FLOWER_TwinLanternScreenSurface.fxh"
 FIDELITY = ROOT / "Twin-Lanterns" / "Fidelity-Overdrive" / "reshade-shaders" / "Shaders" / "camera_obscura"
 RESULT = BUILD / "STATIC_VALIDATION_RESULTS.json"
 
@@ -41,6 +42,7 @@ def record(name: str, passed: bool, detail: str) -> None:
 required = [
     EFFECT,
     VOXEL,
+    SURFACE,
     BUILD / "README.md",
     BUILD / "LINEAGE.json",
     BUILD / "DESIGN_RECORD.md",
@@ -57,6 +59,7 @@ record(
 
 effect = EFFECT.read_text(encoding="utf-8") if EFFECT.is_file() else ""
 voxel = VOXEL.read_text(encoding="utf-8") if VOXEL.is_file() else ""
+surface = SURFACE.read_text(encoding="utf-8") if SURFACE.is_file() else ""
 readme = (BUILD / "README.md").read_text(encoding="utf-8") if (BUILD / "README.md").is_file() else ""
 
 include_pattern = re.compile(r'^\s*#include\s+"([^"]+)"', re.MULTILINE)
@@ -112,12 +115,18 @@ ray_schedule_ok = all(
 )
 record("variable_opposing_ray_pairs", ray_schedule_ok, "one to four pairs schedule two to eight rays")
 
-transport = (SHADERS / SHARED[0]).read_text(encoding="utf-8") if (SHADERS / SHARED[0]).is_file() else ""
-dual_provider_ok = all(
-    token in transport
-    for token in ["CAMERA_OBSCURA_TraceDDA", "CAMERA_OBSCURA_TraceMarch", "combinedDonor"]
+dual_provider_ok = "LUNAR_FLOWER_TLFRTraceScreen(" in effect and all(
+    token in surface
+    for token in ["CAMERA_OBSCURA_TraceDDA", "CAMERA_OBSCURA_TraceMarch", "totalWeight * 0.5"]
 )
 record("dual_provider_per_direction", dual_provider_ok, "DDA and parametric march remain independently evaluated")
+record(
+    "alpha_surface_guide_wiring",
+    "CAMERA_OBSCURA_API_BuildTL08Guide(" not in effect
+    and "LUNAR_FLOWER_TLFRBuildSurfaceGuide(" in effect
+    and "guide.depth_confidence = guide.valid;" in surface,
+    "Alpha transport/resolve/fill use the local surface guide; CPU fixtures check behavior separately",
+)
 
 voxel_ok = all(
     token in voxel
@@ -192,6 +201,7 @@ payload = {
     "failed": len(checks) - passed,
     "effect_sha256": digest(EFFECT) if EFFECT.is_file() else None,
     "voxel_api_sha256": digest(VOXEL) if VOXEL.is_file() else None,
+    "screen_surface_sha256": digest(SURFACE) if SURFACE.is_file() else None,
     "checks": checks,
 }
 RESULT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
