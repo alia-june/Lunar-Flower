@@ -97,6 +97,23 @@ thin geometry and silhouettes for increased donor contamination or leakage.
 Reconstruction guides now sample five depth points instead of three; GPU cost
 has not been measured for this candidate.
 
+### Screen-hit refinement correction
+
+The Alpha-local refiner repeats the coarse traversal's self-hit exclusion and
+depth-validity checks at every midpoint. A rejected midpoint advances the left
+bracket while retaining the known valid right endpoint, so a valid nearby coarse
+hit survives. Invalid coarse fallbacks are rejected. Final donor admission also
+checks coverage and the self-hit distance. Confidence is recomputed at the
+selected point instead of retaining a potentially higher coarse confidence.
+
+CPU fixtures at 1280×720, 2560×1440 and 3840×2160 reproduce the legacy violation,
+check both providers in all eight directions, preserve valid nearby donors,
+reject invalid-depth midpoints and verify fallback/confidence behavior. The
+shared refiner and fixed Stable/Fidelity builds are unchanged. This does not
+reject all donors on the receiver's local plane, change the voxel provider, or
+establish physically correct GI. Fresh native compilation and in-game comparison
+remain pending for this revision.
+
 ## Resource And Cost Envelope
 
 Each full-resolution `RGBA16F` working field uses eight bytes per output pixel;

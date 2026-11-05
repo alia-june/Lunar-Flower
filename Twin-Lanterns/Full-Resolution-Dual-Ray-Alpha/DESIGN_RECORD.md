@@ -37,6 +37,14 @@ through screen transport, resolve and edge fill. Existing DDA/march traversal
 and the bounded composite remain shared. This is a tested CPU candidate requiring
 fresh native compile and visual validation, not a recovered historical design.
 
+The following Alpha-local refinement correction reapplies self-hit distance,
+coverage and valid-depth conditions, preserves a valid coarse fallback when
+midpoints are rejected, and recomputes confidence at the selected hit. Final
+screen donor admission repeats the distance guard. Shared API source identity is
+preserved. CPU fixtures cover both providers/eight directions at three output
+resolutions; native behavior and the remaining coplanar-donor question are not
+certified by those fixtures.
+
 ## Validation State
 
 - Static candidate checks: see `STATIC_VALIDATION_RESULTS.json`.

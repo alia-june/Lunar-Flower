@@ -1,10 +1,10 @@
 {
   "status": "public alpha; static structural validation only; full ReShade compile and live acceptance pending",
-  "passed": 14,
+  "passed": 15,
   "failed": 0,
   "effect_sha256": "4E25743652031AB095F53837B9D056CFBC4CB617B6560EA82812606C7BA2B951",
   "voxel_api_sha256": "582949851DF9C49736981BE7CB0DFE2C9A512B3327118881B04957402C0B6612",
-  "screen_surface_sha256": "1C719E4F6921B1CA04433BBA8C32ED55C216190C5E43BEAE9BC8009DFADB291C",
+  "screen_surface_sha256": "01AB875373172D1537B9125ECAB4271095B6523311C5CEB4F5953CF036BC2B33",
   "checks": [
     {
       "name": "candidate_surface_complete",
@@ -40,6 +40,11 @@
       "name": "alpha_surface_guide_wiring",
       "passed": true,
       "detail": "Alpha transport/resolve/fill use the local surface guide; CPU fixtures check behavior separately"
+    },
+    {
+      "name": "alpha_refinement_wiring",
+      "passed": true,
+      "detail": "both Alpha screen providers use guarded refinement and final self-hit admission; CPU fixtures check behavior separately"
     },
     {
       "name": "view_frustum_voxel_proxy",

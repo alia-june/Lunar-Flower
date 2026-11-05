@@ -12,7 +12,8 @@
     "64 x 36 x 32 current-frame view-frustum voxel-radiance proxy",
     "compute voxel-build pass and voxel diagnostics",
     "distinct public effect and technique identity",
-    "Alpha-local screen surface guide and donor weighting contour correction candidate"
+    "Alpha-local screen surface guide and donor weighting contour correction candidate",
+    "Alpha-local screen refinement self-hit/depth guards and selected-hit confidence correction"
   ],
   "representation_boundary": "camera-visible depth shell only; not world voxels, hidden geometry, off-screen geometry, or complete GI",
   "pending": [

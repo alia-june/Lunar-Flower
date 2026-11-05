@@ -127,6 +127,14 @@ record(
     and "guide.depth_confidence = guide.valid;" in surface,
     "Alpha transport/resolve/fill use the local surface guide; CPU fixtures check behavior separately",
 )
+record(
+    "alpha_refinement_wiring",
+    surface.count("LUNAR_FLOWER_TLFRRefineScreenHit(ray,") == 2
+    and "CAMERA_OBSCURA_RefineHit(ray," not in surface
+    and "distancePixels > max(controls.self_hit_pixels, 0.0)" in surface
+    and "distancePixels > max(selfHitPixels, 0.0)" in surface,
+    "both Alpha screen providers use guarded refinement and final self-hit admission; CPU fixtures check behavior separately",
+)
 
 voxel_ok = all(
     token in voxel

@@ -24,8 +24,12 @@ def block(source, token):
     return source[start:end]
 
 
-def shader_cpp():
-    source = CPP_SHIMS
+def shader_cpp(width=64, height=64, cases=None):
+    source = CPP_SHIMS.replace(
+        '#define BUFFER_RCP_WIDTH (1.f/64.f)', f'#define BUFFER_RCP_WIDTH (1.f/{width}.f)'
+    ).replace(
+        '#define BUFFER_RCP_HEIGHT (1.f/64.f)', f'#define BUFFER_RCP_HEIGHT (1.f/{height}.f)'
+    )
     common = (BASE / 'header/CAMERA_OBSCURA_AtomicCommon.fxh').read_text()
     source += common
     source += CPP_TEXTURES
@@ -52,7 +56,7 @@ def shader_cpp():
     source = re.sub(r'\b(\d+\.\d+)\.xxx', r'float3(\1)', source)
     source = re.sub(r'\b(\w+)\.xxx', r'float3(\1)', source)
     source = re.sub(r'\b(\d+\.\d+)(?![\w.])', r'\1f', source)
-    return source + CPP_CASES
+    return source + (CPP_CASES if cases is None else cases)
 
 
 CPP_SHIMS = r'''
@@ -111,6 +115,8 @@ struct float4 {
 
 CPP_TEXTURES = r'''
 int fixture=0;
+float specialCut=.5f;
+float fixtureDepth=.4f;
 float3 color(.8f,.4f,.2f);
 float CAMERA_OBSCURA_LoadDepth(float2 uv){
  uv=saturate(uv);
@@ -118,6 +124,8 @@ float CAMERA_OBSCURA_LoadDepth(float2 uv){
  if(fixture==1) return x<32?.4f:.8f;
  if(fixture==2) return .3f+.001f*x;
  if(fixture==3) return 0;
+ if(fixture==4) return uv.x<specialCut?0.f:fixtureDepth;
+ if(fixture==5) return uv.x<specialCut?.403f:.401f;
  return .4f;
 }
 float3 CAMERA_OBSCURA_LoadColor(float2){return color;}
@@ -137,7 +145,7 @@ int main(){
   auto flat=LUNAR_FLOWER_TLFRBuildSurfaceGuide(donorUV);
   check(close(flat.normal,float3(0,0,1)),"flat normal");
   auto oldFlat=CAMERA_OBSCURA_API_BuildTL07ProviderSample(ray,flat,hit,24);
-  auto newFlat=LUNAR_FLOWER_TLFRSampleScreenDonor(ray,flat,hit,24);
+  auto newFlat=LUNAR_FLOWER_TLFRSampleScreenDonor(ray,flat,hit,24,1.5f);
   check(close(oldFlat.raw_weight,newFlat.a),"flat donor weight changed");
   check(close(oldFlat.donor_rgb,newFlat.rgb()),"flat donor color changed");
   fixture=1;
@@ -145,7 +153,7 @@ int main(){
   auto receiver=LUNAR_FLOWER_TLFRBuildSurfaceGuide(receiverUV);
   auto oldGuide=CAMERA_OBSCURA_API_BuildTL07DonorGuide(donorUV);
   auto oldSample=CAMERA_OBSCURA_API_BuildTL07ProviderSample(ray,receiver,hit,24);
-  auto newSample=LUNAR_FLOWER_TLFRSampleScreenDonor(ray,receiver,hit,24);
+  auto newSample=LUNAR_FLOWER_TLFRSampleScreenDonor(ray,receiver,hit,24,1.5f);
   check(oldGuide.depth_confidence==0&&oldSample.raw_weight==0,"old edge hole not reproduced");
   check(close(edge.normal,float3(0,0,1)),"foreground edge acquired cross-object normal");
   check(close(newSample.a,.875f),"foreground edge failed to retain valid donor weight");
@@ -165,14 +173,14 @@ int main(){
   fixture=3;
   auto invalid=LUNAR_FLOWER_TLFRBuildSurfaceGuide(donorUV);
   check(invalid.valid==0,"invalid depth accepted");
-  check(LUNAR_FLOWER_TLFRSampleScreenDonor(ray,receiver,hit,24).a==0,"invalid donor accepted");
+  check(LUNAR_FLOWER_TLFRSampleScreenDonor(ray,receiver,hit,24,1.5f).a==0,"invalid donor accepted");
   fixture=0;
   hit.hit=0;
-  check(LUNAR_FLOWER_TLFRSampleScreenDonor(ray,flat,hit,24).a==0,"miss invented light");
+  check(LUNAR_FLOWER_TLFRSampleScreenDonor(ray,flat,hit,24,1.5f).a==0,"miss invented light");
   hit.hit=1;ray.valid=0;
-  check(LUNAR_FLOWER_TLFRSampleScreenDonor(ray,flat,hit,24).a==0,"invalid ray invented light");
+  check(LUNAR_FLOWER_TLFRSampleScreenDonor(ray,flat,hit,24,1.5f).a==0,"invalid ray invented light");
   ray.valid=1;color=float3(0);
-  auto black=LUNAR_FLOWER_TLFRSampleScreenDonor(ray,flat,hit,24);
+  auto black=LUNAR_FLOWER_TLFRSampleScreenDonor(ray,flat,hit,24,1.5f);
   check(black.a>0&&close(black.rgb(),float3(0)),"valid black donor misclassified");
   color=float3(.8f,.4f,.2f);
   for(int d=0;d<8;++d){
@@ -196,18 +204,100 @@ int main(){
 '''
 
 
+CPP_REFINEMENT_CASES = r'''
+int count=0;
+void check(bool ok,const char* why){if(!ok)throw std::runtime_error(why);++count;}
+float distancePx(float2 a,float2 b){return length((a-b)/CAMERA_OBSCURA_PixelSize());}
+int main(){
+ try{
+  int oldViolations=0;
+  float2 uv(.5f,.5f);
+  CAMERA_OBSCURA_Ray savedRay{};
+  CAMERA_OBSCURA_TraceControls savedControls{};
+  for(int d=0;d<8;++d){
+   fixture=0;
+   auto receiver=LUNAR_FLOWER_TLFRBuildSurfaceGuide(uv);
+   auto travel=CAMERA_OBSCURA_API_TL45Direction((float)d)*24*CAMERA_OBSCURA_PixelSize();
+   auto request=CAMERA_OBSCURA_DefaultRayRequest(travel);
+   request.ray_length_uv=length(travel);request.ray_depth_slope=.16f;request.requested_steps=32;
+   auto controls=CAMERA_OBSCURA_BuildTraceControls(request);
+   auto ray=CAMERA_OBSCURA_BuildRayC0(uv,receiver,request,controls);
+   savedRay=ray;savedControls=controls;
+   for(int backend=0;backend<2;++backend){
+    auto activeControls=controls;
+    if(backend)activeControls.spatial_phase=1;
+    auto coarse=backend?CAMERA_OBSCURA_TraceMarch(ray,activeControls):CAMERA_OBSCURA_TraceDDA(ray,activeControls);
+    check(coarse.hit>0.5f,"fixture needs a valid coarse donor");
+    auto legacy=CAMERA_OBSCURA_RefineHit(ray,coarse,activeControls);
+    if(distancePx(legacy.uv,uv)<=controls.self_hit_pixels)++oldViolations;
+    auto corrected=LUNAR_FLOWER_TLFRRefineScreenHit(ray,coarse,activeControls);
+    check(corrected.hit>0.5f,"valid coarse fallback lost");
+    check(distancePx(corrected.uv,uv)>controls.self_hit_pixels,"refinement crossed self exclusion");
+    check(distancePx(corrected.uv,uv)<=distancePx(coarse.uv,uv)+.002f,"refinement extended beyond coarse hit");
+    auto donor=LUNAR_FLOWER_TLFRSampleScreenDonor(ray,receiver,corrected,24,controls.self_hit_pixels);
+    check(donor.a>0,"valid nearby donor lost contribution");
+    auto unsafe=corrected;unsafe.uv=uv+CAMERA_OBSCURA_API_TL45Direction((float)d)*CAMERA_OBSCURA_PixelSize();
+    check(LUNAR_FLOWER_TLFRSampleScreenDonor(ray,receiver,unsafe,24,controls.self_hit_pixels).a==0,
+       "final donor admission accepted self sample");
+    check(LUNAR_FLOWER_TLFRRefineScreenHit(ray,unsafe,activeControls).hit==0,"invalid coarse self fallback accepted");
+   }
+  }
+  check(oldViolations>0,"legacy self-hit defect not reproduced");
+  auto ray=savedRay;auto controls=savedControls;
+  ray.origin_depth=.0002f;ray.step_depth=0;
+  auto coarse=CAMERA_OBSCURA_MakeMiss(CAMERA_OBSCURA_BACKEND_DDA,CAMERA_OBSCURA_REASON_HIT);
+  coarse.hit=1;coarse.uv=uv+float2(4*BUFFER_RCP_WIDTH,0);
+  coarse.previous_uv=uv+float2(2*BUFFER_RCP_WIDTH,0);
+  coarse.scene_z=.0002f;coarse.ray_z=.0002f;coarse.previous_ray_z=.0002f;
+  coarse.delta=0;coarse.confidence=1;
+  fixture=4;fixtureDepth=.0002f;specialCut=uv.x+3.75f*BUFFER_RCP_WIDTH;
+  auto oldInvalid=CAMERA_OBSCURA_RefineHit(ray,coarse,controls);
+  check(oldInvalid.hit>0.5f&&oldInvalid.scene_z==0,"legacy invalid-depth midpoint not reproduced");
+  auto fallback=LUNAR_FLOWER_TLFRRefineScreenHit(ray,coarse,controls);
+  check(fallback.hit>0.5f&&fallback.scene_z==.0002f,"valid fallback lost after invalid midpoint");
+  check(distancePx(fallback.uv,coarse.uv)<.001f,"invalid-depth midpoint replaced valid hit");
+  auto invalidCoarse=coarse;invalidCoarse.scene_z=0;
+  check(LUNAR_FLOWER_TLFRRefineScreenHit(ray,invalidCoarse,controls).hit==0,"invalid coarse depth accepted");
+  invalidCoarse=coarse;invalidCoarse.uv=float2(1.1f,.5f);
+  check(LUNAR_FLOWER_TLFRRefineScreenHit(ray,invalidCoarse,controls).hit==0,"off-screen coarse hit accepted");
+  auto invalidRay=ray;invalidRay.valid=0;
+  check(LUNAR_FLOWER_TLFRRefineScreenHit(invalidRay,coarse,controls).hit==0,"invalid ray accepted");
+  auto miss=CAMERA_OBSCURA_MakeMiss(CAMERA_OBSCURA_BACKEND_DDA,CAMERA_OBSCURA_REASON_MAX_STEPS);
+  check(LUNAR_FLOWER_TLFRRefineScreenHit(ray,miss,controls).hit==0,"refinement fabricated a hit");
+  fixture=5;specialCut=uv.x+3.75f*BUFFER_RCP_WIDTH;
+  coarse.scene_z=.401f;coarse.ray_z=.401f;coarse.previous_ray_z=.4f;coarse.delta=0;coarse.confidence=1;
+  auto stale=CAMERA_OBSCURA_RefineHit(ray,coarse,controls);
+  auto accurate=LUNAR_FLOWER_TLFRRefineScreenHit(ray,coarse,controls);
+  check(stale.confidence==1,"legacy confidence floor not reproduced");
+  check(accurate.hit>0.5f&&accurate.confidence<.5f,"selected hit retained stale confidence");
+  std::cout<<"PASS: "<<count<<" refinement assertions; legacy violations="<<oldViolations
+     <<"; corrected hits outside exclusion, invalid midpoints rejected, valid fallback retained.\n";
+ }catch(const std::exception& error){std::cerr<<"FAIL: "<<error.what()<<"\n";return 1;}
+}
+'''
+
+
 class ScreenSurfaceTests(unittest.TestCase):
-    @unittest.skipUnless(shutil.which('c++'), 'CPU fixture requires a C++17 compiler')
-    def test_shader_extracted_surface_and_composite(self):
+    def run_cpp(self, source_text):
         with tempfile.TemporaryDirectory(prefix='tl-surface-fixtures-') as folder:
             source = Path(folder) / 'fixtures.cpp'
-            source.write_text(shader_cpp())
+            source.write_text(source_text)
             executable = Path(folder) / 'fixtures'
             result = subprocess.run(['c++', '-std=c++17', '-O2', str(source), '-o', str(executable)], capture_output=True, text=True)
             self.assertEqual(0, result.returncode, result.stderr)
             result = subprocess.run([str(executable)], capture_output=True, text=True)
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)
             print(result.stdout, end='')
+
+    @unittest.skipUnless(shutil.which('c++'), 'CPU fixture requires a C++17 compiler')
+    def test_shader_extracted_surface_and_composite(self):
+        self.run_cpp(shader_cpp())
+
+    @unittest.skipUnless(shutil.which('c++'), 'CPU fixture requires a C++17 compiler')
+    def test_refinement_exclusion_depth_and_fallback(self):
+        for width, height in [(1280, 720), (2560, 1440), (3840, 2160)]:
+            with self.subTest(resolution=(width, height)):
+                self.run_cpp(shader_cpp(width, height, CPP_REFINEMENT_CASES))
 
 
 if __name__ == '__main__':
