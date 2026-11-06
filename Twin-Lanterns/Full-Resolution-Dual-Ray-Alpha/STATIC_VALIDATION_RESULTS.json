@@ -1,10 +1,10 @@
 {
   "status": "public alpha; static structural validation only; full ReShade compile and live acceptance pending",
-  "passed": 17,
+  "passed": 19,
   "failed": 0,
-  "effect_sha256": "ED78DAFFF410D5A20631355E95B654A87B033C826F9E844E8AD9DFEF5758E8EC",
-  "voxel_api_sha256": "2152DDC1AF721FCDA9BB8F9EC6CF8198568E7864409684A3B790943777194F9B",
-  "screen_surface_sha256": "01AB875373172D1537B9125ECAB4271095B6523311C5CEB4F5953CF036BC2B33",
+  "effect_sha256": "E9D0809ED271D6B769C46D93CA709A398E0AAB8D49A4792B68A26B122B7F71B3",
+  "voxel_api_sha256": "663C4FAD892FA53D78222DF86060FF37849F7ED2EF71A1DD5625EEDBE4DEE7F3",
+  "screen_surface_sha256": "B3480482AAADADEBFBEDF86C8DBB86A40C87A7B00DA6BC9AB947D9B0B8626A9B",
   "checks": [
     {
       "name": "candidate_surface_complete",
@@ -60,6 +60,16 @@
       "name": "voxel_fine_validation",
       "passed": true,
       "detail": "proxy candidates require fine depth and full-resolution donor color, self-distance rejection and the actual ray budget"
+    },
+    {
+      "name": "inactive_work_guards",
+      "passed": true,
+      "detail": "inactive/source-only builds and working passes are guarded; CPU fixtures execute the actual guards"
+    },
+    {
+      "name": "receiver_guide_reuse",
+      "passed": true,
+      "detail": "transport and final reconstruction reuse current-pixel receiver data; CPU fixtures check output equivalence/read counts"
     },
     {
       "name": "ordered_five_pass_graph",

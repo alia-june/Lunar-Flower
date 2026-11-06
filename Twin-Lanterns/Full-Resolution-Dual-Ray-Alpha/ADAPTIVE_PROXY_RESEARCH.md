@@ -79,7 +79,9 @@ specific mechanism of applying one stored cell color across a large rectangle.
 
 The tracer follows the actual shared ray step budget, including consumers whose
 shared cap is 24 rather than Alpha's 32. Voxel strength zero skips the per-ray
-proxy trace. The build still runs to support its diagnostics.
+proxy trace. Following the reported Elden Ring slowdown, the effect also skips
+the build at zero voxel strength in Final Image view. Voxel diagnostics still
+request a current build. See [performance follow-up](PERFORMANCE_NOTES.md).
 
 `Voxel Detail Level` exposes levels 0, 1 and 2. `Voxel Surface Occupancy` and
 `Voxel Surface Radiance` show depth-bounds-validated visible surfaces and their

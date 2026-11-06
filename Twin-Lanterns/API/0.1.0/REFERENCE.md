@@ -5,7 +5,7 @@ include files and the experimental voxel extension. It complements the
 [architecture and integration guide](README.md) and the machine-readable
 [symbol index](SYMBOLS.json).
 
-Coverage: **9 source files · 72 macros · 15 structs · 208 fields · 64 functions · 3 resources**.
+Coverage: **9 source files · 72 macros · 15 structs · 208 fields · 66 functions · 3 resources**.
 
 ## Stability Legend
 
@@ -68,10 +68,12 @@ Experimental voxel-proxy trace result.
 | `LUNAR_FLOWER_API_TwinLanternVoxelEvidence LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence()` | Returns an empty experimental voxel trace record. |
 | `float LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance(float depth)` | Returns a depth-relative subdivision/lookup tolerance with a small absolute floor. |
 | `bool LUNAR_FLOWER_API_BuildTwinLanternVoxelNode(int2 rootCell, int nodeIndex, float2 minimumUv, float2 sizeUv, int level)` | Measures a node's center and four inset corners, conditionally marks it as a branch, and writes depth bounds, sampled coverage and signed center depth. |
-| `void LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS(uint3 id : SV_DispatchThreadID)` | Clears all 21 records per root tile and constructs up to two adaptive subdivision levels from current color/depth samples. |
+| `void LUNAR_FLOWER_API_BuildTwinLanternVoxelTile(uint3 id)` | Clears all 21 records per root tile and constructs up to two adaptive subdivision levels from current color/depth samples. |
+| `void LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS(uint3 id : SV_DispatchThreadID)` | Standalone compute entrypoint that calls the root-tile builder; the Alpha effect uses a guarded entrypoint to skip inactive builds. |
 | `float4 LUNAR_FLOWER_API_LoadTwinLanternVoxelNode(float2 uv, out float level)` | Descends root/child/grandchild records for a UV and returns depth bounds/coverage/signed center depth plus the selected detail level. |
 | `float LUNAR_FLOWER_API_TwinLanternVoxelDetailLevel(float2 uv)` | Returns the selected hierarchy level (0, 1 or 2) for the detail diagnostic. |
 | `float4 LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface(float2 uv)` | Returns full-resolution visible color and depth-bounds-validated occupancy for diagnostics. |
+| `LUNAR_FLOWER_API_TwinLanternVoxelEvidence LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver(float2 uv, float directionIndex, float rayLengthPixels, float depthSlope, float frontBias, float backThickness, float requestedSteps, CAMERA_OBSCURA_SurfaceGuide receiver)` | Performs the same adaptive trace with a supplied current-pixel receiver guide, avoiding repeated receiver depth reads across directions. |
 | `LUNAR_FLOWER_API_TwinLanternVoxelEvidence LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy(float2 uv, float directionIndex, float rayLengthPixels, float depthSlope, float frontBias, float backThickness, float requestedSteps)` | Gates ray candidates using the adaptive hierarchy, rejects self samples, validates full-resolution depth, and fetches current-frame donor color at the accepted UV. |
 
 ## `CAMERA_OBSCURA_API_TwinLanternComposite.fxh`

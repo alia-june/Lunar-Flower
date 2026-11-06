@@ -143,7 +143,12 @@ only when a parent splits. At most 21 nodes are built per root. All child record
 are cleared every frame, so collapsing a tree does not leave stale occupancy.
 The worst case performs more build sampling than a uniform scene; adaptive does
 not guarantee a frame-time improvement. At voxel strength zero, per-ray voxel
-tracing is skipped, while the build remains available for diagnostics.
+tracing and building are skipped in Final Image view. The build still runs when
+voxel diagnostics require it. Source Image, or disabled/zero-strength Final
+Image, bypasses lighting calculations while retaining the technique's declared
+passes and full-resolution targets. Receiver guides are reused across directions
+and final reconstruction. See [performance investigation](PERFORMANCE_NOTES.md)
+for verified source-level savings and the in-game timing comparison still needed.
 
 ## Controls
 

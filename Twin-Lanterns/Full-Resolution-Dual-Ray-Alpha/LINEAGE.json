@@ -14,7 +14,8 @@
     "distinct public effect and technique identity",
     "Alpha-local screen surface guide and donor weighting contour correction candidate",
     "Alpha-local screen refinement self-hit/depth guards and selected-hit confidence correction",
-    "bounded adaptive surface hierarchy replaces uniform 32-bin proxy; fine depth/color validation and detail diagnostic"
+    "bounded adaptive surface hierarchy replaces uniform 32-bin proxy; fine depth/color validation and detail diagnostic",
+    "inactive-build/source-only guards and receiver-guide reuse at full resolution"
   ],
   "representation_boundary": "camera-visible depth shell only; not world voxels, hidden geometry, off-screen geometry, or complete GI",
   "pending": [

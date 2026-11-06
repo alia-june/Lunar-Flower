@@ -159,7 +159,7 @@ int main(){
 '''
 
 
-def voxel_cpp(width, height, dda_limit=32):
+def voxel_cpp(width, height, dda_limit=32, cases=None):
     voxel = (BASE / 'api/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh').read_text()
     # Resource declarations become the explicit bounded CPU storage above.
     voxel = re.sub(r'^(?:texture3D|storage3D|sampler3D)\s+\w+\s*\{.*?^\};', '', voxel, flags=re.M | re.S)
@@ -183,7 +183,7 @@ def voxel_cpp(width, height, dda_limit=32):
         core += function + '\n'
     core = core.replace('CAMERA_OBSCURA_API_TL45_INPUT_LIVE', '0.0f')
     core += '#define CAMERA_OBSCURA_API_TL45_INPUT_LIVE 0.0f\n'
-    return core + SHIMS + voxel + CASES
+    return core + SHIMS + voxel + (CASES if cases is None else cases)
 
 
 class AdaptiveVoxelTests(unittest.TestCase):

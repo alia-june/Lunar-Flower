@@ -107,9 +107,7 @@ bool LUNAR_FLOWER_API_BuildTwinLanternVoxelNode(
     return split;
 }
 
-[shader("compute")]
-void LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS(
-    uint3 id : SV_DispatchThreadID)
+void LUNAR_FLOWER_API_BuildTwinLanternVoxelTile(uint3 id)
 {
     if (id.x >= LUNAR_FLOWER_TL_VOXEL_WIDTH || id.y >= LUNAR_FLOWER_TL_VOXEL_HEIGHT || id.z > 0)
         return;
@@ -146,6 +144,13 @@ void LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS(
             }
         }
     }
+}
+
+[shader("compute")]
+void LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS(
+    uint3 id : SV_DispatchThreadID)
+{
+    LUNAR_FLOWER_API_BuildTwinLanternVoxelTile(id);
 }
 
 float4 LUNAR_FLOWER_API_LoadTwinLanternVoxelNode(float2 uv, out float level)
@@ -198,17 +203,23 @@ float4 LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface(float2 uv)
 }
 
 LUNAR_FLOWER_API_TwinLanternVoxelEvidence
-LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy(
+LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver(
     float2 uv, float directionIndex, float rayLengthPixels, float depthSlope,
-    float frontBias, float backThickness, float requestedSteps)
+    float frontBias, float backThickness, float requestedSteps,
+    CAMERA_OBSCURA_SurfaceGuide receiver)
 {
     LUNAR_FLOWER_API_TwinLanternVoxelEvidence evidence = LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence();
-    CAMERA_OBSCURA_TraceControls controls;
-    CAMERA_OBSCURA_SurfaceGuide receiver;
     float safeSteps = clamp(requestedSteps, 1.0, (float)LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS);
-    CAMERA_OBSCURA_Ray ray = CAMERA_OBSCURA_API_BuildTL45Ray(uv, directionIndex,
-        CAMERA_OBSCURA_API_TL45_INPUT_LIVE, safeSteps, rayLengthPixels, depthSlope,
-        frontBias, backThickness, controls, receiver);
+    float2 travel = CAMERA_OBSCURA_API_TL45Direction(directionIndex) *
+        max(rayLengthPixels, 0.0) * CAMERA_OBSCURA_PixelSize();
+    CAMERA_OBSCURA_RayRequest request = CAMERA_OBSCURA_DefaultRayRequest(travel);
+    request.ray_length_uv = length(travel);
+    request.ray_depth_slope = max(depthSlope, 0.0);
+    request.front_bias = max(frontBias, 0.0);
+    request.back_thickness = max(backThickness, 0.0);
+    request.requested_steps = safeSteps;
+    CAMERA_OBSCURA_TraceControls controls = CAMERA_OBSCURA_BuildTraceControls(request);
+    CAMERA_OBSCURA_Ray ray = CAMERA_OBSCURA_BuildRayC0(uv, receiver, request, controls);
     // Follow the actual ray budget even when a consumer uses a smaller shared cap.
     int stepCount = min((int)ray.steps, LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS);
     float2 pixel = max(CAMERA_OBSCURA_PixelSize(), float2(0.000001, 0.000001));
@@ -254,6 +265,17 @@ LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy(
         }
     }
     return evidence;
+}
+
+LUNAR_FLOWER_API_TwinLanternVoxelEvidence
+LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy(
+    float2 uv, float directionIndex, float rayLengthPixels, float depthSlope,
+    float frontBias, float backThickness, float requestedSteps)
+{
+    CAMERA_OBSCURA_SurfaceGuide receiver = CAMERA_OBSCURA_API_BuildTL45Receiver(
+        uv, CAMERA_OBSCURA_API_TL45_INPUT_LIVE);
+    return LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver(uv, directionIndex,
+        rayLengthPixels, depthSlope, frontBias, backThickness, requestedSteps, receiver);
 }
 
 #endif // LUNAR_FLOWER_API_TWIN_LANTERN_VOXEL_PROXY_FXH

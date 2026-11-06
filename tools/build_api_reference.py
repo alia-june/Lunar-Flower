@@ -99,13 +99,15 @@ FUNCTION_DESCRIPTIONS = {
     "CAMERA_OBSCURA_API_DefaultTL09CompositeEvidence": "Returns an empty composite record configured as rejected but bounds-valid.",
     "CAMERA_OBSCURA_API_BuildTL09Composite": "Applies enabled/receiver/evidence/strength admission, then nonnegative maximum and channel-room bounds.",
     "LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence": "Returns an empty experimental voxel trace record.",
-    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS": "Clears all 21 records per root tile and constructs up to two adaptive subdivision levels from current color/depth samples.",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS": "Standalone compute entrypoint that calls the root-tile builder; the Alpha effect uses a guarded entrypoint to skip inactive builds.",
+    "LUNAR_FLOWER_API_BuildTwinLanternVoxelTile": "Clears all 21 records per root tile and constructs up to two adaptive subdivision levels from current color/depth samples.",
     "LUNAR_FLOWER_API_BuildTwinLanternVoxelNode": "Measures a node's center and four inset corners, conditionally marks it as a branch, and writes depth bounds, sampled coverage and signed center depth.",
     "LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance": "Returns a depth-relative subdivision/lookup tolerance with a small absolute floor.",
     "LUNAR_FLOWER_API_LoadTwinLanternVoxelNode": "Descends root/child/grandchild records for a UV and returns depth bounds/coverage/signed center depth plus the selected detail level.",
     "LUNAR_FLOWER_API_TwinLanternVoxelDetailLevel": "Returns the selected hierarchy level (0, 1 or 2) for the detail diagnostic.",
     "LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface": "Returns full-resolution visible color and depth-bounds-validated occupancy for diagnostics.",
     "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy": "Gates ray candidates using the adaptive hierarchy, rejects self samples, validates full-resolution depth, and fetches current-frame donor color at the accepted UV.",
+    "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver": "Performs the same adaptive trace with a supplied current-pixel receiver guide, avoiding repeated receiver depth reads across directions.",
 }
 
 

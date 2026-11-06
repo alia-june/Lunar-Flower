@@ -7,7 +7,7 @@
     "macros": 72,
     "structs": 15,
     "struct_fields": 208,
-    "functions": 64,
+    "functions": 66,
     "resources": 3
   },
   "sources": [
@@ -96,6 +96,11 @@
         },
         {
           "return_type": "void",
+          "name": "LUNAR_FLOWER_API_BuildTwinLanternVoxelTile",
+          "parameters": "uint3 id"
+        },
+        {
+          "return_type": "void",
           "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS",
           "parameters": "uint3 id : SV_DispatchThreadID"
         },
@@ -113,6 +118,11 @@
           "return_type": "float4",
           "name": "LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface",
           "parameters": "float2 uv"
+        },
+        {
+          "return_type": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",
+          "name": "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver",
+          "parameters": "float2 uv, float directionIndex, float rayLengthPixels, float depthSlope, float frontBias, float backThickness, float requestedSteps, CAMERA_OBSCURA_SurfaceGuide receiver"
         },
         {
           "return_type": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",

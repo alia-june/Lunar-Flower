@@ -115,7 +115,7 @@ ray_schedule_ok = all(
 )
 record("variable_opposing_ray_pairs", ray_schedule_ok, "one to four pairs schedule two to eight rays")
 
-dual_provider_ok = "LUNAR_FLOWER_TLFRTraceScreen(" in effect and all(
+dual_provider_ok = "LUNAR_FLOWER_TLFRTraceScreenWithReceiver(" in effect and all(
     token in surface
     for token in ["CAMERA_OBSCURA_TraceDDA", "CAMERA_OBSCURA_TraceMarch", "totalWeight * 0.5"]
 )
@@ -166,6 +166,20 @@ record(
         "int stepCount = min((int)ray.steps",
     ]),
     "proxy candidates require fine depth and full-resolution donor color, self-distance rejection and the actual ray budget",
+)
+record(
+    "inactive_work_guards",
+    "LUNAR_FLOWER_TLFRBuildVoxelProxyCS<8, 8, 1>" in effect
+    and "!LUNAR_FLOWER_TLFRSourceOnly()" in effect
+    and effect.count("if (LUNAR_FLOWER_TLFRSourceOnly())") == 4,
+    "inactive/source-only builds and working passes are guarded; CPU fixtures execute the actual guards",
+)
+record(
+    "receiver_guide_reuse",
+    "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver(" in effect
+    and "LUNAR_FLOWER_TLFRFullResolutionReconstruct(uv, centerGuide)" in effect
+    and "float receiverValid = centerGuide.valid;" in effect,
+    "transport and final reconstruction reuse current-pixel receiver data; CPU fixtures check output equivalence/read counts",
 )
 
 passes = re.findall(r"\bpass\s+(\w+)", effect)

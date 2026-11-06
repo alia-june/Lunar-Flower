@@ -18,6 +18,7 @@ def package(output: Path) -> None:
         "LICENSE": ROOT / "LICENSE",
         "README.md": BUILD / "README.md",
         "ADAPTIVE_PROXY_RESEARCH.md": BUILD / "ADAPTIVE_PROXY_RESEARCH.md",
+        "PERFORMANCE_NOTES.md": BUILD / "PERFORMANCE_NOTES.md",
         "tools/install_twin_lantern_alpha.py": ROOT / "tools/install_twin_lantern_alpha.py",
     })
     effects = [name for name in payload if name.endswith(".fx")]
