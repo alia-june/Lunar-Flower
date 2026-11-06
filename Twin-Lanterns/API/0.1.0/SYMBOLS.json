@@ -133,15 +133,15 @@
       "resources": [
         {
           "kind": "texture3D",
-          "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex"
+          "name": "LUNAR_FLOWER_TLAdaptiveAtlasV1Tex"
         },
         {
           "kind": "storage3D",
-          "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage"
+          "name": "LUNAR_FLOWER_TLAdaptiveAtlasV1Storage"
         },
         {
           "kind": "sampler3D",
-          "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler"
+          "name": "LUNAR_FLOWER_TLAdaptiveAtlasV1Sampler"
         }
       ]
     },

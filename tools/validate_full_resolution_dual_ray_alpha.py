@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
+from audit_twin_lantern_loop_sampling import audit_directory
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -139,8 +140,8 @@ record(
 voxel_ok = all(
     token in voxel
     for token in [
-        "texture3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex",
-        "storage3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage",
+        "texture3D LUNAR_FLOWER_TLAdaptiveAtlasV1Tex",
+        "storage3D LUNAR_FLOWER_TLAdaptiveAtlasV1Storage",
         "Width = LUNAR_FLOWER_TL_VOXEL_WIDTH",
         "Depth = LUNAR_FLOWER_TL_VOXEL_DEPTH",
         "#define LUNAR_FLOWER_TL_VOXEL_DEPTH 21",
@@ -161,7 +162,7 @@ record(
     "voxel_fine_validation",
     all(token in voxel for token in [
         "float sceneDepth = CAMERA_OBSCURA_LoadDepth(requestedUv)",
-        "evidence.radiance_rgb = saturate(CAMERA_OBSCURA_LoadColor(requestedUv))",
+        "float4(requestedUv, 0.0, 0.0)).rgb",
         "distancePixels <= controls.self_hit_pixels",
         "int stepCount = min((int)ray.steps",
     ]),
@@ -180,6 +181,19 @@ record(
     and "LUNAR_FLOWER_TLFRFullResolutionReconstruct(uv, centerGuide)" in effect
     and "float receiverValid = centerGuide.valid;" in effect,
     "transport and final reconstruction reuse current-pixel receiver data; CPU fixtures check output equivalence/read counts",
+)
+gradient_failures = audit_directory(SHADERS)
+record(
+    "loop_sampling_derivative_free",
+    not gradient_failures,
+    "no implicit-gradient operations reachable from active Alpha loop entrypoints"
+    if not gradient_failures else " | ".join(gradient_failures),
+)
+record(
+    "adaptive_resource_layout_identity",
+    "LUNAR_FLOWER_TLAdaptiveAtlasV1Tex" in voxel
+    and "FullResolutionDualRayAlphaVoxelRadianceTex" not in voxel,
+    "adaptive atlas has a distinct resource identity from the former uniform volume",
 )
 
 passes = re.findall(r"\bpass\s+(\w+)", effect)

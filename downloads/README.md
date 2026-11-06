@@ -2,9 +2,11 @@
 
 [Download the single-effect ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Alpha-performance-candidate.zip).
 
-This package contains the shader/include bytes from performance candidate
-`1d7f0dd`, with exactly one Alpha `.fx` file, its required includes, installation
-repair tool and notes. Native compilation, visual acceptance and GPU performance
+This package contains the corrected performance candidate, with explicit-LOD
+ray sampling and versioned adaptive atlas resources. It replaces the earlier
+archive that failed with X3570/X3511 in ReShade. It contains exactly one Alpha
+`.fx` file, its required includes, installation repair tool and compiler notes.
+Native compilation, visual acceptance and GPU performance
 are still pending for this candidate. It is on the review branch, not main.
 
 1. Close the game and extract the ZIP outside ReShade's shader search folders.
@@ -20,7 +22,7 @@ shader search path. The ZIP already includes the complete selected build.
 SHA-256:
 
 ```text
-4eedfc6056f96aa5e7829e377c2bd91bf5a639309c012fac986392a50769f903
+8ec9d6834574ac7d3a3e0c601690efc629f5ec53ee68c35a69152cdae8e22cad
 ```
 
 The adjacent `.zip.sha256` file records the same archive checksum. It verifies

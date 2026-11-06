@@ -140,7 +140,9 @@ float4 LUNAR_FLOWER_TLFRSampleScreenDonor(
             float compatibility = saturate(dot(receiver.normal, donor.normal));
             float weight = saturate(hit.confidence) * donor.depth_confidence *
                 compatibility * distanceWeight;
-            sampleValue = float4(saturate(CAMERA_OBSCURA_LoadColor(hit.uv)), weight);
+            // Explicit base LOD: this call is reachable from varying ray loops.
+            float3 color = tex2Dlod(ReShade::BackBuffer, float4(hit.uv, 0.0, 0.0)).rgb;
+            sampleValue = float4(saturate(color), weight);
         }
     }
     return sampleValue;

@@ -11,7 +11,7 @@
 #define LUNAR_FLOWER_TL_VOXEL_COLOR_SPLIT 0.08
 #define LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS 32
 
-texture3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex
+texture3D LUNAR_FLOWER_TLAdaptiveAtlasV1Tex
 {
     Width = LUNAR_FLOWER_TL_VOXEL_WIDTH;
     Height = LUNAR_FLOWER_TL_VOXEL_HEIGHT;
@@ -19,14 +19,14 @@ texture3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex
     Format = RGBA32F;
 };
 
-storage3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage
+storage3D LUNAR_FLOWER_TLAdaptiveAtlasV1Storage
 {
-    Texture = LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex;
+    Texture = LUNAR_FLOWER_TLAdaptiveAtlasV1Tex;
 };
 
-sampler3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler
+sampler3D LUNAR_FLOWER_TLAdaptiveAtlasV1Sampler
 {
-    Texture = LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex;
+    Texture = LUNAR_FLOWER_TLAdaptiveAtlasV1Tex;
     MinFilter = POINT;
     MagFilter = POINT;
     MipFilter = POINT;
@@ -101,7 +101,7 @@ bool LUNAR_FLOWER_API_BuildTwinLanternVoxelNode(
     // treating one center sample as the whole cell. No coarse RGB is stored.
     float nodeDepth = split ? -1.0 : centerDepth * centerValid;
     float hasSamples = step(0.5, validCount);
-    tex3Dstore(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage,
+    tex3Dstore(LUNAR_FLOWER_TLAdaptiveAtlasV1Storage,
         int3(rootCell, nodeIndex), float4(minimumDepth * hasSamples,
             maximumDepth * hasSamples, validCount * 0.2, nodeDepth));
     return split;
@@ -114,7 +114,7 @@ void LUNAR_FLOWER_API_BuildTwinLanternVoxelTile(uint3 id)
     int2 rootCell = int2(id.xy);
     // Every record is cleared each frame, including children no longer needed.
     for (int node = 0; node < LUNAR_FLOWER_TL_VOXEL_DEPTH; ++node)
-        tex3Dstore(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage,
+        tex3Dstore(LUNAR_FLOWER_TLAdaptiveAtlasV1Storage,
             int3(rootCell, node), float4(0.0, 0.0, 0.0, 0.0));
     float2 sizeUv = float2(1.0, 1.0) /
         float2(LUNAR_FLOWER_TL_VOXEL_WIDTH, LUNAR_FLOWER_TL_VOXEL_HEIGHT);
@@ -161,21 +161,21 @@ float4 LUNAR_FLOWER_API_LoadTwinLanternVoxelNode(float2 uv, out float level)
         min((int)floor(position.x), LUNAR_FLOWER_TL_VOXEL_WIDTH - 1),
         min((int)floor(position.y), LUNAR_FLOWER_TL_VOXEL_HEIGHT - 1));
     float2 local = saturate(position - float2(rootCell));
-    float4 node = tex3Dfetch(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler,
+    float4 node = tex3Dfetch(LUNAR_FLOWER_TLAdaptiveAtlasV1Sampler,
         int3(rootCell, 0));
     level = 0.0;
     if (node.a < 0.0)
     {
         int x = min((int)floor(local.x * 2.0), 1);
         int y = min((int)floor(local.y * 2.0), 1);
-        node = tex3Dfetch(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler,
+        node = tex3Dfetch(LUNAR_FLOWER_TLAdaptiveAtlasV1Sampler,
             int3(rootCell, 1 + x + y * 2));
         level = 1.0;
         if (node.a < 0.0)
         {
             int fx = min((int)floor(local.x * 4.0), 3);
             int fy = min((int)floor(local.y * 4.0), 3);
-            node = tex3Dfetch(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler,
+            node = tex3Dfetch(LUNAR_FLOWER_TLAdaptiveAtlasV1Sampler,
                 int3(rootCell, 5 + fx + fy * 4));
             level = 2.0;
         }
@@ -198,7 +198,7 @@ float4 LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface(float2 uv)
     float slack = LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance(node.x);
     float valid = CAMERA_OBSCURA_DepthConfidence(depth) * step(0.000001, node.z) *
         step(node.x - slack, depth) * step(depth, node.y + slack);
-    float3 color = saturate(CAMERA_OBSCURA_LoadColor(uv));
+    float3 color = saturate(tex2Dlod(ReShade::BackBuffer, float4(uv, 0.0, 0.0)).rgb);
     return float4(color * valid, valid);
 }
 
@@ -255,7 +255,9 @@ LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver(
                     sceneDepth - rayDepth, ray.front_bias, ray.back_thickness);
                 if (weight > 0.000001)
                 {
-                    evidence.radiance_rgb = saturate(CAMERA_OBSCURA_LoadColor(requestedUv));
+                    // Avoid implicit gradients in the varying traversal loop.
+                    evidence.radiance_rgb = saturate(tex2Dlod(
+                        ReShade::BackBuffer, float4(requestedUv, 0.0, 0.0)).rgb);
                     evidence.evidence = saturate(weight);
                     evidence.hit = 1.0;
                     evidence.normalized_distance = saturate(distancePixels / max(rayLengthPixels, 0.000001));

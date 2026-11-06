@@ -20,3 +20,6 @@ This is a bounded screen/depth quadtree, not a world-space octree or general
 dynamic sparse-volume allocator. The old depth-bin storage interpretation has
 changed under the experimental boundary; consumers must use matching source,
 compute dispatch (`8 x 8 x 1` threads, `8 x 5 x 1` groups) and decode functions.
+The atlas resources use the `LUNAR_FLOWER_TLAdaptiveAtlasV1*` identity to avoid
+aliasing older volume layouts. Donor color reads use explicit LOD zero so the
+trace can be called inside varying loops without implicit-gradient unrolling.

@@ -55,10 +55,8 @@ struct int3 {
 };
 using uint3=int3;
 float2 min(float2 a,float2 b){return {min(a.x,b.x),min(a.y,b.y)};}
-namespace ReShade { const int BackBuffer=0; }
-float4 tex2Dlod(int,float4 coords){return float4(CAMERA_OBSCURA_LoadColor(coords.xy()),1);}
-int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage=0;
-int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler=0;
+int LUNAR_FLOWER_TLAdaptiveAtlasV1Storage=0;
+int LUNAR_FLOWER_TLAdaptiveAtlasV1Sampler=0;
 std::vector<float4> nodes(64*36*21,float4(0,0,0,0));
 int nodeWrites=0,nodeReads=0;
 int indexOf(int3 cell){
@@ -172,7 +170,6 @@ def voxel_cpp(width, height, dda_limit=32, cases=None):
     core = core.replace('#define CAMERA_OBSCURA_DDA_MAX_STEPS 32', f'#define CAMERA_OBSCURA_DDA_MAX_STEPS {dda_limit}')
     core = core.replace('float2():x(0),y(0){}', 'float2():x(0),y(0){} template<typename V> float2(V v):x((float)v.x),y((float)v.y){}')
     core = core.replace('float3 rgb()const', 'float2 xy()const{return {x,y};} float3 rgb()const')
-    core = core.replace('float4(float3 c,float w)', 'float4(float2 c,float zValue,float w):x(c.x),y(c.y),z(zValue),a(w){} float4(float3 c,float w)')
     proof = (BASE / 'api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh').read_text()
     # Only the shared receiver/ray builders are needed in addition to the core.
     from test_twin_lantern_screen_surface import block

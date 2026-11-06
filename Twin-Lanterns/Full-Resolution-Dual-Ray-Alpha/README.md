@@ -150,6 +150,16 @@ passes and full-resolution targets. Receiver guides are reused across directions
 and final reconstruction. See [performance investigation](PERFORMANCE_NOTES.md)
 for verified source-level savings and the in-game timing comparison still needed.
 
+### Native compiler follow-up
+
+A reported native compile failed with X3570/X3511 because the varying ray loops
+could reach the shared implicit-gradient color loader. Alpha donor reads now use
+explicit base-LOD sampling, and the adaptive atlas has the distinct
+`LUNAR_FLOWER_TLAdaptiveAtlasV1*` resource identity. Packaging audits the active
+loop call graphs and refuses this known implicit-gradient pattern. See
+[compiler investigation](COMPILER_NOTES.md) for the evidence and remaining native
+validation. CPU success is not a native compiler pass.
+
 ## Controls
 
 - `Opposing Ray Pairs`: `1-4` pairs (`2-8` rays). Two pairs use the original

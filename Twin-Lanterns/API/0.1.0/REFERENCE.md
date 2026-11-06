@@ -46,9 +46,9 @@ Source: [`experimental/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh`](experimental
 
 | Declaration | Meaning |
 |---|---|
-| `texture3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex` | Legacy resource name for a `64 x 36 x 21` RGBA32F hierarchy atlas. XY store depth bounds, Z stores sampled coverage, W stores signed center depth (-1 marks a branch). Texture Z indexes tree nodes, not world/depth slices; no coarse donor RGB is stored. |
-| `storage3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage` | Writable `storage3D` view used by the compute build pass. |
-| `sampler3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler` | Point-filtered, clamped sampler used for cell-exact proxy reads. |
+| `texture3D LUNAR_FLOWER_TLAdaptiveAtlasV1Tex` | Versioned identity for the `64 x 36 x 21` RGBA32F hierarchy atlas, distinct from the old uniform volume. XY store depth bounds, Z stores sampled coverage, W stores signed center depth (-1 marks a branch). Texture Z indexes tree nodes, not world/depth slices; no coarse donor RGB is stored. |
+| `storage3D LUNAR_FLOWER_TLAdaptiveAtlasV1Storage` | Writable `storage3D` view used by the compute build pass. |
+| `sampler3D LUNAR_FLOWER_TLAdaptiveAtlasV1Sampler` | Point-filtered, clamped sampler used for cell-exact proxy reads. |
 
 ### `LUNAR_FLOWER_API_TwinLanternVoxelEvidence`
 

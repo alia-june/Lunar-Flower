@@ -59,8 +59,10 @@ Record layout:
 
 An empty record is zero. A leaf can have an invalid center but valid sampled
 corners; its bounds/coverage can still nominate a candidate for fine validation.
-The texture's Z coordinate is a node index, not a depth bin. The historical
-`VoxelRadianceTex` resource name is retained, but **no coarse RGB is stored**.
+The texture's Z coordinate is a node index, not a depth bin. The resource uses
+the versioned `LUNAR_FLOWER_TLAdaptiveAtlasV1` identity; **no coarse RGB is stored**.
+See [COMPILER_NOTES.md](COMPILER_NOTES.md) for the layout identity and explicit-LOD
+sampling correction following the native compiler failure.
 This representation is a screen/depth quadtree, not a world-space octree.
 
 One compute thread owns a root and its descendants, avoiding cross-thread

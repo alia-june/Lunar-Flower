@@ -1,10 +1,10 @@
 {
   "status": "public alpha; static structural validation only; full ReShade compile and live acceptance pending",
-  "passed": 19,
+  "passed": 21,
   "failed": 0,
   "effect_sha256": "E9D0809ED271D6B769C46D93CA709A398E0AAB8D49A4792B68A26B122B7F71B3",
-  "voxel_api_sha256": "663C4FAD892FA53D78222DF86060FF37849F7ED2EF71A1DD5625EEDBE4DEE7F3",
-  "screen_surface_sha256": "B3480482AAADADEBFBEDF86C8DBB86A40C87A7B00DA6BC9AB947D9B0B8626A9B",
+  "voxel_api_sha256": "13FA361AB611996BB5610580668C52C2381AC368A759C5D31894A170AF66A31B",
+  "screen_surface_sha256": "FB154B4407AFEAA2D6E9E868576EEBF3E0B109ACC92A7783C363B7FA176FFB98",
   "checks": [
     {
       "name": "candidate_surface_complete",
@@ -70,6 +70,16 @@
       "name": "receiver_guide_reuse",
       "passed": true,
       "detail": "transport and final reconstruction reuse current-pixel receiver data; CPU fixtures check output equivalence/read counts"
+    },
+    {
+      "name": "loop_sampling_derivative_free",
+      "passed": true,
+      "detail": "no implicit-gradient operations reachable from active Alpha loop entrypoints"
+    },
+    {
+      "name": "adaptive_resource_layout_identity",
+      "passed": true,
+      "detail": "adaptive atlas has a distinct resource identity from the former uniform volume"
     },
     {
       "name": "ordered_five_pass_graph",
