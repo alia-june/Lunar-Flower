@@ -11,18 +11,26 @@ contracts while changing the transport representation:
   scheduled rays per pixel;
 - every scheduled direction retains the independent DDA and parametric-march
   providers;
-- a compute pass builds a `64 x 36 x 32` current-frame view-frustum
-  voxel-radiance proxy from visible color and depth;
+- a compute pass builds an adaptive current-frame camera-visible surface
+  proxy, with `64 x 36` root tiles and up to two subdivision levels;
 - each ray may admit proxy radiance under an independent strength and trace
   budget before the existing surface reconstruction and hard composite bounds.
 
 ## Truth Boundary
 
-The voxel field is a **camera-visible view-frustum proxy**. It contains one
-depth-derived occupied cell per proxy column and the color visible at that
-screen location in the current frame. It is not world voxelization, does not
-contain hidden or off-screen geometry, and does not create multi-bounce or
-physically complete global illumination.
+The voxel interface now uses a **bounded adaptive screen/depth surface proxy**.
+Tiles split on sampled depth or color variation, up to two levels. A
+`64 x 36 x 21` atlas stores a root, four children and sixteen grandchildren per
+tile. Z indexes tree nodes rather than 32 uniform depth slices. This is not
+world voxelization, a world-space octree or a general sparse-volume allocator.
+It contains only current camera-visible evidence and does not recover hidden
+or off-screen geometry or create multi-bounce/physically complete GI.
+
+Final lighting validates depth and fetches color at the full-resolution ray
+sample. Nodes store sampled depth bounds and coverage, not coarse RGB. This
+targets the large square patches reported at high voxel strength.
+Read the [online research and implementation rationale](ADAPTIVE_PROXY_RESEARCH.md)
+for the source basis, limits and proposed GPU acceptance checks.
 
 This candidate requires ReShade compute shaders, 3D textures, and `storage3D`.
 It therefore excludes D3D9 and D3D10 paths that cannot execute the compute
@@ -53,8 +61,8 @@ Lunar Flower - Twin Lanterns: Full Resolution Dual Ray Alpha
 
 ## Five-Pass Graph
 
-1. **Voxel Build** writes the current visible depth shell and radiance into the
-   `64 x 36 x 32` `RGBA16F` proxy.
+1. **Voxel Build** clears the bounded node atlas and subdivides detected depth,
+   coverage or color changes. Uniform areas stay coarse.
 2. **Transport** casts the selected opposing ray pairs at full resolution. Each
    direction evaluates DDA, parametric march, and the voxel proxy, then merges
    only admitted evidence.
@@ -117,8 +125,10 @@ remain pending for this revision.
 ## Resource And Cost Envelope
 
 Each full-resolution `RGBA16F` working field uses eight bytes per output pixel;
-the candidate allocates three. The `64 x 36 x 32` voxel proxy adds approximately
-`0.56 MiB` before runtime overhead.
+the candidate allocates three. The adaptive `64 x 36 x 21` `RGBA32F` proxy adds
+approximately `0.74 MiB` before runtime overhead, compared with `0.56 MiB` for
+the previous uniform volume. Leaf depth is stored directly, without 32-bin
+quantization.
 
 | Output resolution | One working field | Three working fields |
 |---:|---:|---:|
@@ -127,7 +137,13 @@ the candidate allocates three. The `64 x 36 x 32` voxel proxy adds approximately
 
 Transport cost also scales with pair count. Every direction evaluates DDA,
 parametric march, and up to the configured voxel trace steps. These figures are
-resource arithmetic, not measured GPU frame time.
+resource arithmetic, not measured GPU frame time. The compute pass assigns one
+thread per root tile. Each root samples five points; additional nodes are sampled
+only when a parent splits. At most 21 nodes are built per root. All child records
+are cleared every frame, so collapsing a tree does not leave stale occupancy.
+The worst case performs more build sampling than a uniform scene; adaptive does
+not guarantee a frame-time improvement. At voxel strength zero, per-ray voxel
+tracing is skipped, while the build remains available for diagnostics.
 
 ## Controls
 
@@ -136,7 +152,7 @@ resource arithmetic, not measured GPU frame time.
   two diagonals.
 - `Voxel Proxy Lighting`: contribution authority for admitted voxel-proxy
   radiance. Zero leaves only the screen-depth DDA/march providers.
-- `Voxel Trace Steps`: `4-32` proxy cells tested per scheduled direction.
+- `Voxel Trace Steps`: `4-32` ray samples per scheduled direction.
   This effect sets the shared ray-builder/DDA step limit to 32 so the full
   voxel step range stays within the configured transport distance. Transport
   Distance remains `4-24` pixels; more steps increase sampling density rather
@@ -152,10 +168,14 @@ The candidate retains all Fidelity Overdrive views and adds:
 
 15. `Voxel Surface Occupancy`
 16. `Voxel Surface Radiance`
+17. `Voxel Detail Level` (heatmap of hierarchy levels `0`, `1`, `2`)
 
 `Bound Verification` must remain green. The voxel views must show only the
 current camera-visible depth shell; full-volume or off-screen-looking content
 is a rejection condition.
+The radiance diagnostic shows fine-resolution color on proxy-supported surfaces.
+Detail Level should vary with scene complexity. Small features missed by the center/corner
+samples and refinement-level changes under camera motion remain acceptance risks.
 
 ## Public API
 

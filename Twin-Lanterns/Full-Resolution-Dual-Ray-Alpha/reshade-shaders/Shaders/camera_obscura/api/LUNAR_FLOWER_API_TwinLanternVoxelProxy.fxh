@@ -1,10 +1,14 @@
 #ifndef LUNAR_FLOWER_API_TWIN_LANTERN_VOXEL_PROXY_FXH
 #define LUNAR_FLOWER_API_TWIN_LANTERN_VOXEL_PROXY_FXH
 
-// Current-frame, camera-visible proxy only. This is not world voxelization.
+// Adaptive camera-visible depth shell, not world voxelization or an octree.
+// A bounded quadtree per screen tile: root + 4 children + 16 grandchildren.
 #define LUNAR_FLOWER_TL_VOXEL_WIDTH 64
 #define LUNAR_FLOWER_TL_VOXEL_HEIGHT 36
-#define LUNAR_FLOWER_TL_VOXEL_DEPTH 32
+#define LUNAR_FLOWER_TL_VOXEL_DEPTH 21
+#define LUNAR_FLOWER_TL_VOXEL_MAX_LEVEL 2
+#define LUNAR_FLOWER_TL_VOXEL_DEPTH_SPLIT 0.001
+#define LUNAR_FLOWER_TL_VOXEL_COLOR_SPLIT 0.08
 #define LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS 32
 
 texture3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex
@@ -12,7 +16,7 @@ texture3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex
     Width = LUNAR_FLOWER_TL_VOXEL_WIDTH;
     Height = LUNAR_FLOWER_TL_VOXEL_HEIGHT;
     Depth = LUNAR_FLOWER_TL_VOXEL_DEPTH;
-    Format = RGBA16F;
+    Format = RGBA32F;
 };
 
 storage3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage
@@ -50,134 +54,205 @@ LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence()
     return evidence;
 }
 
+float LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance(float depth)
+{
+    return max(0.00001, abs(depth) * LUNAR_FLOWER_TL_VOXEL_DEPTH_SPLIT);
+}
+
+bool LUNAR_FLOWER_API_BuildTwinLanternVoxelNode(
+    int2 rootCell, int nodeIndex, float2 minimumUv, float2 sizeUv, int level)
+{
+    float2 uv = minimumUv + sizeUv * 0.5;
+    float centerDepth = CAMERA_OBSCURA_LoadDepth(uv);
+    float centerValid = CAMERA_OBSCURA_DepthConfidence(centerDepth);
+    float3 centerColor = saturate(tex2Dlod(ReShade::BackBuffer, float4(uv, 0.0, 0.0)).rgb);
+    float minimumDepth = centerValid > 0.5 ? centerDepth : 1.0;
+    float maximumDepth = centerValid > 0.5 ? centerDepth : 0.0;
+    float3 minimumColor = centerValid > 0.5 ? centerColor : float3(1.0, 1.0, 1.0);
+    float3 maximumColor = centerValid > 0.5 ? centerColor : float3(0.0, 0.0, 0.0);
+    float validCount = centerValid;
+    float2 inset = min(CAMERA_OBSCURA_PixelSize() * 0.5, sizeUv * 0.25);
+    for (int y = 0; y < 2; ++y)
+    {
+        for (int x = 0; x < 2; ++x)
+        {
+            float2 cornerUv = minimumUv + inset + float2(x, y) * (sizeUv - inset * 2.0);
+            float depth = CAMERA_OBSCURA_LoadDepth(cornerUv);
+            float valid = CAMERA_OBSCURA_DepthConfidence(depth);
+            validCount += valid;
+            if (valid > 0.5)
+            {
+                float3 color = saturate(tex2Dlod(ReShade::BackBuffer, float4(cornerUv, 0.0, 0.0)).rgb);
+                minimumDepth = min(minimumDepth, depth);
+                maximumDepth = max(maximumDepth, depth);
+                minimumColor = min(minimumColor, color);
+                maximumColor = max(maximumColor, color);
+            }
+        }
+    }
+    float3 colorRange = max(maximumColor - minimumColor, 0.0.xxx);
+    float maximumColorRange = max(max(colorRange.r, colorRange.g), colorRange.b);
+    bool mixedCoverage = validCount > 0.5 && validCount < 4.5;
+    bool split = level < LUNAR_FLOWER_TL_VOXEL_MAX_LEVEL && validCount > 0.5 &&
+        (mixedCoverage || maximumDepth - minimumDepth > LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance(minimumDepth) ||
+         maximumColorRange > LUNAR_FLOWER_TL_VOXEL_COLOR_SPLIT);
+    // XY hold sampled depth bounds, Z holds sampled coverage, and W is signed
+    // center depth (-1=branch). Bounds retain sloped/mixed surfaces rather than
+    // treating one center sample as the whole cell. No coarse RGB is stored.
+    float nodeDepth = split ? -1.0 : centerDepth * centerValid;
+    float hasSamples = step(0.5, validCount);
+    tex3Dstore(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage,
+        int3(rootCell, nodeIndex), float4(minimumDepth * hasSamples,
+            maximumDepth * hasSamples, validCount * 0.2, nodeDepth));
+    return split;
+}
+
 [shader("compute")]
 void LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS(
     uint3 id : SV_DispatchThreadID)
 {
-    if (
-        id.x >= LUNAR_FLOWER_TL_VOXEL_WIDTH ||
-        id.y >= LUNAR_FLOWER_TL_VOXEL_HEIGHT ||
-        id.z >= LUNAR_FLOWER_TL_VOXEL_DEPTH)
-    {
+    if (id.x >= LUNAR_FLOWER_TL_VOXEL_WIDTH || id.y >= LUNAR_FLOWER_TL_VOXEL_HEIGHT || id.z > 0)
         return;
+    int2 rootCell = int2(id.xy);
+    // Every record is cleared each frame, including children no longer needed.
+    for (int node = 0; node < LUNAR_FLOWER_TL_VOXEL_DEPTH; ++node)
+        tex3Dstore(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage,
+            int3(rootCell, node), float4(0.0, 0.0, 0.0, 0.0));
+    float2 sizeUv = float2(1.0, 1.0) /
+        float2(LUNAR_FLOWER_TL_VOXEL_WIDTH, LUNAR_FLOWER_TL_VOXEL_HEIGHT);
+    float2 minimumUv = float2(rootCell) * sizeUv;
+    bool splitRoot = LUNAR_FLOWER_API_BuildTwinLanternVoxelNode(rootCell, 0, minimumUv, sizeUv, 0);
+    if (splitRoot)
+    {
+        for (int y = 0; y < 2; ++y)
+        {
+            for (int x = 0; x < 2; ++x)
+            {
+                float2 childMinimum = minimumUv + float2(x, y) * sizeUv * 0.5;
+                bool splitChild = LUNAR_FLOWER_API_BuildTwinLanternVoxelNode(
+                    rootCell, 1 + x + y * 2, childMinimum, sizeUv * 0.5, 1);
+                if (splitChild)
+                {
+                    for (int fy = 0; fy < 2; ++fy)
+                    {
+                        for (int fx = 0; fx < 2; ++fx)
+                        {
+                            int fineIndex = 5 + x * 2 + fx + (y * 2 + fy) * 4;
+                            LUNAR_FLOWER_API_BuildTwinLanternVoxelNode(rootCell, fineIndex,
+                                childMinimum + float2(fx, fy) * sizeUv * 0.25, sizeUv * 0.25, 2);
+                        }
+                    }
+                }
+            }
+        }
     }
+}
 
-    float2 uv = (float2(id.xy) + 0.5) /
-        float2(
-            LUNAR_FLOWER_TL_VOXEL_WIDTH,
-            LUNAR_FLOWER_TL_VOXEL_HEIGHT);
-    float depth = saturate(ReShade::GetLinearizedDepth(uv));
-    float valid = CAMERA_OBSCURA_DepthConfidence(depth);
-    int depthCell = min(
-        (int)floor(depth * (float)LUNAR_FLOWER_TL_VOXEL_DEPTH),
-        LUNAR_FLOWER_TL_VOXEL_DEPTH - 1);
-    float occupied = valid * ((int)id.z == depthCell ? 1.0 : 0.0);
-    float3 source = tex2Dlod(
-        ReShade::BackBuffer,
-        float4(CAMERA_OBSCURA_SaturateUV(uv), 0.0, 0.0)).rgb;
+float4 LUNAR_FLOWER_API_LoadTwinLanternVoxelNode(float2 uv, out float level)
+{
+    float2 dimensions = float2(LUNAR_FLOWER_TL_VOXEL_WIDTH, LUNAR_FLOWER_TL_VOXEL_HEIGHT);
+    float2 position = CAMERA_OBSCURA_SaturateUV(uv) * dimensions;
+    int2 rootCell = int2(
+        min((int)floor(position.x), LUNAR_FLOWER_TL_VOXEL_WIDTH - 1),
+        min((int)floor(position.y), LUNAR_FLOWER_TL_VOXEL_HEIGHT - 1));
+    float2 local = saturate(position - float2(rootCell));
+    float4 node = tex3Dfetch(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler,
+        int3(rootCell, 0));
+    level = 0.0;
+    if (node.a < 0.0)
+    {
+        int x = min((int)floor(local.x * 2.0), 1);
+        int y = min((int)floor(local.y * 2.0), 1);
+        node = tex3Dfetch(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler,
+            int3(rootCell, 1 + x + y * 2));
+        level = 1.0;
+        if (node.a < 0.0)
+        {
+            int fx = min((int)floor(local.x * 4.0), 3);
+            int fy = min((int)floor(local.y * 4.0), 3);
+            node = tex3Dfetch(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler,
+                int3(rootCell, 5 + fx + fy * 4));
+            level = 2.0;
+        }
+    }
+    return node;
+}
 
-    tex3Dstore(
-        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage,
-        int3(id),
-        float4(saturate(source) * occupied, occupied));
+float LUNAR_FLOWER_API_TwinLanternVoxelDetailLevel(float2 uv)
+{
+    float level = 0.0;
+    LUNAR_FLOWER_API_LoadTwinLanternVoxelNode(uv, level);
+    return level;
 }
 
 float4 LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface(float2 uv)
 {
-    float2 uvSafe = CAMERA_OBSCURA_SaturateUV(uv);
-    float depth = CAMERA_OBSCURA_LoadDepth(uvSafe);
-    float valid = CAMERA_OBSCURA_DepthConfidence(depth);
-    int3 dimensions = int3(
-        LUNAR_FLOWER_TL_VOXEL_WIDTH,
-        LUNAR_FLOWER_TL_VOXEL_HEIGHT,
-        LUNAR_FLOWER_TL_VOXEL_DEPTH);
-    int3 cell = int3(
-        min((int)floor(uvSafe.x * dimensions.x), dimensions.x - 1),
-        min((int)floor(uvSafe.y * dimensions.y), dimensions.y - 1),
-        min((int)floor(depth * dimensions.z), dimensions.z - 1));
-    return tex3Dfetch(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler, cell) * valid;
+    float level = 0.0;
+    float4 node = LUNAR_FLOWER_API_LoadTwinLanternVoxelNode(uv, level);
+    float depth = CAMERA_OBSCURA_LoadDepth(uv);
+    float slack = LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance(node.x);
+    float valid = CAMERA_OBSCURA_DepthConfidence(depth) * step(0.000001, node.z) *
+        step(node.x - slack, depth) * step(depth, node.y + slack);
+    float3 color = saturate(CAMERA_OBSCURA_LoadColor(uv));
+    return float4(color * valid, valid);
 }
 
 LUNAR_FLOWER_API_TwinLanternVoxelEvidence
 LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy(
-    float2 uv,
-    float directionIndex,
-    float rayLengthPixels,
-    float depthSlope,
-    float frontBias,
-    float backThickness,
-    float requestedSteps)
+    float2 uv, float directionIndex, float rayLengthPixels, float depthSlope,
+    float frontBias, float backThickness, float requestedSteps)
 {
-    LUNAR_FLOWER_API_TwinLanternVoxelEvidence evidence =
-        LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence();
+    LUNAR_FLOWER_API_TwinLanternVoxelEvidence evidence = LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence();
     CAMERA_OBSCURA_TraceControls controls;
     CAMERA_OBSCURA_SurfaceGuide receiver;
-    float safeSteps = min(
-        max(requestedSteps, 1.0),
-        (float)LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS);
-    CAMERA_OBSCURA_Ray ray = CAMERA_OBSCURA_API_BuildTL45Ray(
-        uv,
-        directionIndex,
-        CAMERA_OBSCURA_API_TL45_INPUT_LIVE,
-        safeSteps,
-        rayLengthPixels,
-        depthSlope,
-        frontBias,
-        backThickness,
-        controls,
-        receiver);
-    int stepCount = min(
-        max((int)floor(safeSteps + 0.5), 1),
-        LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS);
-    int3 dimensions = int3(
-        LUNAR_FLOWER_TL_VOXEL_WIDTH,
-        LUNAR_FLOWER_TL_VOXEL_HEIGHT,
-        LUNAR_FLOWER_TL_VOXEL_DEPTH);
-
-    [loop]
-    for (int stepIndex = 1;
-         stepIndex <= LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS;
-         ++stepIndex)
+    float safeSteps = clamp(requestedSteps, 1.0, (float)LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS);
+    CAMERA_OBSCURA_Ray ray = CAMERA_OBSCURA_API_BuildTL45Ray(uv, directionIndex,
+        CAMERA_OBSCURA_API_TL45_INPUT_LIVE, safeSteps, rayLengthPixels, depthSlope,
+        frontBias, backThickness, controls, receiver);
+    // Follow the actual ray budget even when a consumer uses a smaller shared cap.
+    int stepCount = min((int)ray.steps, LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS);
+    float2 pixel = max(CAMERA_OBSCURA_PixelSize(), float2(0.000001, 0.000001));
+    float previousRayDepth = ray.origin_depth;
+    if (ray.valid > 0.5 && receiver.valid > 0.5)
     {
-        if (stepIndex > stepCount)
+        [loop]
+        for (int stepIndex = 1; stepIndex <= LUNAR_FLOWER_TL_VOXEL_MAX_TRACE_STEPS; ++stepIndex)
         {
-            break;
-        }
-
-        float2 requestedUv = ray.origin_uv + ray.step_uv * (float)stepIndex;
-        float coverage =
-            step(0.0, requestedUv.x) * step(requestedUv.x, 1.0) *
-            step(0.0, requestedUv.y) * step(requestedUv.y, 1.0);
-        if (coverage < 0.5)
-        {
-            break;
-        }
-
-        float rayDepth = saturate(
-            ray.origin_depth + ray.step_depth * (float)stepIndex);
-        int3 cell = int3(
-            min((int)floor(requestedUv.x * dimensions.x), dimensions.x - 1),
-            min((int)floor(requestedUv.y * dimensions.y), dimensions.y - 1),
-            min((int)floor(rayDepth * dimensions.z), dimensions.z - 1));
-        float4 voxel = tex3Dfetch(
-            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler,
-            cell);
-        float normalizedDistance =
-            (float)stepIndex / max((float)stepCount, 1.0);
-        float distanceWeight = saturate(1.0 - normalizedDistance);
-        float accepted = ray.valid * receiver.valid *
-            saturate(voxel.a) * distanceWeight;
-
-        if (accepted > 0.000001)
-        {
-            evidence.radiance_rgb = saturate(voxel.rgb);
-            evidence.evidence = saturate(accepted);
-            evidence.hit = 1.0;
-            evidence.normalized_distance = normalizedDistance;
-            break;
+            if (stepIndex > stepCount) break;
+            float2 requestedUv = ray.origin_uv + ray.step_uv * (float)stepIndex;
+            if (requestedUv.x < 0.0 || requestedUv.x > 1.0 || requestedUv.y < 0.0 || requestedUv.y > 1.0)
+                break;
+            float rayDepth = ray.origin_depth + ray.step_depth * (float)stepIndex;
+            float intervalMin = min(previousRayDepth, rayDepth) - ray.front_bias;
+            float intervalMax = max(previousRayDepth, rayDepth) + ray.back_thickness;
+            previousRayDepth = rayDepth;
+            float distancePixels = length((requestedUv - ray.origin_uv) / pixel);
+            if (distancePixels <= controls.self_hit_pixels) continue;
+            float level = 0.0;
+            float4 node = LUNAR_FLOWER_API_LoadTwinLanternVoxelNode(requestedUv, level);
+            float coarseSlack = LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance(node.x);
+            float coarseSupport = step(0.000001, node.z) *
+                CAMERA_OBSCURA_DepthConfidence(node.x) * CAMERA_OBSCURA_DepthConfidence(node.y) *
+                step(intervalMin - coarseSlack, node.y) * step(node.x, intervalMax + coarseSlack);
+            if (coarseSupport > 0.5)
+            {
+                float sceneDepth = CAMERA_OBSCURA_LoadDepth(requestedUv);
+                float fineSupport = CAMERA_OBSCURA_DepthConfidence(sceneDepth) *
+                    step(intervalMin, sceneDepth) * step(sceneDepth, intervalMax);
+                float distanceWeight = saturate(1.0 - distancePixels / max(rayLengthPixels, 0.000001));
+                float weight = fineSupport * distanceWeight * CAMERA_OBSCURA_HitConfidence(
+                    sceneDepth - rayDepth, ray.front_bias, ray.back_thickness);
+                if (weight > 0.000001)
+                {
+                    evidence.radiance_rgb = saturate(CAMERA_OBSCURA_LoadColor(requestedUv));
+                    evidence.evidence = saturate(weight);
+                    evidence.hit = 1.0;
+                    evidence.normalized_distance = saturate(distancePixels / max(rayLengthPixels, 0.000001));
+                    break;
+                }
+            }
         }
     }
-
     return evidence;
 }
 

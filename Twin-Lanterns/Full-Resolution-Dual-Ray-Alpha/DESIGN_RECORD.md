@@ -45,6 +45,17 @@ preserved. CPU fixtures cover both providers/eight directions at three output
 resolutions; native behavior and the remaining coplanar-donor question are not
 certified by those fixtures.
 
+## Adaptive Proxy Candidate
+
+The uniform 32-bin volume is superseded by a bounded adaptive screen/depth
+hierarchy. Its fixed 64×36×21 RGBA32F atlas holds depth bounds, coverage and
+branch/center-depth metadata. Two optional subdivision levels are built on
+detected depth, coverage or color variation. Final donor color comes from a
+full-resolution, depth-validated sample. This is not a world-space octree or
+dynamic sparse-volume allocator. See [online research and candidate validation](ADAPTIVE_PROXY_RESEARCH.md).
+The experimental API copy, hash inventory and declaration reference track the
+new storage interpretation; the eight shared API sources are unchanged.
+
 ## Validation State
 
 - Static candidate checks: see `STATIC_VALIDATION_RESULTS.json`.

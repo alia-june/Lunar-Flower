@@ -9,11 +9,12 @@
   "generated_changes": [
     "full-resolution raw and separable resolve fields",
     "one to four opposing ray pairs",
-    "64 x 36 x 32 current-frame view-frustum voxel-radiance proxy",
+    "initial 64 x 36 x 32 current-frame proxy (superseded by the adaptive surface hierarchy)",
     "compute voxel-build pass and voxel diagnostics",
     "distinct public effect and technique identity",
     "Alpha-local screen surface guide and donor weighting contour correction candidate",
-    "Alpha-local screen refinement self-hit/depth guards and selected-hit confidence correction"
+    "Alpha-local screen refinement self-hit/depth guards and selected-hit confidence correction",
+    "bounded adaptive surface hierarchy replaces uniform 32-bin proxy; fine depth/color validation and detail diagnostic"
   ],
   "representation_boundary": "camera-visible depth shell only; not world voxels, hidden geometry, off-screen geometry, or complete GI",
   "pending": [

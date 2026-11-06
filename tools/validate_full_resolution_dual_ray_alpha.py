@@ -143,13 +143,30 @@ voxel_ok = all(
         "storage3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage",
         "Width = LUNAR_FLOWER_TL_VOXEL_WIDTH",
         "Depth = LUNAR_FLOWER_TL_VOXEL_DEPTH",
-        "Format = RGBA16F",
+        "#define LUNAR_FLOWER_TL_VOXEL_DEPTH 21",
+        "Format = RGBA32F",
         "tex3Dstore",
         "tex3Dfetch",
         "SV_DispatchThreadID",
     ]
 )
-record("view_frustum_voxel_proxy", voxel_ok, "64x36x32 storage3D build and trace surface present")
+record("view_frustum_voxel_proxy", voxel_ok, "bounded 64x36x21 RGBA32F hierarchy atlas and trace surface present")
+record(
+    "adaptive_hierarchy_wiring",
+    all(token in voxel for token in ["splitRoot", "splitChild", "node < LUNAR_FLOWER_TL_VOXEL_DEPTH", "LUNAR_FLOWER_API_LoadTwinLanternVoxelNode"])
+    and "BuildVoxelProxyCS<8, 8, 1>" in effect and "DispatchSizeZ = 1;" in effect,
+    "two-level adaptive node construction, per-frame child clearing and one-thread-per-root dispatch; CPU fixtures check behavior separately",
+)
+record(
+    "voxel_fine_validation",
+    all(token in voxel for token in [
+        "float sceneDepth = CAMERA_OBSCURA_LoadDepth(requestedUv)",
+        "evidence.radiance_rgb = saturate(CAMERA_OBSCURA_LoadColor(requestedUv))",
+        "distancePixels <= controls.self_hit_pixels",
+        "int stepCount = min((int)ray.steps",
+    ]),
+    "proxy candidates require fine depth and full-resolution donor color, self-distance rejection and the actual ray budget",
+)
 
 passes = re.findall(r"\bpass\s+(\w+)", effect)
 expected_passes = [
@@ -170,7 +187,7 @@ record("voxel_truth_boundary", truth_ok, "proxy is explicitly bounded away from 
 
 ui_items_match = re.search(r'ui_items\s*=\s*"([^"]+)"', effect)
 diagnostic_count = ui_items_match.group(1).count("\\0") if ui_items_match else 0
-record("candidate_diagnostics", diagnostic_count == 16, f"diagnostic views={diagnostic_count}/16")
+record("candidate_diagnostics", diagnostic_count == 17, f"diagnostic views={diagnostic_count}/17")
 
 shared_matches = sum(
     1

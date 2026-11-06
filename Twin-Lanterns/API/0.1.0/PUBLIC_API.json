@@ -18,10 +18,10 @@
     "symbol_index": "SYMBOLS.json",
     "reference_coverage": {
       "source_files": 9,
-      "macros": 69,
+      "macros": 72,
       "structs": 15,
       "struct_fields": 208,
-      "functions": 60,
+      "functions": 64,
       "resources": 3
     }
   },
@@ -96,15 +96,16 @@
   },
   "experimental_extensions": [
     {
-      "name": "view-frustum voxel proxy",
-      "status": "experimental alpha; distributed beside but excluded from the 0.1.0 shared stability contract",
+      "name": "adaptive camera-visible surface proxy",
+      "status": "experimental alpha; bounded surface hierarchy; excluded from the 0.1.0 shared stability contract",
       "path": "experimental/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh",
-      "sha256": "582949851DF9C49736981BE7CB0DFE2C9A512B3327118881B04957402C0B6612",
+      "sha256": "2152DDC1AF721FCDA9BB8F9EC6CF8198568E7864409684A3B790943777194F9B",
       "type": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",
       "entrypoints": [
         "LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence",
         "LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface",
-        "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy"
+        "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy",
+        "LUNAR_FLOWER_API_TwinLanternVoxelDetailLevel"
       ]
     }
   ],

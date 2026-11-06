@@ -6,7 +6,7 @@
 #include "../api/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh"
 
 uniform int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView
-< ui_type = "combo"; ui_category = "Lunar Flower / Twin Lanterns / 00 Diagnostics"; ui_label = "Output View"; ui_items = "Final Image\0Source Image\0Bounded Indirect Light\0Evidence Confidence\0Applied Light\0Rejection Reason\0Remaining Channel Room\0Containment Activity\0Source Difference\0Bound Verification\0Edge Fill Target\0Edge Fill Added\0Fidelity Guard Activity\0Overdrive Pressure\0Voxel Surface Occupancy\0Voxel Surface Radiance\0"; ui_tooltip = "Final Image is the production output.\nDiagnostic views expose reconstructed light, admission evidence, containment, rendering intent, and the current-frame view-frustum voxel proxy.\nBound Verification must remain green."; > = 0;
+< ui_type = "combo"; ui_category = "Lunar Flower / Twin Lanterns / 00 Diagnostics"; ui_label = "Output View"; ui_items = "Final Image\0Source Image\0Bounded Indirect Light\0Evidence Confidence\0Applied Light\0Rejection Reason\0Remaining Channel Room\0Containment Activity\0Source Difference\0Bound Verification\0Edge Fill Target\0Edge Fill Added\0Fidelity Guard Activity\0Overdrive Pressure\0Voxel Surface Occupancy\0Voxel Surface Radiance\0Voxel Detail Level\0"; ui_tooltip = "Final Image is the production output.\nDiagnostic views expose reconstructed light, admission evidence, containment, rendering intent, and the current-frame view-frustum voxel proxy.\nBound Verification must remain green."; > = 0;
 
 uniform bool LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEnabled
 < ui_type = "checkbox"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Enable Indirect Light"; ui_tooltip = "Applies bounded reconstructed indirect light.\nOff returns the source image exactly while diagnostics remain available."; > = true;
@@ -36,7 +36,7 @@ uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingSt
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Voxel Proxy Lighting"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.01; ui_tooltip = "Blends admitted radiance from the current-frame view-frustum voxel proxy into each ray direction.\nThis proxy contains camera-visible depth evidence only and is not world voxel lighting."; > = 0.35;
 
 uniform int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelTraceSteps
-< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Voxel Trace Steps"; ui_min = 4; ui_max = 32; ui_step = 1; ui_tooltip = "Maximum voxel cells tested along each scheduled ray.\nHigher values improve reach through the proxy and increase transport cost."; > = 16;
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Voxel Trace Steps"; ui_min = 4; ui_max = 32; ui_step = 1; ui_tooltip = "Maximum depth samples tested along each scheduled ray.\nHigher values increase sampling density within the configured transport distance and increase cost."; > = 16;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthTolerance
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 91 Reconstruction"; ui_label = "Surface Depth Agreement"; ui_min = 0.0001; ui_max = 0.0500; ui_step = 0.0001; ui_tooltip = "Maximum depth disagreement admitted during reconstruction.\nLower values protect boundaries more strictly."; > = 0.0050;
@@ -265,14 +265,19 @@ void LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaAccumulateDirection(
             LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias,
             LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBackThickness);
     LUNAR_FLOWER_API_TwinLanternVoxelEvidence voxelEvidence =
-        LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy(
-            uv,
-            directionIndex,
-            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayLengthPixels,
-            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthSlope,
-            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias,
-            LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBackThickness,
-            (float)LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelTraceSteps);
+        LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence();
+    if (LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength > 0.000001)
+    {
+        voxelEvidence =
+            LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy(
+                uv,
+                directionIndex,
+                LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayLengthPixels,
+                LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthSlope,
+                LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias,
+                LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBackThickness,
+                (float)LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelTraceSteps);
+    }
     float screenWeight = saturate(screenEvidence.a);
     float voxelWeight = saturate(voxelEvidence.evidence) *
         saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength);
@@ -615,7 +620,9 @@ float4 LUNAR_FLOWER_TLFRDisplay_PS(
         LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface(uv);
     if (view < 14.5) return float4(
         CAMERA_OBSCURA_DebugHeat(voxelSurface.a), 1.0);
-    return float4(saturate(voxelSurface.rgb), 1.0);
+    if (view < 15.5) return float4(saturate(voxelSurface.rgb), 1.0);
+    return float4(CAMERA_OBSCURA_DebugHeat(
+        LUNAR_FLOWER_API_TwinLanternVoxelDetailLevel(uv) * 0.5), 1.0);
 }
 
 technique LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlpha
@@ -623,10 +630,10 @@ technique LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlpha
 {
     pass TwinLanternVoxelBuild
     {
-        ComputeShader = LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS<8, 8, 4>;
+        ComputeShader = LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS<8, 8, 1>;
         DispatchSizeX = 8;
         DispatchSizeY = 5;
-        DispatchSizeZ = 8;
+        DispatchSizeZ = 1;
     }
     pass TwinLanternTransport
     {

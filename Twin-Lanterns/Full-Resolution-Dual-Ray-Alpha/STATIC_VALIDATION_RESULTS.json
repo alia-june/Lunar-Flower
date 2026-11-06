@@ -1,9 +1,9 @@
 {
   "status": "public alpha; static structural validation only; full ReShade compile and live acceptance pending",
-  "passed": 15,
+  "passed": 17,
   "failed": 0,
-  "effect_sha256": "4E25743652031AB095F53837B9D056CFBC4CB617B6560EA82812606C7BA2B951",
-  "voxel_api_sha256": "582949851DF9C49736981BE7CB0DFE2C9A512B3327118881B04957402C0B6612",
+  "effect_sha256": "ED78DAFFF410D5A20631355E95B654A87B033C826F9E844E8AD9DFEF5758E8EC",
+  "voxel_api_sha256": "2152DDC1AF721FCDA9BB8F9EC6CF8198568E7864409684A3B790943777194F9B",
   "screen_surface_sha256": "01AB875373172D1537B9125ECAB4271095B6523311C5CEB4F5953CF036BC2B33",
   "checks": [
     {
@@ -49,7 +49,17 @@
     {
       "name": "view_frustum_voxel_proxy",
       "passed": true,
-      "detail": "64x36x32 storage3D build and trace surface present"
+      "detail": "bounded 64x36x21 RGBA32F hierarchy atlas and trace surface present"
+    },
+    {
+      "name": "adaptive_hierarchy_wiring",
+      "passed": true,
+      "detail": "two-level adaptive node construction, per-frame child clearing and one-thread-per-root dispatch; CPU fixtures check behavior separately"
+    },
+    {
+      "name": "voxel_fine_validation",
+      "passed": true,
+      "detail": "proxy candidates require fine depth and full-resolution donor color, self-distance rejection and the actual ray budget"
     },
     {
       "name": "ordered_five_pass_graph",
@@ -64,7 +74,7 @@
     {
       "name": "candidate_diagnostics",
       "passed": true,
-      "detail": "diagnostic views=16/16"
+      "detail": "diagnostic views=17/17"
     },
     {
       "name": "shared_api_lineage_unchanged",

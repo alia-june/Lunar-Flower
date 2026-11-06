@@ -115,7 +115,7 @@ python -B tools/validate_showcase_and_public_api.py
 ```
 
 The Stable/Fidelity publication result is **13/13 passed**. The separate Full
-Resolution Dual Ray structural result is **15/15 passed**. The showcase
+Resolution Dual Ray structural result is **17/17 passed**. The showcase
 provenance and versioned public API result is **17/17 passed**.
 
 Structural validation is not a substitute for a clean ReShade compile, frame
