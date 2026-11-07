@@ -1,0 +1,58 @@
+{
+  "construct": {
+    "block-0": {
+      "self": {
+        "identification": {
+          "designation": {
+            "$context-ref": {
+              "context": "ctx:page",
+              "item": "identification.designation"
+            }
+          }
+        }
+      }
+    },
+    "block-1": {
+      "safeguards": {
+        "mode": "reference_only"
+      }
+    },
+    "block-2": {
+      "arbitrary-data": {
+        "schema_version": "1.0",
+        "kind": "ai_low_memory_landing_pad",
+        "growth_role": "germ",
+        "mode": "reference_only",
+        "repository": "alia-june/Lunar-Flower",
+        "source_seed": {
+          "repository": "alia-june/Lunar-Flower",
+          "revision": "c0adc251a0306ed010ad96316e2434f639e67874",
+          "path": "ai.landing.pad.json"
+        },
+        "front_door": "https://github.com/alia-june/this-repository-machine-interface/blob/main/ai.ingress.json",
+        "first_step": "Pass alia-june/Lunar-Flower as target context when following shared ingress."
+      }
+    },
+    "block-3": {
+      "context-index": {
+        "matches": {
+          "ctx:page": {
+            "identification.designation": {
+              "target": {
+                "context": "ctx:page",
+                "item": "identification.designation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "block-4": {
+      "context-records": {
+        "ctx:page": {
+          "identification.designation": "Lunar-Flower AI Landing Germ"
+        }
+      }
+    }
+  }
+}
