@@ -162,11 +162,22 @@ validation. CPU success is not a native compiler pass.
 
 ## Controls
 
+- `Indirect Light Strength`: fine drag adjustment and +/- steps of `0.001`
+  (0.1 percentage point of nominal strength). The reported 10-30% tuning range
+  is `0.100-0.300`; `1.000` is nominal 100%, not the slider maximum. The full
+  `0-4` range, default, uniform name and preset scale are preserved.
 - `Opposing Ray Pairs`: `1-4` pairs (`2-8` rays). Two pairs use the original
   east/west and north/south cardinal schedule; pairs three and four add the
   two diagonals.
 - `Voxel Proxy Lighting`: contribution authority for admitted voxel-proxy
-  radiance. Zero leaves only the screen-depth DDA/march providers.
+  radiance, with fine drag adjustment and +/- steps of `0.001`. Zero leaves
+  only the screen-depth DDA/march providers. Its range and default are preserved.
+- `Surface Depth Agreement`: fine drag adjustment and +/- steps of `0.00001`,
+  with the existing `0.0001-0.0500` range and default. This is a depth tolerance:
+  lower means stricter neighbor rejection. It does not change ray-hit admission
+  or directly multiply lighting strength. Larger tolerances admit more
+  neighboring light in both reconstruction passes and edge fill, which can
+  brighten dark receivers and soften boundaries.
 - `Voxel Trace Steps`: `4-32` ray samples per scheduled direction.
   This effect sets the shared ray-builder/DDA step limit to 32 so the full
   voxel step range stays within the configured transport distance. Transport
@@ -176,6 +187,41 @@ validation. CPU success is not a native compiler pass.
   Surface Thickness`: shared ray controls.
 - `Fidelity Guard` and `Overdrive`: post-reconstruction intent controls.
 - `Maximum Added Light`: unchanged hard per-channel ceiling.
+
+### Depth agreement investigation
+
+The reported clearer image at minimum tolerance is consistent with stricter
+rejection of different-depth neighbors. The resolve color is a normalized
+weighted mean; the Alpha visible confidence also depends on the admitted
+neighbors' evidence. Bright, high-evidence neighbors can therefore raise both
+resolved color and confidence as tolerance increases. Edge fill can add a
+further positive deficit from newly admitted neighbors.
+
+A CPU experiment executed the actual resolve and Alpha confidence functions,
+with Edge Ink at zero, center color `0.05` / evidence `0.2`, and two neighbor
+colors `0.8` / evidence `1.0` at depth difference `0.0004`. Normals agreed and
+all guides were valid. Before Strength, render intent, edge fill, or ceilings:
+
+| Depth tolerance | Resolved color × visible confidence |
+| --- | --- |
+| 0.0001 | 0.010000 |
+| 0.0005 | 0.141659 |
+| 0.0050 | 0.388541 |
+
+With constant color `0.4` and evidence `0.8` in all three samples, that signal
+remained `0.32` across six tolerances from `0.0001` to `0.05`. This demonstrates
+neighbor admission as a possible source of large brightness changes, rather
+than an unconditional gain from the tolerance itself. It is a synthetic CPU
+fixture, not proof of the exact cause in Elden Ring or an in-game visual test.
+This update changes only the three control annotations; it preserves lighting
+math, source preservation, and contribution bounds.
+
+ReShade's [control documentation](https://github.com/crosire/reshade-shaders/blob/slim/REFERENCE.md)
+supports drag controls and `ui_step`. Its
+[runtime UI](https://github.com/crosire/reshade/blob/main/source/runtime_gui.cpp)
+derives displayed decimal precision from that step. Fine dragging avoids
+compressing the useful low range into a short section of a full-range slider;
+Ctrl-click allows direct numeric entry.
 
 ## Diagnostics
 

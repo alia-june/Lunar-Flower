@@ -9,6 +9,12 @@ archive that failed with X3570/X3511 in ReShade. It contains exactly one Alpha
 Native compilation, visual acceptance and GPU performance
 are still pending for this candidate. It is on the review branch, not main.
 
+Fine tuning update: Indirect Light Strength and Voxel Proxy Lighting use drag
+controls with `0.001` steps; Surface Depth Agreement uses `0.00001` steps.
+For 10-30% nominal strength, use `0.100-0.300`. Existing preset values, ranges,
+defaults and lighting math are preserved. The included README records the
+depth-agreement brightness investigation and its CPU-only limits.
+
 1. Close the game and extract the ZIP outside ReShade's shader search folders.
 2. Merge only its `reshade-shaders` directory into the existing game installation.
    The extracted folder also contains the backup-preserving repair tool; see its
@@ -22,7 +28,7 @@ shader search path. The ZIP already includes the complete selected build.
 SHA-256:
 
 ```text
-8ec9d6834574ac7d3a3e0c601690efc629f5ec53ee68c35a69152cdae8e22cad
+57a2ee5ed83494564eebcbd204ac32619d19a3c94e2b8faf9ab849c2d64369fa
 ```
 
 The adjacent `.zip.sha256` file records the same archive checksum. It verifies
