@@ -82,15 +82,27 @@ resources.
 
 ## Other Controls
 
-- `Indirect Light Strength` scales admitted reconstructed light.
+- `Indirect Light Strength` scales admitted reconstructed light, with a fine
+  drag control and `0.001` steps (0.1 percentage point of nominal strength).
+  For 10-30% nominal strength, use `0.100-0.300`.
 - `Maximum Added Light` is the hard per-channel addition ceiling.
 - transport controls set ray reach, depth slope, front bias, and back
   thickness.
 - reconstruction controls set depth, surface-direction, and edge agreement.
+  `Surface Depth Agreement` uses a fine drag control with `0.00001` steps.
+  Lower values reject differing-depth neighbors more strictly; higher values
+  can admit more neighboring light and soften boundaries.
 - `Edge Ink Strength` restores optional contour-heavy styling.
 - `Edge Fill Strength` and `Edge Fill Radius` repair positive indirect-light
   deficits using four same-surface taps. Edge Fill never samples or blurs the
   source image.
+
+These two UI annotations were backported from the accepted Alpha controls.
+Ctrl-click permits direct numeric entry. Existing uniform names, ranges,
+defaults, preset scales, shader functions and shared includes are preserved.
+`LINEAGE.json` retains the original source hash and records the exact annotation
+edits; publication validation reverses those edits before the historical rename
+check. Native UI and visual acceptance for this backport still require ReShade.
 
 ## Diagnostics
 

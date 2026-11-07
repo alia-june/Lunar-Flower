@@ -1,0 +1,23 @@
+{
+  "source_effect": "CAMERA_OBSCURA_TwinLantern.fx",
+  "source_effect_sha256": "EDFCD56CC25EC18C375CB716ADF7253340D5BBEDCAF70E7753DD0F243C7A0F9E",
+  "source_revision": "8f79d1f14641ca57806f3600e2a9b1d7fd342893",
+  "shared_api_and_header_change": "none",
+  "ui_annotation_backport": {
+    "date": "2026-11-07",
+    "origin": "Alpha fine controls, commit 8f79d1f",
+    "scope": "Strength and Surface Depth Agreement UI only; preset names, scales, ranges, defaults and shader functions unchanged",
+    "annotations": [
+      {
+        "uniform": "CAMERA_OBSCURA_TwinLanternStrength",
+        "before": "< ui_type = \"slider\"; ui_category = \"Camera Obscura / Twin Lantern / 01 Light\"; ui_label = \"Indirect Light Strength\"; ui_min = 0.00; ui_max = 4.00; ui_step = 0.01; ui_tooltip = \"Scales admitted indirect light after transport normalization and reconstruction evidence.\\nZero returns the source image exactly.\"; >",
+        "after": "< ui_type = \"drag\"; ui_category = \"Camera Obscura / Twin Lantern / 01 Light\"; ui_label = \"Indirect Light Strength\"; ui_min = 0.00; ui_max = 4.00; ui_step = 0.001; ui_tooltip = \"Scales admitted indirect light after transport normalization and reconstruction evidence.\\nFine adjustment: 0.001 per step (0.1 percentage point of nominal strength).\\nFor 10-30% strength, use 0.100-0.300; zero returns the source image exactly.\"; >"
+      },
+      {
+        "uniform": "CAMERA_OBSCURA_TwinLanternDepthTolerance",
+        "before": "< ui_type = \"slider\"; ui_category = \"Camera Obscura / Twin Lantern / 91 Reconstruction\"; ui_label = \"Surface Depth Agreement\"; ui_min = 0.0001; ui_max = 0.0500; ui_step = 0.0001; ui_tooltip = \"Maximum depth disagreement admitted during reconstruction.\\nLower values protect boundaries more strictly.\"; >",
+        "after": "< ui_type = \"drag\"; ui_category = \"Camera Obscura / Twin Lantern / 91 Reconstruction\"; ui_label = \"Surface Depth Agreement\"; ui_min = 0.0001; ui_max = 0.0500; ui_step = 0.00001; ui_tooltip = \"Maximum depth disagreement admitted during reconstruction and edge fill.\\nLower values reject differing-depth neighbors more strictly; higher values admit more neighboring light and may brighten or soften boundaries.\\nFine adjustment: 0.00001 per step; this is a depth tolerance, not a light strength.\"; >"
+      }
+    ]
+  }
+}

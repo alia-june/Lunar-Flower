@@ -1,4 +1,24 @@
-# Alpha performance candidate download
+# Twin Lanterns downloads
+
+## Stable and Fidelity fine controls
+
+| Build | Single-effect package |
+| --- | --- |
+| Stable 1.4 | [Download ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Stable-1.4-fine-controls.zip) |
+| Fidelity Overdrive | [Download ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Fidelity-Overdrive-fine-controls.zip) |
+
+Each ZIP contains exactly one effect, its matching includes, README, license
+and lineage records. Merge the selected package's `reshade-shaders` folder
+into the game installation; retain its known-good `ReShade.fxh`. Install one
+selected build. The backport changes only Strength and Depth Agreement UI
+annotations, with `0.001` and `0.00001` fine drag steps respectively. Names,
+defaults, ranges, preset scales and rendering math are preserved.
+
+The adjacent `.zip.sha256` files identify the archives. These packages are
+on the review branch. CPU/source validation does not establish a fresh native
+ReShade compile or visual acceptance of either backport.
+
+## Alpha performance candidate
 
 [Download the single-effect ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Alpha-performance-candidate.zip).
 

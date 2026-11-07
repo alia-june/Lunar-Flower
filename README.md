@@ -42,6 +42,11 @@ that imagery is not included in the repository's MIT software grant.
 Overdrive and Full Resolution Dual Ray Alpha are staged beside it rather than
 replacing it.
 
+All three builds now carry the accepted fine Strength (`0.001`) and Surface
+Depth Agreement (`0.00001`) drag controls. Stable and Fidelity received only
+those UI changes; their implementations and preset values remain intact.
+Single-effect packages are available in [downloads](downloads/).
+
 ## Public API
 
 Twin Lanterns now publishes its ReShade FX include contract as

@@ -65,6 +65,19 @@ uniform identifiers.
 Edge Ink defaults to `0.00`. Edge Fill defaults to `0.20` at a `2.00` pixel
 radius.
 
+The accepted Alpha fine controls are backported as UI-only changes:
+`Indirect Light Strength` uses a drag control with `0.001` steps (0.1 percentage
+point of nominal strength), and `Surface Depth Agreement` uses `0.00001` steps.
+For 10-30% nominal strength, use `0.100-0.300`; Ctrl-click permits numeric entry.
+Depth agreement is a tolerance: lower rejects differing-depth neighbors more
+strictly; higher can admit more neighboring light and soften boundaries.
+
+Uniform names, ranges, defaults, preset scales, shader functions and shared
+includes are preserved. [LINEAGE.json](LINEAGE.json) records the exact annotation
+changes and original source hash; publication validation reverses only those
+annotations and verifies byte identity with the original baseline. Native UI
+and visual acceptance for this backport still require ReShade.
+
 ## Live Check
 
 Use a fixed frame with fine geometry and depth boundaries:

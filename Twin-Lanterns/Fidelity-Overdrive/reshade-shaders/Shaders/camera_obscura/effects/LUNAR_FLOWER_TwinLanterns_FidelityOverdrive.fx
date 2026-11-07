@@ -8,7 +8,7 @@ uniform bool LUNAR_FLOWER_TwinLanternsEnabled
 < ui_type = "checkbox"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Enable Indirect Light"; ui_tooltip = "Applies bounded reconstructed indirect light.\nOff returns the source image exactly while diagnostics remain available."; > = true;
 
 uniform float LUNAR_FLOWER_TwinLanternsStrength
-< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Indirect Light Strength"; ui_min = 0.00; ui_max = 4.00; ui_step = 0.01; ui_tooltip = "Scales admitted indirect light after transport normalization and reconstruction evidence.\nZero returns the source image exactly."; > = 1.00;
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Indirect Light Strength"; ui_min = 0.00; ui_max = 4.00; ui_step = 0.001; ui_tooltip = "Scales admitted indirect light after transport normalization and reconstruction evidence.\nFine adjustment: 0.001 per step (0.1 percentage point of nominal strength).\nFor 10-30% strength, use 0.100-0.300; zero returns the source image exactly."; > = 1.00;
 
 uniform float LUNAR_FLOWER_TwinLanternsMaximumContribution
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Maximum Added Light"; ui_min = 0.00; ui_max = 0.50; ui_step = 0.005; ui_tooltip = "Hard per-channel ceiling for added normalized SDR light.\nThe result is also limited by the remaining room in each source channel."; > = 0.20;
@@ -26,7 +26,7 @@ uniform float LUNAR_FLOWER_TwinLanternsBackThickness
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Back Surface Thickness"; ui_min = 0.0000; ui_max = 0.0200; ui_step = 0.0001; ui_tooltip = "Extends the accepted hit interval behind the ray.\nLarger values admit thicker surfaces but can increase leakage."; > = 0.0035;
 
 uniform float LUNAR_FLOWER_TwinLanternsDepthTolerance
-< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 91 Reconstruction"; ui_label = "Surface Depth Agreement"; ui_min = 0.0001; ui_max = 0.0500; ui_step = 0.0001; ui_tooltip = "Maximum depth disagreement admitted during reconstruction.\nLower values protect boundaries more strictly."; > = 0.0050;
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 91 Reconstruction"; ui_label = "Surface Depth Agreement"; ui_min = 0.0001; ui_max = 0.0500; ui_step = 0.00001; ui_tooltip = "Maximum depth disagreement admitted during reconstruction and edge fill.\nLower values reject differing-depth neighbors more strictly; higher values admit more neighboring light and may brighten or soften boundaries.\nFine adjustment: 0.00001 per step; this is a depth tolerance, not a light strength."; > = 0.0050;
 
 uniform float LUNAR_FLOWER_TwinLanternsNormalMinimum
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 91 Reconstruction"; ui_label = "Surface Direction Agreement"; ui_min = 0.00; ui_max = 0.99; ui_step = 0.01; ui_tooltip = "Minimum agreement between reconstructed surface directions.\nHigher values preserve edges but may reduce support."; > = 0.80;
