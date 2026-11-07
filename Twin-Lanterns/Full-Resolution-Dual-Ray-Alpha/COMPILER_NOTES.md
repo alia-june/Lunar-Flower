@@ -48,3 +48,12 @@ can back up duplicate/obsolete files in the standard shader tree.
 The corrected candidate has source and CPU checks. FXC/ReShade native compilation
 and GPU performance were not executed in this Linux environment; no fresh native
 pass is claimed until a corresponding result is available.
+
+## Supplied historical compiler evidence
+
+The November 7 upload includes a hash-matched offline compiler report for the
+older `a07c3ee` Alpha and historical Stable/Fidelity sources. It reports DXBC
+entry compilation with warnings. Source comparisons and evidence limits are
+recorded in the [uploaded-build review](reviews/2026-11-07-uploaded-build/REVIEW.md).
+That report is preserved separately and does not certify compilation of this
+later adaptive/explicit-LOD candidate.

@@ -160,6 +160,11 @@ loop call graphs and refuses this known implicit-gradient pattern. See
 [compiler investigation](COMPILER_NOTES.md) for the evidence and remaining native
 validation. CPU success is not a native compiler pass.
 
+The [November 7 uploaded-build review](reviews/2026-11-07-uploaded-build/REVIEW.md)
+identifies the earlier fixed-grid source, preserves its supplied offline
+compiler evidence, and compares three voxel failure cases against current code.
+The uploaded shaders are not replacements for the current adaptive build.
+
 ## Controls
 
 - `Indirect Light Strength`: fine drag adjustment and +/- steps of `0.001`
