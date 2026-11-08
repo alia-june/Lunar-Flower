@@ -24,7 +24,7 @@ uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthSlope
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Ray Depth Slope"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.01; ui_tooltip = "Controls how quickly transport rays move through screen depth.\nHigher values search more aggressively across depth."; > = 0.16;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias
-< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Front Surface Bias"; ui_min = 0.0000; ui_max = 0.0100; ui_step = 0.0001; ui_tooltip = "Moves the accepted hit interval slightly toward the camera.\nUse only enough bias to avoid self-intersection."; > = 0.0005;
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Front Surface Bias"; ui_min = 0.0000; ui_max = 0.0100; ui_step = 0.000001; ui_tooltip = "Front-side hit tolerance in normalized linear depth; this does not offset the ray origin.\nLarger values admit surfaces farther in front of the ray and also widen confidence weighting; they may increase light carry.\nFine adjustment: 0.000001 per step. Zero is valid; pixel-distance self-hit rejection is separate."; > = 0.0005;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBackThickness
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Back Surface Thickness"; ui_min = 0.0000; ui_max = 0.0200; ui_step = 0.0001; ui_tooltip = "Extends the accepted hit interval behind the ray.\nLarger values admit thicker surfaces but can increase leakage."; > = 0.0035;

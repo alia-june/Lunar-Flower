@@ -110,3 +110,12 @@ updates; baseline evidence cannot validate changed bytes.
 Local runtimes, caches, state databases, source snapshots and generated
 packages are intentionally not committed into the shader repository. This
 setup did not publish or change the reusable cloud environment configuration.
+
+## Subsequent shader experiment
+
+The [Front Bias precision run](experiments/front-bias-precision.json) used a
+separate non-overwriting batch at
+`/workspace/shader-mill/batches/twin-lanterns-front-bias-2026-11-08`.
+It retains the source freeze, working candidate, actual-function CPU probe,
+check logs, package identity and controller receipts for the Alpha control
+update. Native compilation remains blocked and live testing pending.

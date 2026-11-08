@@ -35,6 +35,11 @@ For 10-30% nominal strength, use `0.100-0.300`. Existing preset values, ranges,
 defaults and lighting math are preserved. The included README records the
 depth-agreement brightness investigation and its CPU-only limits.
 
+Alpha Front Surface Bias now has `0.000001` drag steps (100× finer). Exact zero
+and stored preset values remain unchanged. The tooltip and included
+`FRONT_BIAS_NOTES.md` explain normalized-depth admission and confidence weighting;
+this control does not move the ray origin or replace pixel self-hit rejection.
+
 1. Close the game and extract the ZIP outside ReShade's shader search folders.
 2. Merge only its `reshade-shaders` directory into the existing game installation.
    The extracted folder also contains the backup-preserving repair tool; see its
@@ -48,7 +53,7 @@ shader search path. The ZIP already includes the complete selected build.
 SHA-256:
 
 ```text
-57a2ee5ed83494564eebcbd204ac32619d19a3c94e2b8faf9ab849c2d64369fa
+8c0dd96ed38d6c990667de7f32dc6beb76737670223869499d5aac7b41d84a76
 ```
 
 The adjacent `.zip.sha256` file records the same archive checksum. It verifies

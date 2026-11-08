@@ -24,6 +24,7 @@ def package(output: Path) -> None:
         "ADAPTIVE_PROXY_RESEARCH.md": BUILD / "ADAPTIVE_PROXY_RESEARCH.md",
         "PERFORMANCE_NOTES.md": BUILD / "PERFORMANCE_NOTES.md",
         "COMPILER_NOTES.md": BUILD / "COMPILER_NOTES.md",
+        "FRONT_BIAS_NOTES.md": BUILD / "FRONT_BIAS_NOTES.md",
         "tools/install_twin_lantern_alpha.py": ROOT / "tools/install_twin_lantern_alpha.py",
     })
     effects = [name for name in payload if name.endswith(".fx")]

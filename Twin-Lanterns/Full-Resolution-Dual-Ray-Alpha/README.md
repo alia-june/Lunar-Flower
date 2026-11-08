@@ -167,6 +167,10 @@ The uploaded shaders are not replacements for the current adaptive build.
 
 ## Controls
 
+- `Front Surface Bias`: fine drag adjustment in `0.000001` normalized-depth
+  steps (100× finer). Zero is valid; positive values widen front-side hit
+  admission and confidence weighting. See [Front Bias investigation](FRONT_BIAS_NOTES.md).
+
 - `Indirect Light Strength`: fine drag adjustment and +/- steps of `0.001`
   (0.1 percentage point of nominal strength). The reported 10-30% tuning range
   is `0.100-0.300`; `1.000` is nominal 100%, not the slider maximum. The full
