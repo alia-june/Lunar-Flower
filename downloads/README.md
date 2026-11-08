@@ -18,7 +18,7 @@ The adjacent `.zip.sha256` files identify the archives. These packages are
 on the review branch. CPU/source validation does not establish a fresh native
 ReShade compile or visual acceptance of either backport.
 
-## Alpha performance candidate
+## Crystal Spider - Beta
 
 The Alpha defaults now match all 24 Twin Lanterns values in the corrected
 user-supplied `Lazara.ini` section. Seven defaults changed: Strength `0.272`,
@@ -33,14 +33,18 @@ provided preset. Zero still disables fade or softening. The fade scales final
 bounded contribution, and the source image is not blurred. Native compile/live
 acceptance remain separate from source, CPU and package checks.
 
-[Download the single-effect ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Alpha-performance-candidate.zip).
+[Download Crystal Spider - Beta](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip).
+
+This is the download name for the existing Twin Lanterns Alpha package.
+Only the archive name changed; its contents, shader identity and saved preset
+compatibility are unchanged.
 
 This package contains the corrected performance candidate, with explicit-LOD
 ray sampling and versioned adaptive atlas resources. It replaces the earlier
 archive that failed with X3570/X3511 in ReShade. It contains exactly one Alpha
 `.fx` file, its required includes, installation repair tool and compiler notes.
 Native compilation, visual acceptance and GPU performance
-are still pending for this candidate. It is on the review branch, not main.
+are still pending for this candidate. The package is available on `main`.
 
 Fine tuning update: Indirect Light Strength and Voxel Proxy Lighting use drag
 controls with `0.001` steps; Surface Depth Agreement uses `0.00001` steps.
