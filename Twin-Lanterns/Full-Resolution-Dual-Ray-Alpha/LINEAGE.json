@@ -9,11 +9,18 @@
   "generated_changes": [
     "full-resolution raw and separable resolve fields",
     "one to four opposing ray pairs",
-    "64 x 36 x 32 current-frame view-frustum voxel-radiance proxy",
+    "initial 64 x 36 x 32 current-frame proxy (superseded by the adaptive surface hierarchy)",
     "compute voxel-build pass and voxel diagnostics",
     "distinct public effect and technique identity",
     "Alpha-local screen surface guide and donor weighting contour correction candidate",
-    "Alpha-local screen refinement self-hit/depth guards and selected-hit confidence correction"
+    "Alpha-local screen refinement self-hit/depth guards and selected-hit confidence correction",
+    "bounded adaptive surface hierarchy replaces uniform 32-bin proxy; fine depth/color validation and detail diagnostic",
+    "inactive-build/source-only guards and receiver-guide reuse at full resolution",
+    "explicit base-LOD Alpha donor sampling and versioned adaptive atlas resource identity",
+    "Front Bias UI-only precision and tooltip correction; normalized-depth scale, preset values and ray math preserved",
+    "receiver-depth fade and premultiplied, surface-gated indirect-light softening after edge fill; appended mask diagnostic; no new textures or passes",
+    "fade/softening defaults off and explicit label; fade final bounded contribution after caps with updated diagnostics; preserve stored values",
+    "Alpha-only uniform defaults copied exactly from corrected user Lazara.ini: 24 matched values, seven changed initializers; shader functions and other effects preserved"
   ],
   "representation_boundary": "camera-visible depth shell only; not world voxels, hidden geometry, off-screen geometry, or complete GI",
   "pending": [

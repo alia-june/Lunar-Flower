@@ -1,0 +1,52 @@
+{
+  "schema": "lunar-flower-mill-experiment-v1",
+  "experiment": "front-bias-precision",
+  "date": "2026-11-08",
+  "source_revision": "baddf3bd25a7cd7ca8cbaa6eb00cb0c2ec4d1889",
+  "batch_path": "/workspace/shader-mill/batches/twin-lanterns-front-bias-2026-11-08",
+  "user_image_labels": [
+    "0",
+    "0.0001"
+  ],
+  "change_scope": "Alpha Front Bias annotation-only precision and tooltip correction; documentation and package inclusion",
+  "uniform_name_range_default_and_stored_values_preserved": true,
+  "shader_function_changes": false,
+  "step_before": 0.0001,
+  "step_after": 1e-06,
+  "checks": {
+    "structural_passed": 51,
+    "regression_passed": 15,
+    "historical_voxel_comparisons_passed": 3,
+    "front_bias_probe": "PASS: zero retained, independent self-exclusion retained, front-side admission threshold reproduced"
+  },
+  "probe_log_path": "/workspace/shader-mill/batches/twin-lanterns-front-bias-2026-11-08/evidence/static/front-bias-probe.log",
+  "probe_log_sha256": "bb86cfa62a08df00f9f575ea208ed2836de9aa321e938ac1267dfb9b73f88866",
+  "package": {
+    "result": "PASS",
+    "scope": "Archive integrity and source-byte identity only",
+    "path": "package/Twin-Lanterns-Alpha-bias-precision-001.zip",
+    "sha256": "8c0dd96ed38d6c990667de7f32dc6beb76737670223869499d5aac7b41d84a76",
+    "effect_count": 1,
+    "matching_shader_include_count": 11
+  },
+  "gates": {
+    "source_freeze": "PASS",
+    "candidate": "PASS",
+    "static": "PASS",
+    "compiler": "BLOCKED",
+    "package": "PASS",
+    "live": "PENDING"
+  },
+  "decision": "HOLD",
+  "final_verification": {
+    "batch_path": "/workspace/shader-mill/batches/twin-lanterns-front-bias-2026-11-08",
+    "evidence_boundary": "PASS proves factory structure and internal consistency only.",
+    "failures": [],
+    "gate_logic_pass": true,
+    "manifest_pass": true,
+    "result": "PASS",
+    "structure_pass": true
+  },
+  "native_compile_performed": false,
+  "live_visual_acceptance_performed": false
+}

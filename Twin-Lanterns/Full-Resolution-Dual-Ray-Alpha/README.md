@@ -11,18 +11,26 @@ contracts while changing the transport representation:
   scheduled rays per pixel;
 - every scheduled direction retains the independent DDA and parametric-march
   providers;
-- a compute pass builds a `64 x 36 x 32` current-frame view-frustum
-  voxel-radiance proxy from visible color and depth;
+- a compute pass builds an adaptive current-frame camera-visible surface
+  proxy, with `64 x 36` root tiles and up to two subdivision levels;
 - each ray may admit proxy radiance under an independent strength and trace
   budget before the existing surface reconstruction and hard composite bounds.
 
 ## Truth Boundary
 
-The voxel field is a **camera-visible view-frustum proxy**. It contains one
-depth-derived occupied cell per proxy column and the color visible at that
-screen location in the current frame. It is not world voxelization, does not
-contain hidden or off-screen geometry, and does not create multi-bounce or
-physically complete global illumination.
+The voxel interface now uses a **bounded adaptive screen/depth surface proxy**.
+Tiles split on sampled depth or color variation, up to two levels. A
+`64 x 36 x 21` atlas stores a root, four children and sixteen grandchildren per
+tile. Z indexes tree nodes rather than 32 uniform depth slices. This is not
+world voxelization, a world-space octree or a general sparse-volume allocator.
+It contains only current camera-visible evidence and does not recover hidden
+or off-screen geometry or create multi-bounce/physically complete GI.
+
+Final lighting validates depth and fetches color at the full-resolution ray
+sample. Nodes store sampled depth bounds and coverage, not coarse RGB. This
+targets the large square patches reported at high voxel strength.
+Read the [online research and implementation rationale](ADAPTIVE_PROXY_RESEARCH.md)
+for the source basis, limits and proposed GPU acceptance checks.
 
 This candidate requires ReShade compute shaders, 3D textures, and `storage3D`.
 It therefore excludes D3D9 and D3D10 paths that cannot execute the compute
@@ -53,8 +61,8 @@ Lunar Flower - Twin Lanterns: Full Resolution Dual Ray Alpha
 
 ## Five-Pass Graph
 
-1. **Voxel Build** writes the current visible depth shell and radiance into the
-   `64 x 36 x 32` `RGBA16F` proxy.
+1. **Voxel Build** clears the bounded node atlas and subdivides detected depth,
+   coverage or color changes. Uniform areas stay coarse.
 2. **Transport** casts the selected opposing ray pairs at full resolution. Each
    direction evaluates DDA, parametric march, and the voxel proxy, then merges
    only admitted evidence.
@@ -117,8 +125,10 @@ remain pending for this revision.
 ## Resource And Cost Envelope
 
 Each full-resolution `RGBA16F` working field uses eight bytes per output pixel;
-the candidate allocates three. The `64 x 36 x 32` voxel proxy adds approximately
-`0.56 MiB` before runtime overhead.
+the candidate allocates three. The adaptive `64 x 36 x 21` `RGBA32F` proxy adds
+approximately `0.74 MiB` before runtime overhead, compared with `0.56 MiB` for
+the previous uniform volume. Leaf depth is stored directly, without 32-bin
+quantization.
 
 | Output resolution | One working field | Three working fields |
 |---:|---:|---:|
@@ -127,16 +137,74 @@ the candidate allocates three. The `64 x 36 x 32` voxel proxy adds approximately
 
 Transport cost also scales with pair count. Every direction evaluates DDA,
 parametric march, and up to the configured voxel trace steps. These figures are
-resource arithmetic, not measured GPU frame time.
+resource arithmetic, not measured GPU frame time. The compute pass assigns one
+thread per root tile. Each root samples five points; additional nodes are sampled
+only when a parent splits. At most 21 nodes are built per root. All child records
+are cleared every frame, so collapsing a tree does not leave stale occupancy.
+The worst case performs more build sampling than a uniform scene; adaptive does
+not guarantee a frame-time improvement. At voxel strength zero, per-ray voxel
+tracing and building are skipped in Final Image view. The build still runs when
+voxel diagnostics require it. Source Image, or disabled/zero-strength Final
+Image, bypasses lighting calculations while retaining the technique's declared
+passes and full-resolution targets. Receiver guides are reused across directions
+and final reconstruction. See [performance investigation](PERFORMANCE_NOTES.md)
+for verified source-level savings and the in-game timing comparison still needed.
+
+### Native compiler follow-up
+
+A reported native compile failed with X3570/X3511 because the varying ray loops
+could reach the shared implicit-gradient color loader. Alpha donor reads now use
+explicit base-LOD sampling, and the adaptive atlas has the distinct
+`LUNAR_FLOWER_TLAdaptiveAtlasV1*` resource identity. Packaging audits the active
+loop call graphs and refuses this known implicit-gradient pattern. See
+[compiler investigation](COMPILER_NOTES.md) for the evidence and remaining native
+validation. CPU success is not a native compiler pass.
+
+The [November 7 uploaded-build review](reviews/2026-11-07-uploaded-build/REVIEW.md)
+identifies the earlier fixed-grid source, preserves its supplied offline
+compiler evidence, and compares three voxel failure cases against current code.
+The uploaded shaders are not replacements for the current adaptive build.
 
 ## Controls
 
-- `Opposing Ray Pairs`: `1-4` pairs (`2-8` rays). Two pairs use the original
+Defaults now match all 24 values in the user-supplied `Lazara.ini` Twin Lanterns
+section. [DEFAULTS_FROM_PRESET.json](DEFAULTS_FROM_PRESET.json) records the exact
+values and provenance. Seven initializers changed: Strength `0.272`, Front Bias
+`0.000052`, Ray Pairs `1`, Voxel Lighting `1`, Voxel Steps `24`, Fade `0.355`,
+and Softening `1`. Other effects and shader functions are unchanged. Existing
+presets retain their own stored values; these apply to new/reset Alpha controls.
+
+- `Depth Fade Amount (0 = Off)`, `Depth Fade Start`, and `Depth Fade End`: fade only added
+  light with receiver depth. `Depth Fade Mask` shows white where light is kept
+  and black where removed (invalid depth is black).
+- Fade amount defaults to `0.355` and softening to `1.000`, as selected by the
+  user preset. Either can still be disabled with zero; saved values are retained.
+- `Distant Light Softening` and `Light Softening Radius`: soften only the
+  indirect-light field with depth/normal/coverage-gated neighbors.
+  See [depth shaping and tuning](DEPTH_SHAPING_NOTES.md) for defaults, bypass,
+  costs and the full-stack limitation.
+
+- `Front Surface Bias`: fine drag adjustment in `0.000001` normalized-depth
+  steps (100× finer). Zero is valid; positive values widen front-side hit
+  admission and confidence weighting. See [Front Bias investigation](FRONT_BIAS_NOTES.md).
+
+- `Indirect Light Strength`: fine drag adjustment and +/- steps of `0.001`
+  (0.1 percentage point of nominal strength). The reported 10-30% tuning range
+  is `0.100-0.300`; `1.000` is nominal 100%, not the slider maximum. The full
+  `0-4` range, uniform name and preset scale are preserved; the default is `0.272`.
+- `Opposing Ray Pairs`: `1-4` pairs (`2-8` rays), default `1`. Two pairs use the original
   east/west and north/south cardinal schedule; pairs three and four add the
   two diagonals.
 - `Voxel Proxy Lighting`: contribution authority for admitted voxel-proxy
-  radiance. Zero leaves only the screen-depth DDA/march providers.
-- `Voxel Trace Steps`: `4-32` proxy cells tested per scheduled direction.
+  radiance, with fine drag adjustment and +/- steps of `0.001`. Zero leaves
+  only the screen-depth DDA/march providers. The range is preserved; default is `1.000`.
+- `Surface Depth Agreement`: fine drag adjustment and +/- steps of `0.00001`,
+  with the existing `0.0001-0.0500` range and default. This is a depth tolerance:
+  lower means stricter neighbor rejection. It does not change ray-hit admission
+  or directly multiply lighting strength. Larger tolerances admit more
+  neighboring light in both reconstruction passes and edge fill, which can
+  brighten dark receivers and soften boundaries.
+- `Voxel Trace Steps`: `4-32` ray samples per scheduled direction, default `24`.
   This effect sets the shared ray-builder/DDA step limit to 32 so the full
   voxel step range stays within the configured transport distance. Transport
   Distance remains `4-24` pixels; more steps increase sampling density rather
@@ -146,16 +214,56 @@ resource arithmetic, not measured GPU frame time.
 - `Fidelity Guard` and `Overdrive`: post-reconstruction intent controls.
 - `Maximum Added Light`: unchanged hard per-channel ceiling.
 
+### Depth agreement investigation
+
+The reported clearer image at minimum tolerance is consistent with stricter
+rejection of different-depth neighbors. The resolve color is a normalized
+weighted mean; the Alpha visible confidence also depends on the admitted
+neighbors' evidence. Bright, high-evidence neighbors can therefore raise both
+resolved color and confidence as tolerance increases. Edge fill can add a
+further positive deficit from newly admitted neighbors.
+
+A CPU experiment executed the actual resolve and Alpha confidence functions,
+with Edge Ink at zero, center color `0.05` / evidence `0.2`, and two neighbor
+colors `0.8` / evidence `1.0` at depth difference `0.0004`. Normals agreed and
+all guides were valid. Before Strength, render intent, edge fill, or ceilings:
+
+| Depth tolerance | Resolved color × visible confidence |
+| --- | --- |
+| 0.0001 | 0.010000 |
+| 0.0005 | 0.141659 |
+| 0.0050 | 0.388541 |
+
+With constant color `0.4` and evidence `0.8` in all three samples, that signal
+remained `0.32` across six tolerances from `0.0001` to `0.05`. This demonstrates
+neighbor admission as a possible source of large brightness changes, rather
+than an unconditional gain from the tolerance itself. It is a synthetic CPU
+fixture, not proof of the exact cause in Elden Ring or an in-game visual test.
+This update changes only the three control annotations; it preserves lighting
+math, source preservation, and contribution bounds.
+
+ReShade's [control documentation](https://github.com/crosire/reshade-shaders/blob/slim/REFERENCE.md)
+supports drag controls and `ui_step`. Its
+[runtime UI](https://github.com/crosire/reshade/blob/main/source/runtime_gui.cpp)
+derives displayed decimal precision from that step. Fine dragging avoids
+compressing the useful low range into a short section of a full-range slider;
+Ctrl-click allows direct numeric entry.
+
 ## Diagnostics
 
 The candidate retains all Fidelity Overdrive views and adds:
 
 15. `Voxel Surface Occupancy`
 16. `Voxel Surface Radiance`
+17. `Voxel Detail Level` (heatmap of hierarchy levels `0`, `1`, `2`)
+18. `Depth Fade Mask` (white retains light, black removes it; invalid depth is black)
 
 `Bound Verification` must remain green. The voxel views must show only the
 current camera-visible depth shell; full-volume or off-screen-looking content
 is a rejection condition.
+The radiance diagnostic shows fine-resolution color on proxy-supported surfaces.
+Detail Level should vary with scene complexity. Small features missed by the center/corner
+samples and refinement-level changes under camera motion remain acceptance risks.
 
 ## Public API
 

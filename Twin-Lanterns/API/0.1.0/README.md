@@ -284,13 +284,20 @@ The byte-identical Alpha extension in [`experimental/`](experimental/) exposes:
 - `LUNAR_FLOWER_API_TwinLanternVoxelEvidence`;
 - `LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence`;
 - `LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface`;
-- `LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy`.
+- `LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy`;
+- `LUNAR_FLOWER_API_TwinLanternVoxelDetailLevel`.
 
 It also declares the Alpha's compute kernel, 3D texture, storage view, and
 sampler. Include the shared umbrella first. The extension requires compute and
 `storage3D` support and remains outside the 0.1.0 stability promise.
 
-Its `64 x 36 x 32` field is a current-frame, camera-visible depth shell. It is
+Its `64 x 36 x 21` RGBA32F atlas stores a bounded adaptive current-frame,
+camera-visible depth shell with two subdivision levels. The texture's Z axis
+indexes tree nodes. Record components X/Y store sampled depth bounds, Z stores
+coverage and W stores signed center depth (-1 marks a branch). The old uniform
+depth-bin representation is superseded under this experimental contract. Final
+lighting uses a full-resolution depth-validated donor color, and a separate
+detail-level function exposes selected refinement for diagnostics. It is
 not world voxelization and contains no hidden or off-screen geometry, temporal
 persistence, multi-bounce solution, or complete global illumination.
 

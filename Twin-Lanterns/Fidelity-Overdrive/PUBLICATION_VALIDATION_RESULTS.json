@@ -7,7 +7,7 @@
     {
       "name": "publication_surface_complete",
       "passed": true,
-      "detail": "required files present=10/10"
+      "detail": "required files present=11/11"
     },
     {
       "name": "stable_local_include_closure",
@@ -22,7 +22,7 @@
     {
       "name": "stable_1_4_identity_preserved",
       "passed": true,
-      "detail": "stable public identifiers retained and fidelity/overdrive controls absent"
+      "detail": "stable identifiers retained; undoing two exact recorded UI edits restores the original source hash"
     },
     {
       "name": "fidelity_overdrive_public_identity",
@@ -32,7 +32,7 @@
     {
       "name": "public_refactor_matches_recorded_source",
       "passed": true,
-      "detail": "reverse-mapped source sha256=2A8BB6D7D582344B88AB653385EA4BC059DD1DA50E3964B7CF9CE5D23A313415"
+      "detail": "recorded UI backport verified=True; reverse-mapped historical source sha256=2A8BB6D7D582344B88AB653385EA4BC059DD1DA50E3964B7CF9CE5D23A313415"
     },
     {
       "name": "fidelity_overdrive_diagnostics",

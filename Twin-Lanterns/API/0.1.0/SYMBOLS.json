@@ -4,10 +4,10 @@
   "scope": "all top-level declarations in the eight shared files and experimental voxel extension",
   "summary": {
     "source_files": 9,
-    "macros": 69,
+    "macros": 72,
     "structs": 15,
     "struct_fields": 208,
-    "functions": 60,
+    "functions": 66,
     "resources": 3
   },
   "sources": [
@@ -31,7 +31,22 @@
         },
         {
           "name": "LUNAR_FLOWER_TL_VOXEL_DEPTH",
-          "value": "32",
+          "value": "21",
+          "include_guard": false
+        },
+        {
+          "name": "LUNAR_FLOWER_TL_VOXEL_MAX_LEVEL",
+          "value": "2",
+          "include_guard": false
+        },
+        {
+          "name": "LUNAR_FLOWER_TL_VOXEL_DEPTH_SPLIT",
+          "value": "0.001",
+          "include_guard": false
+        },
+        {
+          "name": "LUNAR_FLOWER_TL_VOXEL_COLOR_SPLIT",
+          "value": "0.08",
           "include_guard": false
         },
         {
@@ -70,14 +85,44 @@
           "parameters": ""
         },
         {
+          "return_type": "float",
+          "name": "LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance",
+          "parameters": "float depth"
+        },
+        {
+          "return_type": "bool",
+          "name": "LUNAR_FLOWER_API_BuildTwinLanternVoxelNode",
+          "parameters": "int2 rootCell, int nodeIndex, float2 minimumUv, float2 sizeUv, int level"
+        },
+        {
+          "return_type": "void",
+          "name": "LUNAR_FLOWER_API_BuildTwinLanternVoxelTile",
+          "parameters": "uint3 id"
+        },
+        {
           "return_type": "void",
           "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS",
           "parameters": "uint3 id : SV_DispatchThreadID"
         },
         {
           "return_type": "float4",
+          "name": "LUNAR_FLOWER_API_LoadTwinLanternVoxelNode",
+          "parameters": "float2 uv, out float level"
+        },
+        {
+          "return_type": "float",
+          "name": "LUNAR_FLOWER_API_TwinLanternVoxelDetailLevel",
+          "parameters": "float2 uv"
+        },
+        {
+          "return_type": "float4",
           "name": "LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface",
           "parameters": "float2 uv"
+        },
+        {
+          "return_type": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",
+          "name": "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver",
+          "parameters": "float2 uv, float directionIndex, float rayLengthPixels, float depthSlope, float frontBias, float backThickness, float requestedSteps, CAMERA_OBSCURA_SurfaceGuide receiver"
         },
         {
           "return_type": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",
@@ -88,15 +133,15 @@
       "resources": [
         {
           "kind": "texture3D",
-          "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex"
+          "name": "LUNAR_FLOWER_TLAdaptiveAtlasV1Tex"
         },
         {
           "kind": "storage3D",
-          "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage"
+          "name": "LUNAR_FLOWER_TLAdaptiveAtlasV1Storage"
         },
         {
           "kind": "sampler3D",
-          "name": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceSampler"
+          "name": "LUNAR_FLOWER_TLAdaptiveAtlasV1Sampler"
         }
       ]
     },

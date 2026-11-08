@@ -1,0 +1,103 @@
+{
+  "schema": "lunar-flower-mill-deployment-v1",
+  "status": "DEPLOYED_LOCAL_WITH_RECORDED_PLATFORM_LIMITATION",
+  "frontdoor": {
+    "repository": "alia-june/this-repository-machine-interface",
+    "commit": "cdebc54cb96a986a69c2880a2b3d98aab4296f47",
+    "routes": [
+      "ai.landing.pad.low-mem.json",
+      "ai.landing.pad.json",
+      "ai.ingress.json",
+      "ai.launch.pad.json",
+      "ai.egress.json",
+      ".ai.system.logic/human.SYSTEMS_DEPLOYMENT.md"
+    ]
+  },
+  "mill": {
+    "repository": "alia-june/xOSG-prototype",
+    "commit": "545dbf47c9ea33c09eb6e97d5536255344001cd5",
+    "root": "/workspace/tooling/xOSG-prototype/mill-factory",
+    "source_modified": false
+  },
+  "runtime": {
+    "version": "7.5.4",
+    "path": "/workspace/tooling/powershell-7.5.4/pwsh",
+    "archive_sha256": "1fd7983fe56ca9e6233f126925edb24bf6b6b33e356b69996d925c4db94e2fef",
+    "cache_policy": "Task-owned XDG paths; HOME preserved"
+  },
+  "shader_source_commit": "5b615ca881a7d360a089f4ee81cdb5f3f8604f3d",
+  "batch_path": "/workspace/shader-mill/batches/twin-lanterns-development-2026-11-08",
+  "controller_test_results": {
+    "creation": {
+      "passed": 12,
+      "failed": 1,
+      "limitation": "Windows case-insensitive root-comparison test fails on Linux; exact-case real batch creation passed. Upstream source unchanged."
+    },
+    "verification": {
+      "passed": 14,
+      "failed": 0
+    },
+    "gate": {
+      "passed": 12,
+      "failed": 0
+    },
+    "factory": {
+      "passed": 10,
+      "failed": 0
+    }
+  },
+  "shader_checks": {
+    "structural_passed": 51,
+    "structural_failed": 0,
+    "regression_tests_passed": 15,
+    "historical_voxel_comparisons_passed": 3,
+    "native_compile_performed": false,
+    "gpu_visual_test_performed": false
+  },
+  "gates": {
+    "source_freeze": "PASS",
+    "candidate": "PASS",
+    "static": "PASS",
+    "compiler": "BLOCKED",
+    "package": "PASS",
+    "live": "PENDING"
+  },
+  "decision": "HOLD",
+  "package": {
+    "result": "PASS",
+    "scope": "Archive integrity and source-byte identity only",
+    "path": "package/Twin-Lanterns-Alpha-baseline-001.zip",
+    "sha256": "e91192dd313ec687c946cee8af29a3d4ae3e3f1bb05cec4281d52a7737b37945",
+    "effect_count": 1,
+    "matching_shader_include_count": 11
+  },
+  "final_batch_verification": {
+    "batch_path": "/workspace/shader-mill/batches/twin-lanterns-development-2026-11-08",
+    "evidence_boundary": "PASS proves factory structure and internal consistency only.",
+    "failures": [],
+    "gate_logic_pass": true,
+    "manifest_pass": true,
+    "result": "PASS",
+    "structure_pass": true
+  },
+  "receipt_sha256": "5cdb24deb6bddef56106a6d6b6d2a5528bcc7b14ef60b5accf50ae263a4355d7",
+  "raw_evidence_root": "/workspace/shader-mill/deployment/evidence",
+  "limits": [
+    "Local deployment only; no network service or automatic promotion",
+    "One upstream Windows case-insensitive path test fails on Linux; exact-case paths exercised successfully",
+    "Native compiler absent; target-game visual/performance testing not performed",
+    "Upstream Mill and frontdoor source trees unchanged; cloud environment configuration not published"
+  ],
+  "tracked_issues": [
+    {
+      "id": "MILL-001",
+      "status": "OPEN",
+      "path": "issues/MILL-001.md",
+      "intended_upstream_repository": "alia-june/xOSG-prototype",
+      "github_issue_created": false,
+      "github_api_result": "Forbidden for GraphQL/REST reads and gh issue create submission",
+      "evidence_log": "issues/MILL-001-creation-controller-tests.log",
+      "evidence_sha256": "c8b6eaa472fd99bff890a7a61b97be4f4e879c1da003a64c3244ad9fa6f07603"
+    }
+  ]
+}

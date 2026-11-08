@@ -1,0 +1,2 @@
+# Preserve the original supplied report's CRLF bytes and recorded checksum.
+RESHADEFX_COMPILE_RESULTS.json -text !eol

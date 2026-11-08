@@ -88,7 +88,7 @@ bounded-composite contracts.
 ```mermaid
 flowchart TD
     A["Back buffer + depth"] --> B["Stable / Fidelity<br/>Pass 1: four cardinal rays<br/>half-resolution raw field"]
-    A --> V["Full Resolution Dual Ray Alpha<br/>Pass 1: build 64 x 36 x 32<br/>view-frustum voxel proxy"]
+    A --> V["Full Resolution Dual Ray Alpha<br/>Pass 1: build adaptive<br/>visible-depth surface hierarchy"]
     V --> R["Pass 2: 1-4 opposing ray pairs<br/>full-resolution raw field"]
     B --> C["Separable surface resolve"]
     R --> C
@@ -121,10 +121,12 @@ current-frame working fields, not temporal history.
 
 ### Voxel proxy boundary
 
-Full Resolution Dual Ray Alpha builds a `64 x 36 x 32` `RGBA16F` 3D texture. Each
-proxy column stores the visible back-buffer color in the depth-quantized cell
-supported by the current depth buffer. Scheduled rays may trace that proxy as
-an additional radiance provider.
+Full Resolution Dual Ray Alpha builds a bounded adaptive visible-depth hierarchy
+with `64 x 36` root tiles and two optional subdivision levels. A `64 x 36 x 21`
+`RGBA32F` atlas stores nodes with signed depth; Z indexes tree nodes rather than
+uniform depth bins. Tiles split on sampled depth/coverage/color changes. Ray
+candidates require full-resolution depth validation and fetch donor color at the
+accepted UV, instead of applying one coarse cell color to the whole tile.
 
 This is **view-frustum voxel lighting**, not world voxelization. It contains no
 hidden or off-screen geometry, does not persist across frames, and makes no
@@ -301,7 +303,7 @@ controls and 12 diagnostic views; Fidelity Overdrive exposes 16 controls and
 `tools/validate_full_resolution_dual_ray_alpha.py` separately confirms the new
 candidate's local include closure, full-resolution fields, variable opposing
 ray schedule, DDA/march parity, voxel storage/build/trace surface, ordered
-five-pass graph, 16 diagnostics, unchanged shared contracts, hard composite
+five-pass graph, 17 diagnostics, unchanged shared contracts, hard composite
 bounds, and absence of temporal resources.
 
 `tools/validate_showcase_and_public_api.py` confirms the three byte-identical

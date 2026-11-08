@@ -1,0 +1,72 @@
+{
+  "source_filename": "Lazara.ini",
+  "source_sha256": "64b4ec0363087f5f0fbe40e38490fa8eb99912474d91273459f28d59ffbc5a12",
+  "source_section": "LUNAR_FLOWER_TwinLanterns_FullResolutionDualRayAlpha.fx",
+  "scope": "Twin Lanterns Full Resolution Dual Ray Alpha only; other preset sections and effects not changed",
+  "matched_uniform_count": 24,
+  "changed_default_count": 7,
+  "defaults": {
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBackThickness": "0.003500",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeEnd": "0.050000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStart": "0.005000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStrength": "0.355000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthSlope": "0.160000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthTolerance": "0.005000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeFillRadiusPixels": "2.000000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeFillStrength": "0.200000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeInkStrength": "0.000000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEdgeProtection": "1.000000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEnabled": "1",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFidelityGuard": "0.650000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias": "0.000052",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSoftening": "1.000000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSofteningRadiusPixels": "2.000000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaMaximumContribution": "0.200000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaNormalMinimum": "0.800000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaOverdrive": "0.000000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayLengthPixels": "24.000000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayPairs": "1",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength": "0.272000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView": "0",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength": "1.000000",
+    "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelTraceSteps": "24"
+  },
+  "changed_defaults": [
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength",
+      "before": "1.00",
+      "after": "0.272000"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStrength",
+      "before": "0.00",
+      "after": "0.355000"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSoftening",
+      "before": "0.00",
+      "after": "1.000000"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias",
+      "before": "0.0005",
+      "after": "0.000052"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayPairs",
+      "before": "2",
+      "after": "1"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength",
+      "before": "0.35",
+      "after": "1.000000"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelTraceSteps",
+      "before": "16",
+      "after": "24"
+    }
+  ],
+  "shader_function_changes": false
+}

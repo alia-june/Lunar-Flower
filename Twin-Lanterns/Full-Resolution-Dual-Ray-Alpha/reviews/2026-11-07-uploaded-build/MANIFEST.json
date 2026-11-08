@@ -1,0 +1,120 @@
+{
+  "schema": "twin-lantern-upload-review-v1",
+  "archive_filename": "Twin-Lanterns-Full-Resolution-Dual-Ray-Alpha-2026-11-07.zip",
+  "archive_sha256": "5412d26905b4609b303ab984d6e9c2c2aac9c2a644f1c3a2f69ba41d8e411c0f",
+  "source_ancestor_commit": "a07c3eed657ead4f4ce3860010bfb8d293193e3e",
+  "current_shader_commit_reviewed": "d44c5e8c4eac6fd37100aac9367444a920b88757",
+  "shader_files": [
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
+      "sha256": "e36a82a2506d3313b54e0e1fb0ba9dde11109c01e02a42177323c744fe1e2378",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": true
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh",
+      "sha256": "24e6c1c4fe58ff1b3d099a9e18957a408e6f4d0d67b0f7470e5fe17c7c834c45",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": true
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternReconstruction.fxh",
+      "sha256": "3cb3606f4aedb02b745d4adced76df6768de2e651a102dc2825d66a457d15170",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": true
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternTransport.fxh",
+      "sha256": "939323e2a04b8b5eeb06f7dd2aab0b64cf283d9d76e637b2266df05f54dc5e13",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": true
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh",
+      "sha256": "582949851df9c49736981be7cb0dfe2c9a512b3327118881b04957402c0b6612",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": false
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/api/LUNAR_FLOWER_TwinLanternScreenSurface.fxh",
+      "sha256": "01ab875373172d1537b9125ecab4271095b6523311c5ceb4f5953cf036bc2b33",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": false
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/effects/LUNAR_FLOWER_TwinLanterns_FullResolutionDualRayAlpha.fx",
+      "sha256": "4e25743652031ab095f53837b9d056cfbc4cb617b6560ea82812606c7ba2b951",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": false
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_AtomicCommon.fxh",
+      "sha256": "caa8e32ba3f84262a605f63b5a24c2758c882d39efd9126bc87fedcc8d9b66e0",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": true
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_AtomicDebug.fxh",
+      "sha256": "68ef49d68c664753375df0410dba34561cec805d3e519ee4290843c4b917527b",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": true
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_EntryCapability.fxh",
+      "sha256": "d2c7a5d0c1040cc8783e76a492f838199bdacc294437b6940f207e8a9a8e885e",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": true
+    },
+    {
+      "path": "reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_EntryTraversal.fxh",
+      "sha256": "53d65015779448b3f092d9c46cffb56b83011550104b6a32e2b9281933f106f3",
+      "exact_ancestor_match": true,
+      "exact_current_source_match": true
+    }
+  ],
+  "supplied_compiler_report": {
+    "filename": "RESHADEFX_COMPILE_RESULTS.json",
+    "sha256": "eee6b457a279c703f480bcc4d729df1f3c8a4f4df5c94c34ba6abeb022119555",
+    "independently_reproduced": false,
+    "entry_count": 16,
+    "successful_entry_count": 16,
+    "entries_with_warnings": 9,
+    "alpha_effect_hash_matches_uploaded_bytes": true,
+    "fidelity_effect_hash_matches_ancestor_bytes": true,
+    "stable_effect_hash_matches_ancestor_with_crlf_line_endings": true,
+    "limits": "External ReShade.fxh, compiler binaries, generated HLSL and DXBC binaries are not supplied; report is historical evidence, not a current build compile certification."
+  },
+  "cpu_comparison": {
+    "command": "python -B tools/compare_uploaded_alpha_voxels.py --archive <original-upload.zip>",
+    "resolution": [
+      2560,
+      1440
+    ],
+    "passed": 3,
+    "results": [
+      {
+        "case": "same tile, red channels at two fine surfaces",
+        "uploaded": [
+          0.8,
+          0.8
+        ],
+        "current": [
+          0.1,
+          0.8
+        ]
+      },
+      {
+        "case": "accepted flat-surface sample distance in pixels",
+        "uploaded": 0.75,
+        "current_approx": 2.25006,
+        "self_exclusion_pixels": 1.5
+      },
+      {
+        "case": "coarse occupied but incompatible fine depth, hit flag",
+        "uploaded": 1,
+        "current": 0
+      }
+    ],
+    "limits": "Actual shader functions with CPU vector/texture shims, not FXC, GPU execution, visual acceptance, or timing."
+  }
+}

@@ -51,6 +51,11 @@ that imagery is not included in the repository's MIT software grant.
 Overdrive and Full Resolution Dual Ray Alpha are staged beside it rather than
 replacing it.
 
+All three builds now carry the accepted fine Strength (`0.001`) and Surface
+Depth Agreement (`0.00001`) drag controls. Stable and Fidelity received only
+those UI changes; their implementations and preset values remain intact.
+Single-effect packages are available in [downloads](downloads/).
+
 ## Public API
 
 Twin Lanterns now publishes its ReShade FX include contract as
@@ -103,6 +108,11 @@ and game-specific depth behavior remain practical limits.
 
 ## Repository Layout
 
+The [shader development Mill](development/mill/README.md) provides a local
+workspace for frozen source, working candidates, test evidence and packages.
+Its initial deployment is running; native compiler and live game checks remain
+separate from the passing CPU/source checks.
+
 ```text
 Twin-Lanterns/
   API/
@@ -124,7 +134,7 @@ python -B tools/validate_showcase_and_public_api.py
 ```
 
 The Stable/Fidelity publication result is **13/13 passed**. The separate Full
-Resolution Dual Ray structural result is **15/15 passed**. The showcase
+Resolution Dual Ray structural result is **23/23 passed**. The showcase
 provenance and versioned public API result is **17/17 passed**.
 
 Structural validation is not a substitute for a clean ReShade compile, frame

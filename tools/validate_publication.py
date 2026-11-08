@@ -41,6 +41,23 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def restore_control_annotations(source: str, lineage: dict) -> tuple[str, bool]:
+    """Undo only exact recorded UI edits before checking historical hashes."""
+    edits = lineage.get("ui_annotation_backport", {}).get("annotations", [])
+    if len(edits) != 2:
+        return source, False
+    for edit in edits:
+        pattern = re.compile(
+            r"(uniform float " + re.escape(edit["uniform"]) + r"\s*\n)(<[^>]*>)"
+        )
+        matches = list(pattern.finditer(source))
+        if len(matches) != 1 or matches[0][2] != edit["after"]:
+            return source, False
+        match = matches[0]
+        source = source[:match.start(2)] + edit["before"] + source[match.end(2):]
+    return source, True
+
+
 def function_body(source: str, name: str) -> str:
     start = source.find(name)
     if start < 0:
@@ -84,6 +101,7 @@ required_files = [
     ROOT / "README.md",
     TWINS / "README.md",
     STABLE / "README.md",
+    STABLE / "LINEAGE.json",
     OVERDRIVE / "README.md",
     OVERDRIVE / "SOURCE_VALIDATION_RESULTS.json",
     OVERDRIVE / "LINEAGE.json",
@@ -111,14 +129,24 @@ for label, shader_root in (
 stable_source = read(STABLE_EFFECT)
 overdrive_source = read(OVERDRIVE_EFFECT)
 lineage = json.loads(read(OVERDRIVE / "LINEAGE.json"))
+stable_lineage = json.loads(read(STABLE / "LINEAGE.json"))
+original_stable_source, stable_annotations_ok = restore_control_annotations(
+    stable_source, stable_lineage
+)
+original_overdrive_source, overdrive_annotations_ok = restore_control_annotations(
+    overdrive_source, lineage
+)
 
 record(
     "stable_1_4_identity_preserved",
     "technique CAMERA_OBSCURA_TwinLantern" in stable_source
     and "LUNAR_FLOWER_TwinLanterns" not in stable_source
     and "CAMERA_OBSCURA_TwinLanternFidelityGuard" not in stable_source
-    and "CAMERA_OBSCURA_TwinLanternOverdrive" not in stable_source,
-    "stable public identifiers retained and fidelity/overdrive controls absent",
+    and "CAMERA_OBSCURA_TwinLanternOverdrive" not in stable_source
+    and stable_annotations_ok
+    and hashlib.sha256(original_stable_source.encode("utf-8")).hexdigest().upper()
+        == stable_lineage["source_effect_sha256"],
+    "stable identifiers retained; undoing two exact recorded UI edits restores the original source hash",
 )
 
 public_uniforms = re.findall(
@@ -140,7 +168,7 @@ record(
 )
 
 reversed_public_source = (
-    overdrive_source
+    original_overdrive_source
     .replace(
         "technique LUNAR_FLOWER_TwinLanternsFidelityOverdrive",
         "technique CAMERA_OBSCURA_TwinLantern",
@@ -157,8 +185,8 @@ reversed_public_hash = hashlib.sha256(
 ).hexdigest().upper()
 record(
     "public_refactor_matches_recorded_source",
-    reversed_public_hash == lineage["source_effect_sha256"],
-    f"reverse-mapped source sha256={reversed_public_hash}",
+    overdrive_annotations_ok and reversed_public_hash == lineage["source_effect_sha256"],
+    f"recorded UI backport verified={overdrive_annotations_ok}; reverse-mapped historical source sha256={reversed_public_hash}",
 )
 
 view_match = re.search(

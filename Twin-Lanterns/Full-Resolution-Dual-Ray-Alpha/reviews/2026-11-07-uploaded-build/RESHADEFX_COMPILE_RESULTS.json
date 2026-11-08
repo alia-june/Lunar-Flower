@@ -1,0 +1,212 @@
+{
+  "schema": "twin-lanterns-reshadefx-compile-audit-v1",
+  "generated_utc": "2026-11-07T15:38:23.646351+00:00",
+  "status": "pass_with_warnings",
+  "truth_boundary": "ReShadeFX parse/HLSL generation and DXBC entry compilation only; live ReShade loading, game depth behavior, voxel correctness, GPU performance, and visual acceptance remain untested.",
+  "resolution_macros": {
+    "width": 2560,
+    "height": 1440
+  },
+  "tools": {
+    "reshadefxc_version": "6.8.0 UNOFFICIAL",
+    "reshadefxc_sha256": "A55895674413AEE2A37D90ED60B8C52F1B6FCA1548293EAB36240425BBD9D690",
+    "reshadefxc_source_commit": "7bf9de8b33bcc76c3177007e65d73c72dd0f34c0",
+    "reshadefxc_build_note": "Local source build; parser and code-generator sources unmodified. Project debug-information settings and generated version metadata changed only to work around a Visual Studio PDB tool mismatch.",
+    "microsoft_fxc_sha256": "31FA10504B1551337DE4D06EC2194143885A76A8B5A81177999E2FAA34729183"
+  },
+  "inputs": {
+    "reshade_fxh_sha256": "6DABFBBAF968C3871905D2EA17F96572FF7B1CEC01310B5D0E5252B66B30174F"
+  },
+  "variants": [
+    {
+      "name": "Stable-1.4",
+      "effect": "Twin-Lanterns/Stable-1.4/reshade-shaders/shaders/camera_obscura/effects/CAMERA_OBSCURA_TwinLantern.fx",
+      "effect_sha256": "471ADC60987036525CC9C0784CA8497B20F026D867CAE81ECC0480AEB89B6F70",
+      "hlsl_generation": {
+        "status": "pass",
+        "exit_code": 0,
+        "module_sha256": "8FC25462FE72825C4741C16C0C0F03C8FC359F6BF093192AC7D65D545FBE301A"
+      },
+      "entries": [
+        {
+          "entry": "F__PostProcessVS",
+          "profile": "vs_5_0",
+          "status": "pass",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Stable-1.4\\F__PostProcessVS.vs_5_0.dxbc",
+          "dxbc_sha256": "6F6F9E0120B8B8D052C6A83FBDB9512FA0E8EFE47CA786B8FAB44BA0E9FED453",
+          "dxbc_bytes": 724
+        },
+        {
+          "entry": "F__CAMERA_OBSCURA_TL09Raw_PS",
+          "profile": "ps_5_0",
+          "status": "pass",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Stable-1.4\\F__CAMERA_OBSCURA_TL09Raw_PS.ps_5_0.dxbc",
+          "dxbc_sha256": "D2B33815B67AFA50DFFFECCCA7789A74C9A2D46E9BB97BE3A96A6CF84309E2E4",
+          "dxbc_bytes": 51108
+        },
+        {
+          "entry": "F__CAMERA_OBSCURA_TL09ResolveH_PS",
+          "profile": "ps_5_0",
+          "status": "pass_with_warnings",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Stable-1.4\\F__CAMERA_OBSCURA_TL09ResolveH_PS.ps_5_0.dxbc",
+          "stderr": "<OUTPUT_DIR>\\Stable-1.4\\module.hlsl(3128,2): warning X4000: use of potentially uninitialized variable (F__CAMERA_OBSCURA_TL09EvaluateHorizontal)",
+          "dxbc_sha256": "7B276A860EC6958AF97DF6966320D5225A7E0B17821DEB9C005267622459AF99",
+          "dxbc_bytes": 8408
+        },
+        {
+          "entry": "F__CAMERA_OBSCURA_TL09ResolveV_PS",
+          "profile": "ps_5_0",
+          "status": "pass_with_warnings",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Stable-1.4\\F__CAMERA_OBSCURA_TL09ResolveV_PS.ps_5_0.dxbc",
+          "stderr": "<OUTPUT_DIR>\\Stable-1.4\\module.hlsl(3211,2): warning X4000: use of potentially uninitialized variable (F__CAMERA_OBSCURA_TL09EvaluateVertical)",
+          "dxbc_sha256": "5B1B0646E3496F84A465AA42FE9A59EAE6799D0FF7950447FE6F77089EFDEEE7",
+          "dxbc_bytes": 8416
+        },
+        {
+          "entry": "F__CAMERA_OBSCURA_TL09Display_PS",
+          "profile": "ps_5_0",
+          "status": "pass_with_warnings",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Stable-1.4\\F__CAMERA_OBSCURA_TL09Display_PS.ps_5_0.dxbc",
+          "stderr": "<OUTPUT_DIR>\\Stable-1.4\\module.hlsl(3737,2): warning X4000: use of potentially uninitialized variable (F__CAMERA_OBSCURA_TL09ApplyEdgeFill)",
+          "dxbc_sha256": "49BE78FFE8220CE7A65D26BE7A6090D74073E48E75F85E933C43A9AF5BFD82D9",
+          "dxbc_bytes": 26176
+        }
+      ]
+    },
+    {
+      "name": "Fidelity-Overdrive",
+      "effect": "Twin-Lanterns/Fidelity-Overdrive/reshade-shaders/Shaders/camera_obscura/effects/LUNAR_FLOWER_TwinLanterns_FidelityOverdrive.fx",
+      "effect_sha256": "77CA22C51F91FD3E730BE684823D724A33610D58DF12CFD6E32E1D2B2DBE521A",
+      "hlsl_generation": {
+        "status": "pass",
+        "exit_code": 0,
+        "module_sha256": "9A8AEC88DA2914F4BC86145277A978210D182CD8F71BC03D87617E368A9B0C26"
+      },
+      "entries": [
+        {
+          "entry": "F__PostProcessVS",
+          "profile": "vs_5_0",
+          "status": "pass",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Fidelity-Overdrive\\F__PostProcessVS.vs_5_0.dxbc",
+          "dxbc_sha256": "6F6F9E0120B8B8D052C6A83FBDB9512FA0E8EFE47CA786B8FAB44BA0E9FED453",
+          "dxbc_bytes": 724
+        },
+        {
+          "entry": "F__CAMERA_OBSCURA_TL09Raw_PS",
+          "profile": "ps_5_0",
+          "status": "pass",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Fidelity-Overdrive\\F__CAMERA_OBSCURA_TL09Raw_PS.ps_5_0.dxbc",
+          "dxbc_sha256": "FFB1526A4F51CF9B488E6F6833AAF585D303EA391821D52E217F6B0A096FE5D0",
+          "dxbc_bytes": 51260
+        },
+        {
+          "entry": "F__CAMERA_OBSCURA_TL09ResolveH_PS",
+          "profile": "ps_5_0",
+          "status": "pass_with_warnings",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Fidelity-Overdrive\\F__CAMERA_OBSCURA_TL09ResolveH_PS.ps_5_0.dxbc",
+          "stderr": "<OUTPUT_DIR>\\Fidelity-Overdrive\\module.hlsl(3130,2): warning X4000: use of potentially uninitialized variable (F__CAMERA_OBSCURA_TL09EvaluateHorizontal)",
+          "dxbc_sha256": "F20041FEAD09F1F635ADF593DC3DEB65D932B88406AA7D37349AED05E2472AFB",
+          "dxbc_bytes": 8560
+        },
+        {
+          "entry": "F__CAMERA_OBSCURA_TL09ResolveV_PS",
+          "profile": "ps_5_0",
+          "status": "pass_with_warnings",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Fidelity-Overdrive\\F__CAMERA_OBSCURA_TL09ResolveV_PS.ps_5_0.dxbc",
+          "stderr": "<OUTPUT_DIR>\\Fidelity-Overdrive\\module.hlsl(3213,2): warning X4000: use of potentially uninitialized variable (F__CAMERA_OBSCURA_TL09EvaluateVertical)",
+          "dxbc_sha256": "02BA82C8084832C7213AA16367E0C31FA94C481EFBFAC7A720709D452A1616E2",
+          "dxbc_bytes": 8568
+        },
+        {
+          "entry": "F__CAMERA_OBSCURA_TL09Display_PS",
+          "profile": "ps_5_0",
+          "status": "pass_with_warnings",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Fidelity-Overdrive\\F__CAMERA_OBSCURA_TL09Display_PS.ps_5_0.dxbc",
+          "stderr": "<OUTPUT_DIR>\\Fidelity-Overdrive\\module.hlsl(3739,2): warning X4000: use of potentially uninitialized variable (F__CAMERA_OBSCURA_TL09ApplyEdgeFill)",
+          "dxbc_sha256": "D9DC60303E1AEE5FBC2AEBF1ECAA8720AC444A0BCD796F5ED822EA7C7BEF9B9B",
+          "dxbc_bytes": 28944
+        }
+      ]
+    },
+    {
+      "name": "Full-Resolution-Dual-Ray-Alpha",
+      "effect": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/effects/LUNAR_FLOWER_TwinLanterns_FullResolutionDualRayAlpha.fx",
+      "effect_sha256": "4E25743652031AB095F53837B9D056CFBC4CB617B6560EA82812606C7BA2B951",
+      "hlsl_generation": {
+        "status": "pass",
+        "exit_code": 0,
+        "module_sha256": "4434468528F3DB1BBB1392D034D31CA3665358D1524C5AD998E367F28D3DD992"
+      },
+      "entries": [
+        {
+          "entry": "F__PostProcessVS",
+          "profile": "vs_5_0",
+          "status": "pass",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Full-Resolution-Dual-Ray-Alpha\\F__PostProcessVS.vs_5_0.dxbc",
+          "dxbc_sha256": "6F6F9E0120B8B8D052C6A83FBDB9512FA0E8EFE47CA786B8FAB44BA0E9FED453",
+          "dxbc_bytes": 724
+        },
+        {
+          "entry": "F__LUNAR_FLOWER_TLFRRaw_PS",
+          "profile": "ps_5_0",
+          "status": "pass",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Full-Resolution-Dual-Ray-Alpha\\F__LUNAR_FLOWER_TLFRRaw_PS.ps_5_0.dxbc",
+          "dxbc_sha256": "2FA988B1A6C8C36776F6328FE602C87D6C567639DF5AF8A81307945067852EAE",
+          "dxbc_bytes": 44084
+        },
+        {
+          "entry": "F__LUNAR_FLOWER_TLFRResolveH_PS",
+          "profile": "ps_5_0",
+          "status": "pass_with_warnings",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Full-Resolution-Dual-Ray-Alpha\\F__LUNAR_FLOWER_TLFRResolveH_PS.ps_5_0.dxbc",
+          "stderr": "<OUTPUT_DIR>\\Full-Resolution-Dual-Ray-Alpha\\module.hlsl(3834,2): warning X4000: use of potentially uninitialized variable (F__LUNAR_FLOWER_TLFREvaluateHorizontal)",
+          "dxbc_sha256": "116B908F9C57BB2E64885A7E334E3C6668FEB2064A25C310517007E495DB1D7B",
+          "dxbc_bytes": 12656
+        },
+        {
+          "entry": "F__LUNAR_FLOWER_TLFRResolveV_PS",
+          "profile": "ps_5_0",
+          "status": "pass_with_warnings",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Full-Resolution-Dual-Ray-Alpha\\F__LUNAR_FLOWER_TLFRResolveV_PS.ps_5_0.dxbc",
+          "stderr": "<OUTPUT_DIR>\\Full-Resolution-Dual-Ray-Alpha\\module.hlsl(3917,2): warning X4000: use of potentially uninitialized variable (F__LUNAR_FLOWER_TLFREvaluateVertical)",
+          "dxbc_sha256": "CF08F1EE7443408070DEFEF843FB2D9324B816A329FF000B10F8511431796D80",
+          "dxbc_bytes": 12644
+        },
+        {
+          "entry": "F__LUNAR_FLOWER_TLFRDisplay_PS",
+          "profile": "ps_5_0",
+          "status": "pass_with_warnings",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Full-Resolution-Dual-Ray-Alpha\\F__LUNAR_FLOWER_TLFRDisplay_PS.ps_5_0.dxbc",
+          "stderr": "<OUTPUT_DIR>\\Full-Resolution-Dual-Ray-Alpha\\module.hlsl(4293,2): warning X4000: use of potentially uninitialized variable (F__LUNAR_FLOWER_TLFRApplyEdgeFill)",
+          "dxbc_sha256": "A6E603B67CBF1AFF21C8289D18C59900D46B9190BD9CFAB21109333C9284EE6E",
+          "dxbc_bytes": 29448
+        },
+        {
+          "entry": "E__LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS_8_8_4",
+          "profile": "cs_5_0",
+          "status": "pass",
+          "exit_code": 0,
+          "stdout": "compilation object save succeeded; see <OUTPUT_DIR>\\Full-Resolution-Dual-Ray-Alpha\\E__LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBuildVoxelProxyCS_8_8_4.cs_5_0.dxbc",
+          "dxbc_sha256": "DEDB2414CB1AE46E7C025920E38AC128DEACA6F2C580E7C77E280884A1A89A52",
+          "dxbc_bytes": 1564
+        }
+      ]
+    }
+  ],
+  "warning_count": 9
+}

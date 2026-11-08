@@ -24,7 +24,7 @@ def block(source, token):
     return source[start:end]
 
 
-def shader_cpp(width=64, height=64, cases=None):
+def shader_cpp(width=64, height=64, cases=None, textures=None):
     source = CPP_SHIMS.replace(
         '#define BUFFER_RCP_WIDTH (1.f/64.f)', f'#define BUFFER_RCP_WIDTH (1.f/{width}.f)'
     ).replace(
@@ -32,7 +32,8 @@ def shader_cpp(width=64, height=64, cases=None):
     )
     common = (BASE / 'header/CAMERA_OBSCURA_AtomicCommon.fxh').read_text()
     source += common
-    source += CPP_TEXTURES
+    source += CPP_TEXTURES if textures is None else textures
+    source += '\nfloat4 tex2Dlod(int, float4 coords) { return float4(CAMERA_OBSCURA_LoadColor(float2(coords.x, coords.y)), 1.0); }\n'
     cap = (BASE / 'header/CAMERA_OBSCURA_EntryCapability.fxh').read_text()
     for token in ['CAMERA_OBSCURA_RayRequest CAMERA_OBSCURA_DefaultRayRequest(',
                   'CAMERA_OBSCURA_TraceControls CAMERA_OBSCURA_BuildTraceControls(',
@@ -56,7 +57,8 @@ def shader_cpp(width=64, height=64, cases=None):
     source = re.sub(r'\b(\d+\.\d+)\.xxx', r'float3(\1)', source)
     source = re.sub(r'\b(\w+)\.xxx', r'float3(\1)', source)
     source = re.sub(r'\b(\d+\.\d+)(?![\w.])', r'\1f', source)
-    return source + (CPP_CASES if cases is None else cases)
+    cases = CPP_CASES if cases is None else cases
+    return source + cases
 
 
 CPP_SHIMS = r'''
@@ -105,9 +107,11 @@ float3 normalize(float3 a){return a*(1/std::sqrt(dot(a,a)));}
 struct float4 {
  float x,y,z,a;
  float4(float r,float g,float b,float w):x(r),y(g),z(b),a(w){}
+ float4(float2 c,float zValue,float w):x(c.x),y(c.y),z(zValue),a(w){}
  float4(float3 c,float w):x(c.x),y(c.y),z(c.z),a(w){}
  float3 rgb()const{return {x,y,z};}
 };
+namespace ReShade { const int BackBuffer=0; }
 #define BUFFER_RCP_WIDTH (1.f/64.f)
 #define BUFFER_RCP_HEIGHT (1.f/64.f)
 #define CAMERA_OBSCURA_DDA_MAX_STEPS 32

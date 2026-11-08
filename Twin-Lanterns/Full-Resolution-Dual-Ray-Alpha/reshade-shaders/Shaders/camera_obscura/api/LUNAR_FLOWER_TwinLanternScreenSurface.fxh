@@ -140,20 +140,22 @@ float4 LUNAR_FLOWER_TLFRSampleScreenDonor(
             float compatibility = saturate(dot(receiver.normal, donor.normal));
             float weight = saturate(hit.confidence) * donor.depth_confidence *
                 compatibility * distanceWeight;
-            sampleValue = float4(saturate(CAMERA_OBSCURA_LoadColor(hit.uv)), weight);
+            // Explicit base LOD: this call is reachable from varying ray loops.
+            float3 color = tex2Dlod(ReShade::BackBuffer, float4(hit.uv, 0.0, 0.0)).rgb;
+            sampleValue = float4(saturate(color), weight);
         }
     }
     return sampleValue;
 }
 
-float4 LUNAR_FLOWER_TLFRTraceScreen(
+float4 LUNAR_FLOWER_TLFRTraceScreenWithReceiver(
     float2 uv, float directionIndex, float rayLengthPixels,
-    float depthSlope, float frontBias, float backThickness)
+    float depthSlope, float frontBias, float backThickness,
+    CAMERA_OBSCURA_SurfaceGuide receiver)
 {
     float safeLength = clamp(rayLengthPixels, 1.0, (float)CAMERA_OBSCURA_DDA_MAX_STEPS);
     float2 travel = CAMERA_OBSCURA_API_TL45Direction(directionIndex) *
         safeLength * CAMERA_OBSCURA_PixelSize();
-    CAMERA_OBSCURA_SurfaceGuide receiver = LUNAR_FLOWER_TLFRBuildSurfaceGuide(uv);
     CAMERA_OBSCURA_RayRequest request = CAMERA_OBSCURA_DefaultRayRequest(travel);
     request.ray_length_uv = length(travel);
     request.ray_depth_slope = max(depthSlope, 0.0);
@@ -175,6 +177,15 @@ float4 LUNAR_FLOWER_TLFRTraceScreen(
     float3 donor = (ddaSample.rgb * ddaSample.a + marchSample.rgb * marchSample.a) *
         CAMERA_OBSCURA_SafeRcp(totalWeight, 0.0) * hasWeight;
     return float4(saturate(donor), saturate(totalWeight * 0.5));
+}
+
+float4 LUNAR_FLOWER_TLFRTraceScreen(
+    float2 uv, float directionIndex, float rayLengthPixels,
+    float depthSlope, float frontBias, float backThickness)
+{
+    CAMERA_OBSCURA_SurfaceGuide receiver = LUNAR_FLOWER_TLFRBuildSurfaceGuide(uv);
+    return LUNAR_FLOWER_TLFRTraceScreenWithReceiver(uv, directionIndex, rayLengthPixels,
+        depthSlope, frontBias, backThickness, receiver);
 }
 
 #endif

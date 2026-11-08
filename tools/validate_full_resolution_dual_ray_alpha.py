@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
+from audit_twin_lantern_loop_sampling import audit_directory
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -115,7 +116,7 @@ ray_schedule_ok = all(
 )
 record("variable_opposing_ray_pairs", ray_schedule_ok, "one to four pairs schedule two to eight rays")
 
-dual_provider_ok = "LUNAR_FLOWER_TLFRTraceScreen(" in effect and all(
+dual_provider_ok = "LUNAR_FLOWER_TLFRTraceScreenWithReceiver(" in effect and all(
     token in surface
     for token in ["CAMERA_OBSCURA_TraceDDA", "CAMERA_OBSCURA_TraceMarch", "totalWeight * 0.5"]
 )
@@ -139,17 +140,77 @@ record(
 voxel_ok = all(
     token in voxel
     for token in [
-        "texture3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceTex",
-        "storage3D LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelRadianceStorage",
+        "texture3D LUNAR_FLOWER_TLAdaptiveAtlasV1Tex",
+        "storage3D LUNAR_FLOWER_TLAdaptiveAtlasV1Storage",
         "Width = LUNAR_FLOWER_TL_VOXEL_WIDTH",
         "Depth = LUNAR_FLOWER_TL_VOXEL_DEPTH",
-        "Format = RGBA16F",
+        "#define LUNAR_FLOWER_TL_VOXEL_DEPTH 21",
+        "Format = RGBA32F",
         "tex3Dstore",
         "tex3Dfetch",
         "SV_DispatchThreadID",
     ]
 )
-record("view_frustum_voxel_proxy", voxel_ok, "64x36x32 storage3D build and trace surface present")
+record("view_frustum_voxel_proxy", voxel_ok, "bounded 64x36x21 RGBA32F hierarchy atlas and trace surface present")
+record(
+    "adaptive_hierarchy_wiring",
+    all(token in voxel for token in ["splitRoot", "splitChild", "node < LUNAR_FLOWER_TL_VOXEL_DEPTH", "LUNAR_FLOWER_API_LoadTwinLanternVoxelNode"])
+    and "BuildVoxelProxyCS<8, 8, 1>" in effect and "DispatchSizeZ = 1;" in effect,
+    "two-level adaptive node construction, per-frame child clearing and one-thread-per-root dispatch; CPU fixtures check behavior separately",
+)
+record(
+    "voxel_fine_validation",
+    all(token in voxel for token in [
+        "float sceneDepth = CAMERA_OBSCURA_LoadDepth(requestedUv)",
+        "float4(requestedUv, 0.0, 0.0)).rgb",
+        "distancePixels <= controls.self_hit_pixels",
+        "int stepCount = min((int)ray.steps",
+    ]),
+    "proxy candidates require fine depth and full-resolution donor color, self-distance rejection and the actual ray budget",
+)
+record(
+    "inactive_work_guards",
+    "LUNAR_FLOWER_TLFRBuildVoxelProxyCS<8, 8, 1>" in effect
+    and "!LUNAR_FLOWER_TLFRSourceOnly()" in effect
+    and effect.count("if (LUNAR_FLOWER_TLFRSourceOnly())") == 4,
+    "inactive/source-only builds and working passes are guarded; CPU fixtures execute the actual guards",
+)
+record(
+    "receiver_guide_reuse",
+    "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver(" in effect
+    and "LUNAR_FLOWER_TLFRFullResolutionReconstruct(uv, centerGuide)" in effect
+    and "float receiverValid = centerGuide.valid;" in effect,
+    "transport and final reconstruction reuse current-pixel receiver data; CPU fixtures check output equivalence/read counts",
+)
+gradient_failures = audit_directory(SHADERS)
+record(
+    "loop_sampling_derivative_free",
+    not gradient_failures,
+    "no implicit-gradient operations reachable from active Alpha loop entrypoints"
+    if not gradient_failures else " | ".join(gradient_failures),
+)
+record(
+    "adaptive_resource_layout_identity",
+    "LUNAR_FLOWER_TLAdaptiveAtlasV1Tex" in voxel
+    and "FullResolutionDualRayAlphaVoxelRadianceTex" not in voxel,
+    "adaptive atlas has a distinct resource identity from the former uniform volume",
+)
+
+record(
+    "depth_shaping_wiring",
+    "LUNAR_FLOWER_TLFRApplyDepthShaping(uv, reconstructed, centerGuide)" in effect
+    and "result.bounded_contribution_rgb *= fade" in effect
+    and "LUNAR_FLOWER_TLFRFadeComposite(result, centerGuide.depth)" in effect
+    and "LUNAR_FLOWER_TLFRDepthFadeFactor" in effect,
+    "receiver-depth fade scales final bounded contribution after render intent/composite; CPU fixtures verify saturated and channel-room cases",
+)
+record(
+    "light_only_softening_wiring",
+    effect.count("LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(uv ") == 4
+    and "float3 baseSignal = saturate(baseIndirect.rgb) * baseEvidence" in effect
+    and "mixedSignal" in effect and "mixedEvidence" in effect,
+    "four existing depth/normal/coverage-gated ResolveV taps soften premultiplied light without a new texture/pass",
+)
 
 passes = re.findall(r"\bpass\s+(\w+)", effect)
 expected_passes = [
@@ -170,7 +231,7 @@ record("voxel_truth_boundary", truth_ok, "proxy is explicitly bounded away from 
 
 ui_items_match = re.search(r'ui_items\s*=\s*"([^"]+)"', effect)
 diagnostic_count = ui_items_match.group(1).count("\\0") if ui_items_match else 0
-record("candidate_diagnostics", diagnostic_count == 16, f"diagnostic views={diagnostic_count}/16")
+record("candidate_diagnostics", diagnostic_count == 18, f"diagnostic views={diagnostic_count}/18")
 
 shared_matches = sum(
     1

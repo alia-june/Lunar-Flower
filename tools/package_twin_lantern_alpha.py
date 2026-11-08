@@ -4,12 +4,16 @@
 import argparse
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
+from audit_twin_lantern_loop_sampling import audit_directory
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha"
 
 
 def package(output: Path) -> None:
+    failures = audit_directory(BUILD / 'reshade-shaders/Shaders/camera_obscura')
+    if failures:
+        raise ValueError('Implicit-gradient or missing loop call graph:\n' + '\n'.join(failures))
     payload = {
         str(p.relative_to(BUILD)).replace("\\", "/"): p
         for p in (BUILD / "reshade-shaders").rglob("*") if p.is_file()
@@ -17,6 +21,12 @@ def package(output: Path) -> None:
     payload.update({
         "LICENSE": ROOT / "LICENSE",
         "README.md": BUILD / "README.md",
+        "ADAPTIVE_PROXY_RESEARCH.md": BUILD / "ADAPTIVE_PROXY_RESEARCH.md",
+        "PERFORMANCE_NOTES.md": BUILD / "PERFORMANCE_NOTES.md",
+        "COMPILER_NOTES.md": BUILD / "COMPILER_NOTES.md",
+        "FRONT_BIAS_NOTES.md": BUILD / "FRONT_BIAS_NOTES.md",
+        "DEPTH_SHAPING_NOTES.md": BUILD / "DEPTH_SHAPING_NOTES.md",
+        "DEFAULTS_FROM_PRESET.json": BUILD / "DEFAULTS_FROM_PRESET.json",
         "tools/install_twin_lantern_alpha.py": ROOT / "tools/install_twin_lantern_alpha.py",
     })
     effects = [name for name in payload if name.endswith(".fx")]
