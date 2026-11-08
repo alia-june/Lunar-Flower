@@ -20,6 +20,13 @@ ReShade compile or visual acceptance of either backport.
 
 ## Alpha performance candidate
 
+The Alpha now includes receiver-depth light fade and surface-gated distant-light
+softening. New controls start at fade strength `1`, Start `0.005`, End `0.05`,
+softening `0.35`, Radius `2 px`. These depth endpoints need game-specific tuning.
+Use the appended `Depth Fade Mask` view to set the range. Set fade and softening
+both to zero to bypass the new shaping exactly. The source image is not blurred;
+see included `DEPTH_SHAPING_NOTES.md`. Native compile/live acceptance remain pending.
+
 [Download the single-effect ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Alpha-performance-candidate.zip).
 
 This package contains the corrected performance candidate, with explicit-LOD
@@ -53,7 +60,7 @@ shader search path. The ZIP already includes the complete selected build.
 SHA-256:
 
 ```text
-8c0dd96ed38d6c990667de7f32dc6beb76737670223869499d5aac7b41d84a76
+84935cf86d11f78122550d5b9abdf4f402e61e4f74991f75658dc0460feae36b
 ```
 
 The adjacent `.zip.sha256` file records the same archive checksum. It verifies

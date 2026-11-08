@@ -196,6 +196,21 @@ record(
     "adaptive atlas has a distinct resource identity from the former uniform volume",
 )
 
+record(
+    "depth_shaping_wiring",
+    "LUNAR_FLOWER_TLFRApplyDepthShaping(uv, reconstructed, centerGuide)" in effect
+    and "saturate(shaped.a) * fade" in effect
+    and "LUNAR_FLOWER_TLFRDepthFadeFactor" in effect,
+    "receiver-depth fade follows edge fill/softening and precedes render intent/composite; CPU fixtures verify behavior",
+)
+record(
+    "light_only_softening_wiring",
+    effect.count("LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(uv ") == 4
+    and "float3 baseSignal = saturate(baseIndirect.rgb) * baseEvidence" in effect
+    and "mixedSignal" in effect and "mixedEvidence" in effect,
+    "four existing depth/normal/coverage-gated ResolveV taps soften premultiplied light without a new texture/pass",
+)
+
 passes = re.findall(r"\bpass\s+(\w+)", effect)
 expected_passes = [
     "TwinLanternVoxelBuild",
@@ -215,7 +230,7 @@ record("voxel_truth_boundary", truth_ok, "proxy is explicitly bounded away from 
 
 ui_items_match = re.search(r'ui_items\s*=\s*"([^"]+)"', effect)
 diagnostic_count = ui_items_match.group(1).count("\\0") if ui_items_match else 0
-record("candidate_diagnostics", diagnostic_count == 17, f"diagnostic views={diagnostic_count}/17")
+record("candidate_diagnostics", diagnostic_count == 18, f"diagnostic views={diagnostic_count}/18")
 
 shared_matches = sum(
     1

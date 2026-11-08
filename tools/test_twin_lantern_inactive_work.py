@@ -24,6 +24,10 @@ def effect_cpp():
         'EdgeInkStrength':('float','0'), 'EdgeFillStrength':('float','.2f'),
         'EdgeFillRadiusPixels':('float','2'), 'FidelityGuard':('float','.65f'),
         'Overdrive':('float','0'), 'MaximumContribution':('float','.2f'),
+        # Explicitly disable new shaping for the existing cache-equivalence fixtures.
+        'DepthFadeStrength':('float','0'), 'DepthFadeStart':('float','.005f'),
+        'DepthFadeEnd':('float','.05f'), 'LightSoftening':('float','0'),
+        'LightSofteningRadiusPixels':('float','2'),
     }
     source='\n'.join(f'{kind} {PREFIX}{name}={value};' for name,(kind,value) in uniforms.items())+'\n'
     source+=r'''
@@ -51,12 +55,15 @@ float3 CAMERA_OBSCURA_DebugHeat(float x){return float3(x);}
         'float4 LUNAR_FLOWER_TLFRResolveH_PS(', 'float4 LUNAR_FLOWER_TLFRResolveV_PS(',
         'float4 LUNAR_FLOWER_TLFRFullResolutionReconstruct(',
         'void LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(', 'float4 LUNAR_FLOWER_TLFRApplyEdgeFill(',
+        'float LUNAR_FLOWER_TLFRDepthPhase(', 'float LUNAR_FLOWER_TLFRDepthFadeFactor(',
+        'float4 LUNAR_FLOWER_TLFRApplyDepthShaping(',
         'float4 LUNAR_FLOWER_TLFRApplyRenderIntent(',
         'CAMERA_OBSCURA_API_TL09CompositeEvidence\nLUNAR_FLOWER_TLFREvaluateComposite(',
         'float3 LUNAR_FLOWER_TLFRRejectionColor(', 'float4 LUNAR_FLOWER_TLFRDisplay_PS(',
     ]
     for token in tokens:source+=block(effect,token)+'\n'
-    # Reference evaluation recomputes the same guides as the pre-cache path.
+    # Reference recomputes reconstruction/fill/receiver guides, while retaining
+    # a center guide for the new depth-shaping stage in both evaluations.
     reconstruct=block(effect,'float4 LUNAR_FLOWER_TLFRFullResolutionReconstruct(')
     reconstruct=reconstruct.replace('LUNAR_FLOWER_TLFRFullResolutionReconstruct','LegacyReconstruct')
     reconstruct=reconstruct.replace(', CAMERA_OBSCURA_SurfaceGuide centerGuide','')
@@ -67,7 +74,6 @@ float3 CAMERA_OBSCURA_DebugHeat(float x){return float3(x);}
         '    CAMERA_OBSCURA_SurfaceGuide centerGuide=LUNAR_FLOWER_TLFRBuildSurfaceGuide(uv);\n    [branch]\n    if (centerGuide.valid',1)
     evaluate=block(effect,'CAMERA_OBSCURA_API_TL09CompositeEvidence\nLUNAR_FLOWER_TLFREvaluateComposite(')
     evaluate=evaluate.replace('LUNAR_FLOWER_TLFREvaluateComposite','LegacyEvaluate')
-    evaluate=evaluate.replace('    CAMERA_OBSCURA_SurfaceGuide centerGuide = LUNAR_FLOWER_TLFRBuildSurfaceGuide(uv);\n','')
     evaluate=evaluate.replace('LUNAR_FLOWER_TLFRFullResolutionReconstruct(uv, centerGuide)','LegacyReconstruct(uv)')
     evaluate=evaluate.replace('LUNAR_FLOWER_TLFRApplyEdgeFill(','LegacyFill(').replace('uv, vertical, centerGuide,','uv, vertical,')
     evaluate=evaluate.replace('float receiverValid = centerGuide.valid;',
@@ -145,7 +151,7 @@ int main(){
       close(old.bounded_contribution_rgb,current.bounded_contribution_rgb),"composite receiver reuse changed output");
     check(close(oldTarget,target)&&close(oldFidelity,fidelity)&&close(oldPressure,pressure)&&close(oldAdded,added),
       "composite receiver reuse changed diagnostics");
-    check(baseline-depthSamples==(fill==0?1:6),"composite did not eliminate repeated center guide reads");
+    check(baseline-depthSamples==(fill==0?6:11),"composite did not eliminate repeated center guide reads");
     compositeSaved+=baseline-depthSamples;
    }
   }

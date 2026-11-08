@@ -6,7 +6,7 @@
 #include "../api/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh"
 
 uniform int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView
-< ui_type = "combo"; ui_category = "Lunar Flower / Twin Lanterns / 00 Diagnostics"; ui_label = "Output View"; ui_items = "Final Image\0Source Image\0Bounded Indirect Light\0Evidence Confidence\0Applied Light\0Rejection Reason\0Remaining Channel Room\0Containment Activity\0Source Difference\0Bound Verification\0Edge Fill Target\0Edge Fill Added\0Fidelity Guard Activity\0Overdrive Pressure\0Voxel Surface Occupancy\0Voxel Surface Radiance\0Voxel Detail Level\0"; ui_tooltip = "Final Image is the production output.\nDiagnostic views expose reconstructed light, admission evidence, containment, rendering intent, and the current-frame view-frustum voxel proxy.\nBound Verification must remain green."; > = 0;
+< ui_type = "combo"; ui_category = "Lunar Flower / Twin Lanterns / 00 Diagnostics"; ui_label = "Output View"; ui_items = "Final Image\0Source Image\0Bounded Indirect Light\0Evidence Confidence\0Applied Light\0Rejection Reason\0Remaining Channel Room\0Containment Activity\0Source Difference\0Bound Verification\0Edge Fill Target\0Edge Fill Added\0Fidelity Guard Activity\0Overdrive Pressure\0Voxel Surface Occupancy\0Voxel Surface Radiance\0Voxel Detail Level\0Depth Fade Mask\0"; ui_tooltip = "Final Image is the production output.\nDiagnostic views expose reconstructed light, admission evidence, containment, rendering intent, and the current-frame view-frustum voxel proxy.\nBound Verification must remain green."; > = 0;
 
 uniform bool LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEnabled
 < ui_type = "checkbox"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Enable Indirect Light"; ui_tooltip = "Applies bounded reconstructed indirect light.\nOff returns the source image exactly while diagnostics remain available."; > = true;
@@ -16,6 +16,22 @@ uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaMaximumContribution
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Maximum Added Light"; ui_min = 0.00; ui_max = 0.50; ui_step = 0.005; ui_tooltip = "Hard per-channel ceiling for added normalized SDR light.\nThe result is also limited by the remaining room in each source channel."; > = 0.20;
+
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStrength
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Light Fade"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Attenuates only Twin Lanterns added light as receiver depth increases.\nOne fully removes it at Fade End; zero disables fading.\nDepth uses ReShade normalized linear depth, not world distance."; > = 1.00;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStart
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Fade Start"; ui_min = 0.00000; ui_max = 1.00000; ui_step = 0.00001; ui_tooltip = "Normalized linear depth where fading and distant-light softening begin.\nUse Depth Fade Mask to tune this for the game; these values are not calibrated distances."; > = 0.00500;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeEnd
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Fade End"; ui_min = 0.00000; ui_max = 1.00000; ui_step = 0.00001; ui_tooltip = "Normalized linear depth where fade and softening reach full authority.\nEnd is treated as at least Start plus 0.000001 to avoid a zero-width transition."; > = 0.05000;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSoftening
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Distant Light Softening"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Softens only the indirect-light field, increasing between Fade Start and End.\nFour neighboring taps are gated by Surface Depth and Direction Agreement.\nZero bypasses these taps. The source image is never blurred."; > = 0.35;
+
+uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSofteningRadiusPixels
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Light Softening Radius"; ui_min = 1.0; ui_max = 4.0; ui_step = 1.0; ui_tooltip = "Radius in full-resolution pixels for four surface-gated indirect-light taps.\nThe fixed radius avoids depth-driven changes in the tap footprint."; > = 2.0;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayLengthPixels
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Transport Distance"; ui_min = 4.0; ui_max = 24.0; ui_step = 1.0; ui_tooltip = "Maximum screen-space travel in pixels for each scheduled transport direction.\nLonger travel reaches farther donors and costs more work."; > = 24.0;
@@ -74,8 +90,10 @@ bool LUNAR_FLOWER_TLFRSourceOnly()
 void LUNAR_FLOWER_TLFRBuildVoxelProxyCS(uint3 id : SV_DispatchThreadID)
 {
     if (!LUNAR_FLOWER_TLFRSourceOnly() &&
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView != 17 &&
         (LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength > 0.000001 ||
-         LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView >= 14))
+         (LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView >= 14 &&
+          LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView <= 16)))
         LUNAR_FLOWER_API_BuildTwinLanternVoxelTile(id);
 }
 
@@ -319,6 +337,7 @@ float4 LUNAR_FLOWER_TLFRRaw_PS(
     float2 uv : TEXCOORD) : SV_Target
 {
     if (LUNAR_FLOWER_TLFRSourceOnly()) return float4(0.0, 0.0, 0.0, 0.0);
+    if (LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView == 17) return float4(0.0, 0.0, 0.0, 0.0);
     CAMERA_OBSCURA_SurfaceGuide receiver = LUNAR_FLOWER_TLFRBuildSurfaceGuide(uv);
     if (receiver.valid < 0.5) return float4(0.0, 0.0, 0.0, 0.0);
     float3 weightedDonor = float3(0.0, 0.0, 0.0);
@@ -386,6 +405,7 @@ float4 LUNAR_FLOWER_TLFRResolveH_PS(
     float2 uv : TEXCOORD) : SV_Target
 {
     if (LUNAR_FLOWER_TLFRSourceOnly()) return float4(0.0, 0.0, 0.0, 0.0);
+    if (LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView == 17) return float4(0.0, 0.0, 0.0, 0.0);
     CAMERA_OBSCURA_API_TL08ResolveEvidence evidence =
         LUNAR_FLOWER_TLFREvaluateHorizontal(uv);
     return float4(
@@ -398,6 +418,7 @@ float4 LUNAR_FLOWER_TLFRResolveV_PS(
     float2 uv : TEXCOORD) : SV_Target
 {
     if (LUNAR_FLOWER_TLFRSourceOnly()) return float4(0.0, 0.0, 0.0, 0.0);
+    if (LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView == 17) return float4(0.0, 0.0, 0.0, 0.0);
     CAMERA_OBSCURA_API_TL08ResolveEvidence evidence =
         LUNAR_FLOWER_TLFREvaluateVertical(uv);
     return float4(
@@ -515,6 +536,60 @@ float4 LUNAR_FLOWER_TLFRApplyEdgeFill(
     return float4(saturate(filledColor), saturate(filledEvidence));
 }
 
+
+float LUNAR_FLOWER_TLFRDepthPhase(float receiverDepth)
+{
+    float start = saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStart);
+    float end = max(saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeEnd), start + 0.000001);
+    return smoothstep(start, end, saturate(receiverDepth));
+}
+
+float LUNAR_FLOWER_TLFRDepthFadeFactor(float receiverDepth)
+{
+    return 1.0 - saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStrength) *
+        LUNAR_FLOWER_TLFRDepthPhase(receiverDepth);
+}
+
+float4 LUNAR_FLOWER_TLFRApplyDepthShaping(
+    float2 uv, float4 baseIndirect, CAMERA_OBSCURA_SurfaceGuide centerGuide)
+{
+    if (LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStrength <= 0.0 &&
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSoftening <= 0.0)
+        return baseIndirect;
+    if (centerGuide.valid < 0.5) return float4(0.0, 0.0, 0.0, 0.0);
+    float phase = LUNAR_FLOWER_TLFRDepthPhase(centerGuide.depth);
+    float fade = LUNAR_FLOWER_TLFRDepthFadeFactor(centerGuide.depth);
+    if (fade <= 0.0) return float4(0.0, 0.0, 0.0, 0.0);
+    float amount = saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSoftening) * phase;
+    float4 shaped = baseIndirect;
+    [branch]
+    if (amount > 0.000001)
+    {
+        float radius = clamp(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSofteningRadiusPixels, 1.0, 4.0);
+        float2 offset = LUNAR_FLOWER_TLFRFullTexel() * radius;
+        float baseEvidence = saturate(baseIndirect.a);
+        float3 baseSignal = saturate(baseIndirect.rgb) * baseEvidence;
+        float3 signalSum = baseSignal;
+        float evidenceSum = baseEvidence;
+        float supportSum = 1.0;
+        // Existing depth/normal/coverage-gated taps read only ResolveV light.
+        LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(uv - float2(offset.x, 0.0), centerGuide, signalSum, evidenceSum, supportSum);
+        LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(uv + float2(offset.x, 0.0), centerGuide, signalSum, evidenceSum, supportSum);
+        LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(uv - float2(0.0, offset.y), centerGuide, signalSum, evidenceSum, supportSum);
+        LUNAR_FLOWER_TLFRAccumulateEdgeFillTap(uv + float2(0.0, offset.y), centerGuide, signalSum, evidenceSum, supportSum);
+        float inverseSupport = CAMERA_OBSCURA_SafeRcp(supportSum, 0.0);
+        float3 meanSignal = signalSum * inverseSupport;
+        float meanEvidence = saturate(evidenceSum * inverseSupport);
+        float3 mixedSignal = lerp(baseSignal, meanSignal, amount);
+        float mixedEvidence = saturate(lerp(baseEvidence, meanEvidence, amount));
+        float hasEvidence = step(0.000001, mixedEvidence);
+        float3 mixedColor = mixedSignal * CAMERA_OBSCURA_SafeRcp(mixedEvidence, 0.0) * hasEvidence;
+        shaped = float4(saturate(mixedColor), mixedEvidence);
+    }
+    // Fade after edge fill and softening so neither can refill a faded receiver.
+    return float4(shaped.rgb, saturate(shaped.a) * fade);
+}
+
 float4 LUNAR_FLOWER_TLFRApplyRenderIntent(
     float3 source,
     float4 reconstructed,
@@ -571,6 +646,7 @@ LUNAR_FLOWER_TLFREvaluateComposite(
     float4 vertical = LUNAR_FLOWER_TLFRFullResolutionReconstruct(uv, centerGuide);
     float4 reconstructed = LUNAR_FLOWER_TLFRApplyEdgeFill(
         uv, vertical, centerGuide, edgeFillTarget, edgeFillAdded);
+    reconstructed = LUNAR_FLOWER_TLFRApplyDepthShaping(uv, reconstructed, centerGuide);
     float3 source = saturate(tex2D(ReShade::BackBuffer, uv).rgb);
     float effectiveStrength = 0.0;
     float4 intended = LUNAR_FLOWER_TLFRApplyRenderIntent(
@@ -607,6 +683,13 @@ float4 LUNAR_FLOWER_TLFRDisplay_PS(
 {
     if (LUNAR_FLOWER_TLFRSourceOnly())
         return float4(saturate(tex2D(ReShade::BackBuffer, uv).rgb), 1.0);
+    if (LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView == 17)
+    {
+        float depth = CAMERA_OBSCURA_LoadDepth(uv);
+        float mask = CAMERA_OBSCURA_DepthConfidence(depth) * LUNAR_FLOWER_TLFRDepthFadeFactor(depth);
+        return float4(mask, mask, mask, 1.0);
+    }
+
     float edgeFillTarget = 0.0;
     float3 edgeFillAdded = float3(0.0, 0.0, 0.0);
     float fidelityActivity = 0.0;

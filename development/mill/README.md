@@ -119,3 +119,10 @@ separate non-overwriting batch at
 It retains the source freeze, working candidate, actual-function CPU probe,
 check logs, package identity and controller receipts for the Alpha control
 update. Native compilation remains blocked and live testing pending.
+
+The [depth fade and light softening run](experiments/depth-shaping.json) adds
+an Alpha-only light-field stage in
+`/workspace/shader-mill/batches/twin-lanterns-depth-shaping-2026-11-08`.
+Its 53 structural checks and 16 regression tests include 839 depth-shaping
+assertions. The package is verified; native compilation and in-game acceptance
+remain unresolved, and the batch stays on HOLD.

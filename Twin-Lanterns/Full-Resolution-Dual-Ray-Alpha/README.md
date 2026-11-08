@@ -167,6 +167,14 @@ The uploaded shaders are not replacements for the current adaptive build.
 
 ## Controls
 
+- `Depth Light Fade`, `Depth Fade Start`, and `Depth Fade End`: fade only added
+  light with receiver depth. `Depth Fade Mask` shows white where light is kept
+  and black where removed (invalid depth is black).
+- `Distant Light Softening` and `Light Softening Radius`: soften only the
+  indirect-light field with depth/normal/coverage-gated neighbors.
+  See [depth shaping and tuning](DEPTH_SHAPING_NOTES.md) for defaults, bypass,
+  costs and the full-stack limitation.
+
 - `Front Surface Bias`: fine drag adjustment in `0.000001` normalized-depth
   steps (100× finer). Zero is valid; positive values widen front-side hit
   admission and confidence weighting. See [Front Bias investigation](FRONT_BIAS_NOTES.md).
@@ -239,6 +247,7 @@ The candidate retains all Fidelity Overdrive views and adds:
 15. `Voxel Surface Occupancy`
 16. `Voxel Surface Radiance`
 17. `Voxel Detail Level` (heatmap of hierarchy levels `0`, `1`, `2`)
+18. `Depth Fade Mask` (white retains light, black removes it; invalid depth is black)
 
 `Bound Verification` must remain green. The voxel views must show only the
 current camera-visible depth shell; full-volume or off-screen-looking content

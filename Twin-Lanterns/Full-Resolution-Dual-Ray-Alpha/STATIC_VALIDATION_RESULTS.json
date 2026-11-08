@@ -1,8 +1,8 @@
 {
   "status": "public alpha; static structural validation only; full ReShade compile and live acceptance pending",
-  "passed": 21,
+  "passed": 23,
   "failed": 0,
-  "effect_sha256": "6CE60E2755E0CA866AB34EAAAB00C1DC3120E2F7B31B638EC4BF33DA68A28B1F",
+  "effect_sha256": "82B8D5221A2FEA3DE43725886D2AA49EC378CA336BF835569C38FEE7ABF8BBC7",
   "voxel_api_sha256": "13FA361AB611996BB5610580668C52C2381AC368A759C5D31894A170AF66A31B",
   "screen_surface_sha256": "FB154B4407AFEAA2D6E9E868576EEBF3E0B109ACC92A7783C363B7FA176FFB98",
   "checks": [
@@ -82,6 +82,16 @@
       "detail": "adaptive atlas has a distinct resource identity from the former uniform volume"
     },
     {
+      "name": "depth_shaping_wiring",
+      "passed": true,
+      "detail": "receiver-depth fade follows edge fill/softening and precedes render intent/composite; CPU fixtures verify behavior"
+    },
+    {
+      "name": "light_only_softening_wiring",
+      "passed": true,
+      "detail": "four existing depth/normal/coverage-gated ResolveV taps soften premultiplied light without a new texture/pass"
+    },
+    {
       "name": "ordered_five_pass_graph",
       "passed": true,
       "detail": "pass order=['TwinLanternVoxelBuild', 'TwinLanternTransport', 'TwinLanternResolveHorizontal', 'TwinLanternResolveVertical', 'TwinLanternComposite']"
@@ -94,7 +104,7 @@
     {
       "name": "candidate_diagnostics",
       "passed": true,
-      "detail": "diagnostic views=17/17"
+      "detail": "diagnostic views=18/18"
     },
     {
       "name": "shared_api_lineage_unchanged",

@@ -1,0 +1,67 @@
+{
+  "schema": "lunar-flower-mill-experiment-v1",
+  "experiment": "depth-fade-and-light-softening",
+  "date": "2026-11-08",
+  "source_revision": "4076f697ae4940fcd9c629535fec9c6b264b8c1d",
+  "batch_path": "/workspace/shader-mill/batches/twin-lanterns-depth-shaping-2026-11-08",
+  "motivation": "User requested depth-aware light fade and softening, with a full-preset-stack screenshot; no isolated causality or calibrated depth was supplied",
+  "scope": "Alpha-only light field; preserve source detail, shared APIs and diagnostic indices 0-16",
+  "shader_algorithm_changes": true,
+  "source_image_filtered": false,
+  "new_passes": 0,
+  "new_textures": 0,
+  "default_controls": {
+    "DepthFadeStrength": 1.0,
+    "DepthFadeStart": 0.005,
+    "DepthFadeEnd": 0.05,
+    "LightSoftening": 0.35,
+    "LightSofteningRadiusPixels": 2.0
+  },
+  "disabled_controls_restore_prior_shaping_exactly": true,
+  "new_diagnostic": {
+    "index": 17,
+    "name": "Depth Fade Mask"
+  },
+  "checks": {
+    "structural_passed": 53,
+    "structural_failed": 0,
+    "regression_tests_passed": 16,
+    "depth_shaping_cpu_assertions": 839,
+    "historical_voxel_comparisons_passed": 3
+  },
+  "package": {
+    "result": "PASS",
+    "scope": "Archive integrity and source-byte identity only",
+    "path": "package/Twin-Lanterns-Alpha-depth-shaping-001.zip",
+    "sha256": "84935cf86d11f78122550d5b9abdf4f402e61e4f74991f75658dc0460feae36b",
+    "effect_count": 1,
+    "matching_shader_include_count": 11
+  },
+  "gates": {
+    "source_freeze": "PASS",
+    "candidate": "PASS",
+    "static": "PASS",
+    "compiler": "BLOCKED",
+    "package": "PASS",
+    "live": "PENDING"
+  },
+  "decision": "HOLD",
+  "final_verification": {
+    "batch_path": "/workspace/shader-mill/batches/twin-lanterns-depth-shaping-2026-11-08",
+    "evidence_boundary": "PASS proves factory structure and internal consistency only.",
+    "failures": [],
+    "gate_logic_pass": true,
+    "manifest_pass": true,
+    "result": "PASS",
+    "structure_pass": true
+  },
+  "native_compile_performed": false,
+  "gpu_performance_measured": false,
+  "live_visual_acceptance_performed": false,
+  "limits": [
+    "Normalized depth endpoints require game-specific tuning",
+    "Softening admits only neighbors passing configured depth/normal/coverage gates; overly loose tolerances can still leak",
+    "Fades only Twin Lanterns contribution; cannot recover clipping or outlines from other effects",
+    "Active softening adds four field reads and twenty depth reads; regular Final Image transport is unchanged"
+  ]
+}

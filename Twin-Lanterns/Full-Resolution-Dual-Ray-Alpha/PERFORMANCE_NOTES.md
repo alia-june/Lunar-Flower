@@ -19,7 +19,7 @@ establish which pass is expensive or whether a presentation threshold is involve
   rounded into this bypass. Diagnostic views retain their intended behavior.
 - Raw transport builds one receiver guide and reuses it across directions and
   screen/voxel providers. Invalid receivers return before evaluating directions.
-- Final reconstruction, edge fill and receiver admission reuse one center guide.
+- Final reconstruction, edge fill, depth shaping and receiver admission reuse one center guide.
 
 All working fields remain full resolution. Ray counts, traversal budgets,
 hierarchy detail, donor admission, reconstruction and additive bounds are not
@@ -39,8 +39,12 @@ remain separate checks.
 For receiver setup, each eliminated guide removes five depth reads in the CPU
 fixture. With four active directions, source-level receiver setup changes from
 20 reads (screen only) or 40 reads (screen plus voxel) to five. Final center-guide
-reuse saves six reads when Edge Fill is active, or one when it is bypassed. These
-counts exclude donor/traversal and neighbor reads. GPU compilers/caches may
+reuse originally saved six reads when Edge Fill was active, or one when it was
+bypassed. With the shared depth-shaping guide retained in both paths, the
+current deliberately uncached reconstruction/fill/receiver reference uses eleven
+more reads with fill active, or six with it bypassed. These counts exclude
+donor/traversal and neighbor reads; they compare specified source paths, not a
+historical GPU benchmark. GPU compilers/caches may
 already reuse some work; these are not measured GPU instruction or timing gains.
 
 The fixed render targets, draw/dispatch calls, resource transitions and ReShade
@@ -68,3 +72,17 @@ line from older copies. Install matching effect/includes together and capture a
 fresh compile log. The current candidate still needs native compile, in-game
 output comparison and timing; no Elden Ring or DS3 GPU measurements were made in
 the cloud executor.
+
+## Depth shaping candidate
+
+Depth fading adds scalar work using the existing receiver guide. When distant
+light softening is active at a partly retained receiver, four ResolveV taps
+and four five-depth-sample surface guides add up to four field reads and twenty
+depth reads per output pixel. Near receivers, zero softening, and fully removed
+light bypass those taps. No new pass, render target or temporal history is
+allocated. Transport still runs for normal Final Image even in faded regions;
+no whole-technique FPS improvement is claimed.
+
+Depth Fade Mask retains the existing pass dispatches but returns empty working
+fields, skips the voxel build and reads depth once in display. This is a
+diagnostic optimization, not equivalent to unchecking the technique.
