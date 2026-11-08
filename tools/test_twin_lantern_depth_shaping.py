@@ -104,7 +104,36 @@ int main(){
     }
    }
   }
-  // Edge fill cannot restore faded light, since depth shaping follows it.
+
+  // Regression: partial fades must remain visible after either hard ceiling.
+  // The earlier pre-cap implementation kept 0.2 added light at both 1 and 0.5
+  // strength when raw light exceeded the ceiling; near-white channel room
+  // concealed the same fade at 0.05 added light.
+  LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStrength=1;
+  for(float receiver: {0.f,.1f,.5f,.95f,1.f})
+   for(float energy: {0.f,.05f,.8f,1.f})
+    for(float evidence: {0.f,.1f,1.f})
+     for(float strength: {0.f,.2f,1.f,4.f})
+      for(float ceiling: {0.f,.05f,.2f,.5f}){
+       auto original=CAMERA_OBSCURA_API_BuildTL09Composite(float3(receiver),float3(energy),evidence,1,1,strength,ceiling);
+       for(float depth: {.1f,.2f,.4f,.6f,.9f}){
+        float keep=depth<.4f?1.f:(depth==.4f?.5f:0.f);
+        auto faded=LUNAR_FLOWER_TLFRFadeComposite(original,depth);
+        check(close(faded.bounded_contribution_rgb,original.bounded_contribution_rgb*keep),"fade concealed by contribution/channel-room cap");
+        check(close(faded.final_rgb,original.source_rgb+original.bounded_contribution_rgb*keep),"final output does not match faded bounded light");
+        check(faded.final_rgb.x>=receiver&&faded.final_rgb.x<=1.000001f&&faded.bounds_valid==original.bounds_valid,"post-bound fade broke source/channel bounds or hid failure");
+        check(close(faded.evidence,original.evidence*keep)&&close(faded.maximum_contribution,original.maximum_contribution*keep),"post-fade diagnostics do not track effective evidence/ceiling");
+       }
+      }
+  auto limited=CAMERA_OBSCURA_API_BuildTL09Composite(float3(.5f),float3(.8f),1,1,1,4,.2f);
+  auto halfLimited=LUNAR_FLOWER_TLFRFadeComposite(limited,.4f);
+  check(close(halfLimited.bounded_contribution_rgb,float3(.1f))&&close(halfLimited.source_preserve_delta,.1f)&&close(halfLimited.containment_activity,1),"half fade or diagnostics incorrect for saturated request");
+  auto removed=LUNAR_FLOWER_TLFRFadeComposite(limited,.6f);
+  check(removed.application==0&&removed.rejection==1&&removed.rejection_code==7,"fully faded application/rejection diagnostics incorrect");
+  limited.bounds_valid=0;
+  check(LUNAR_FLOWER_TLFRFadeComposite(limited,.4f).bounds_valid==0,"fade erased an existing bound failure");
+
+  // Edge fill cannot restore faded light, since final fade follows all bounds.
   LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStart=0;
   LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeEnd=.2f;
   LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStrength=1;
@@ -140,7 +169,16 @@ def source():
  if(fieldFixture==2)return float4(.9f,.9f,.9f,1);
  if(fieldFixture==3)return float4(0,0,0,.8f);
  return float4(.4f,.3f,.2f,.8f);''')
-    return voxel_cpp(2560, 1440, cases='') + effect + CASES
+    fixture = r"""
+float4 FixtureShapeThenFade(float2 uv,float4 base,CAMERA_OBSCURA_SurfaceGuide guide){
+ auto softened=LUNAR_FLOWER_TLFRApplyDepthShaping(uv,base,guide);
+ auto result=CAMERA_OBSCURA_API_BuildTL09Composite(float3(0),softened.rgb(),softened.a,guide.valid,1,1,1);
+ result=LUNAR_FLOWER_TLFRFadeComposite(result,guide.depth);
+ return float4(result.indirect_rgb,result.evidence);
+}
+"""
+    cases = CASES.replace('LUNAR_FLOWER_TLFRApplyDepthShaping(', 'FixtureShapeThenFade(')
+    return voxel_cpp(2560, 1440, cases='') + effect + fixture + cases
 
 
 class DepthShapingTests(unittest.TestCase):

@@ -10,21 +10,24 @@ already clipped, blurred or outlined in the source supplied by other effects.
 
 | Control | Default | Meaning |
 | --- | --- | --- |
-| Depth Light Fade | 1.000 | Fade authority; 1 removes added light at/after End, 0 disables this fade |
+| Depth Fade Amount (0 = Off) | 0.000 | Optional fade authority; 1 removes added light at/after End, 0 disables fading |
 | Depth Fade Start | 0.00500 | Normalized linear depth where fade and softening begin |
 | Depth Fade End | 0.05000 | Depth where they reach full authority |
-| Distant Light Softening | 0.350 | Maximum blend toward the surface-gated neighboring light mean |
+| Distant Light Softening | 0.000 | Maximum blend toward the surface-gated neighboring light mean |
 | Light Softening Radius | 2 px | Fixed full-resolution radius for four neighbors |
 
 These are **normalized ReShade linear depth values**, not calibrated game
 distances. The initial range is a tuning starting point. Start/End have
 `0.00001` drag steps and allow numeric entry. End is treated as at least
 Start plus `0.000001`; equal or reversed endpoints cannot divide by zero.
-The shared source image, API and existing preset values are preserved. New
-controls use the defaults above when absent from a preset, so they introduce
-the new look until deliberately disabled or tuned.
+The shared source image, API and existing preset values are preserved. Both
+new shaping controls now default to off when absent from a preset. The first
+candidate incorrectly defaulted fade to 1 and softening to 0.35 without a
+calibrated game depth range. This could remove all Twin Lanterns light and
+make Final match Source. Set a previously saved fade value of 1 to 0 manually;
+installing an update does not reset saved preset values.
 
-Set **Depth Light Fade = 0 and Distant Light Softening = 0** to reproduce the
+Set **Depth Fade Amount = 0 and Distant Light Softening = 0** to reproduce the
 previous light-shaping path exactly and bypass all new neighboring samples.
 The controls are independent: disabling fading alone can leave distant
 softening active, using the same Start/End transition.
@@ -33,15 +36,22 @@ softening active, using the same Start/End transition.
 
 ```text
 transport → horizontal/vertical resolve → positive edge fill
-          → distant light softening → receiver-depth fade
-          → fidelity/overdrive intent → bounded additive composite
+          → distant light softening → fidelity/overdrive intent
+          → bounded contribution/channel-room calculation → receiver-depth fade
+          → source + faded bounded added light
 ```
 
-Fade uses a smooth monotone transition from Start to End and multiplies the
-light's evidence, which the existing composite uses to scale added energy.
-It runs after edge fill and softening so neither can refill a fully faded
-receiver. Fully removed light returns the source through the existing
-composite, including when Overdrive is enabled. It does not darken the source.
+Fade uses a smooth monotone transition from Start to End and scales the final
+bounded contribution. A 0.5 retention factor now halves the actual applied
+light even when the original request exceeded Maximum Added Light or available
+channel room. The first candidate faded evidence before those caps, allowing
+clipping to conceal a partial fade. That separate defect is corrected.
+
+The original source remains unchanged. Requested/bounded light, effective
+ceiling, evidence, containment and source-difference diagnostics are updated
+for the retained energy; an existing bound failure is never cleared. Rejection
+Reason uses a separate fade-suppression color/code when a previously applied
+contribution is fully suppressed.
 
 Softening blends the center and four ResolveV neighbors. Every neighbor must
 pass the existing Surface Depth Agreement, Surface Direction Agreement, and
@@ -63,11 +73,15 @@ partial retention. Invalid/sky depth is black. The mask shows fade only,
 not the softening amount.
 
 1. Hold the scene and camera fixed; initially isolate Twin Lanterns.
-2. Select Depth Fade Mask. Adjust Start/End until the foreground remains white
+2. With Depth Fade Amount at 0, valid scene geometry in Depth Fade Mask should
+   be white (invalid/sky remains black). Then set the amount to 1 for tuning
+   and adjust Start/End until the foreground remains white
    and the intended distant geometry transitions toward black. If all geometry
    stays white or turns black too early, tune the range for the game's actual
    normalized depth rather than assuming the defaults describe meters.
-3. Return to Final Image and compare Depth Light Fade at 0 and 1.
+3. Return to Final Image and compare Depth Fade Amount at 0 and 1. A fully
+   black mask with Final matching Source means Twin Lanterns light is already
+   removed; the remaining full-stack image cannot be changed by fading it more.
 4. Compare Distant Light Softening at 0 and 0.35, starting with Radius 1–2 px.
 5. Inspect thin silhouettes and foreground/background edges. Tighten Surface
    Depth/Direction Agreement if unrelated surfaces are admitted.
@@ -75,8 +89,9 @@ not the softening amount.
    Image is the input Twin Lanterns receives, including preceding effects.
 
 Edge Fill Target/Added remain diagnostics of the edge-fill stage before the
-new depth shaping. Applied Light shows the final bounded contribution after
-shaping and render intent. Bound Verification must remain green.
+new final depth fade. Fidelity/Overdrive diagnostics also describe their
+pre-fade stage. Applied Light shows the actual bounded contribution after
+softening, render intent, hard caps and depth fade. Bound Verification must remain green.
 
 ## Cost and validation limits
 
@@ -95,6 +110,7 @@ field writes still exist.
 functions with CPU texture/vector shims. It checks endpoints, monotonicity,
 fade-only signal, degenerate ranges, constant light, impulses, black samples,
 depth/normal/sky/coverage rejection, bounded source preservation, exact bypass,
-fade after edge fill, and mask work guards. These tests do not replace
+fade after edge fill and final hard caps, saturated/channel-room cases,
+diagnostic consistency, and mask work guards. These tests do not replace
 ReShade/FXC compilation or game visual and timing acceptance. Native
 compilation and live testing remain pending.

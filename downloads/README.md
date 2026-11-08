@@ -21,8 +21,12 @@ ReShade compile or visual acceptance of either backport.
 ## Alpha performance candidate
 
 The Alpha now includes receiver-depth light fade and surface-gated distant-light
-softening. New controls start at fade strength `1`, Start `0.005`, End `0.05`,
-softening `0.35`, Radius `2 px`. These depth endpoints need game-specific tuning.
+softening. Fade and softening now default to **off** (`0`). Start remains `0.005`, End
+`0.05`, Radius `2 px`; the depth endpoints require game-specific tuning.
+The fade slider is labeled `Depth Fade Amount (0 = Off)`. An existing preset
+that saved fade amount `1` must be changed to `0` manually; installing the
+update does not reset saved values. The final bounded contribution now fades
+proportionally even when contribution or channel-room limits were active.
 Use the appended `Depth Fade Mask` view to set the range. Set fade and softening
 both to zero to bypass the new shaping exactly. The source image is not blurred;
 see included `DEPTH_SHAPING_NOTES.md`. Native compile/live acceptance remain pending.
@@ -60,7 +64,7 @@ shader search path. The ZIP already includes the complete selected build.
 SHA-256:
 
 ```text
-84935cf86d11f78122550d5b9abdf4f402e61e4f74991f75658dc0460feae36b
+2398f22df8222bb1e76cd564262facfb9db1053d9e75e7dc13158f4fd1ca3a36
 ```
 
 The adjacent `.zip.sha256` file records the same archive checksum. It verifies

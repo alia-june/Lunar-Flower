@@ -18,7 +18,8 @@
     "inactive-build/source-only guards and receiver-guide reuse at full resolution",
     "explicit base-LOD Alpha donor sampling and versioned adaptive atlas resource identity",
     "Front Bias UI-only precision and tooltip correction; normalized-depth scale, preset values and ray math preserved",
-    "receiver-depth fade and premultiplied, surface-gated indirect-light softening after edge fill; appended mask diagnostic; no new textures or passes"
+    "receiver-depth fade and premultiplied, surface-gated indirect-light softening after edge fill; appended mask diagnostic; no new textures or passes",
+    "fade/softening defaults off and explicit label; fade final bounded contribution after caps with updated diagnostics; preserve stored values"
   ],
   "representation_boundary": "camera-visible depth shell only; not world voxels, hidden geometry, off-screen geometry, or complete GI",
   "pending": [

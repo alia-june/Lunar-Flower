@@ -75,7 +75,8 @@ the cloud executor.
 
 ## Depth shaping candidate
 
-Depth fading adds scalar work using the existing receiver guide. When distant
+Depth fading now defaults off and adds scalar work using the existing receiver
+guide and final bounded composite when enabled. When distant
 light softening is active at a partly retained receiver, four ResolveV taps
 and four five-depth-sample surface guides add up to four field reads and twenty
 depth reads per output pixel. Near receivers, zero softening, and fully removed

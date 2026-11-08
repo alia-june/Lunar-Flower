@@ -126,3 +126,9 @@ an Alpha-only light-field stage in
 Its 53 structural checks and 16 regression tests include 839 depth-shaping
 assertions. The package is verified; native compilation and in-game acceptance
 remain unresolved, and the batch stays on HOLD.
+
+The [fade-usability correction](experiments/fade-usability.json) follows the
+reported black mask and Final/Source match. It defaults the new shaping off,
+clarifies the fade slider, and fixes partial fading being hidden by contribution
+or channel-room caps. Its separate Mill batch retains the before-correction
+diagnostic and 20,042 depth-shaping assertions; saved presets are not reset.

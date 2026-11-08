@@ -19,7 +19,7 @@ uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaMaximumContribu
 
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStrength
-< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Light Fade"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Attenuates only Twin Lanterns added light as receiver depth increases.\nOne fully removes it at Fade End; zero disables fading.\nDepth uses ReShade normalized linear depth, not world distance."; > = 1.00;
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Fade Amount (0 = Off)"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Optional fade of final bounded Twin Lanterns added light.\n0 = Off (default); 1 = full removal at/after Fade End.\nSaved preset values are retained; change an old value of 1 to 0 to turn fading off.\nDepth uses ReShade normalized linear depth, not world distance."; > = 0.00;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStart
 < ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Fade Start"; ui_min = 0.00000; ui_max = 1.00000; ui_step = 0.00001; ui_tooltip = "Normalized linear depth where fading and distant-light softening begin.\nUse Depth Fade Mask to tune this for the game; these values are not calibrated distances."; > = 0.00500;
@@ -28,7 +28,7 @@ uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeEnd
 < ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Fade End"; ui_min = 0.00000; ui_max = 1.00000; ui_step = 0.00001; ui_tooltip = "Normalized linear depth where fade and softening reach full authority.\nEnd is treated as at least Start plus 0.000001 to avoid a zero-width transition."; > = 0.05000;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSoftening
-< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Distant Light Softening"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Softens only the indirect-light field, increasing between Fade Start and End.\nFour neighboring taps are gated by Surface Depth and Direction Agreement.\nZero bypasses these taps. The source image is never blurred."; > = 0.35;
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Distant Light Softening"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Softens only the indirect-light field, increasing between Fade Start and End.\nFour neighboring taps are gated by Surface Depth and Direction Agreement.\nZero bypasses these taps. The source image is never blurred."; > = 0.00;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSofteningRadiusPixels
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Light Softening Radius"; ui_min = 1.0; ui_max = 4.0; ui_step = 1.0; ui_tooltip = "Radius in full-resolution pixels for four surface-gated indirect-light taps.\nThe fixed radius avoids depth-driven changes in the tap footprint."; > = 2.0;
@@ -559,7 +559,7 @@ float4 LUNAR_FLOWER_TLFRApplyDepthShaping(
     if (centerGuide.valid < 0.5) return float4(0.0, 0.0, 0.0, 0.0);
     float phase = LUNAR_FLOWER_TLFRDepthPhase(centerGuide.depth);
     float fade = LUNAR_FLOWER_TLFRDepthFadeFactor(centerGuide.depth);
-    if (fade <= 0.0) return float4(0.0, 0.0, 0.0, 0.0);
+    if (fade <= 0.0) return baseIndirect; // Final composite removes the light; skip softening work.
     float amount = saturate(LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSoftening) * phase;
     float4 shaped = baseIndirect;
     [branch]
@@ -586,8 +586,8 @@ float4 LUNAR_FLOWER_TLFRApplyDepthShaping(
         float3 mixedColor = mixedSignal * CAMERA_OBSCURA_SafeRcp(mixedEvidence, 0.0) * hasEvidence;
         shaped = float4(saturate(mixedColor), mixedEvidence);
     }
-    // Fade after edge fill and softening so neither can refill a faded receiver.
-    return float4(shaped.rgb, saturate(shaped.a) * fade);
+    // Energy fade is applied after the final hard bounds, not to this evidence.
+    return shaped;
 }
 
 float4 LUNAR_FLOWER_TLFRApplyRenderIntent(
@@ -634,6 +634,37 @@ float4 LUNAR_FLOWER_TLFRApplyRenderIntent(
     return float4(saturate(fidelityIndirect), saturate(reconstructed.a));
 }
 
+
+CAMERA_OBSCURA_API_TL09CompositeEvidence
+LUNAR_FLOWER_TLFRFadeComposite(
+    CAMERA_OBSCURA_API_TL09CompositeEvidence result, float receiverDepth)
+{
+    float fade = LUNAR_FLOWER_TLFRDepthFadeFactor(receiverDepth);
+    if (fade >= 1.0) return result;
+    float wasApplied = result.application;
+    // Scale already bounded energy: neither contribution nor channel-room
+    // clipping can conceal a partial fade. The original source stays exact.
+    result.weighted_indirect_rgb *= fade;
+    result.bounded_indirect_rgb *= fade;
+    result.bounded_contribution_rgb *= fade;
+    result.evidence *= fade;
+    result.maximum_contribution *= fade;
+    result.final_rgb = result.source_rgb + result.bounded_contribution_rgb;
+    result.containment_activity = saturate(CAMERA_OBSCURA_Luma(
+        max(result.weighted_indirect_rgb - result.bounded_contribution_rgb, 0.0.xxx)));
+    result.source_preserve_delta = CAMERA_OBSCURA_Luma(
+        abs(result.final_rgb - result.source_rgb));
+    result.admission *= fade > 0.0 ? 1.0 : 0.0;
+    float contributionMaximum = max(max(result.bounded_contribution_rgb.r,
+        result.bounded_contribution_rgb.g), result.bounded_contribution_rgb.b);
+    result.application = result.admission * step(0.000001, contributionMaximum);
+    result.rejection = 1.0 - result.application;
+    if (wasApplied > 0.5 && result.application < 0.5) result.rejection_code = 7.0;
+    // Multiplying a valid nonnegative contribution by [0,1] preserves its
+    // original hard bounds. Keep any pre-existing failure flag visible.
+    return result;
+}
+
 CAMERA_OBSCURA_API_TL09CompositeEvidence
 LUNAR_FLOWER_TLFREvaluateComposite(
     float2 uv,
@@ -656,7 +687,7 @@ LUNAR_FLOWER_TLFREvaluateComposite(
         overdrivePressure,
         effectiveStrength);
     float receiverValid = centerGuide.valid;
-    return CAMERA_OBSCURA_API_BuildTL09Composite(
+    CAMERA_OBSCURA_API_TL09CompositeEvidence result = CAMERA_OBSCURA_API_BuildTL09Composite(
         source,
         intended.rgb,
         intended.a,
@@ -664,6 +695,7 @@ LUNAR_FLOWER_TLFREvaluateComposite(
         LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEnabled ? 1.0 : 0.0,
         effectiveStrength,
         LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaMaximumContribution);
+    return LUNAR_FLOWER_TLFRFadeComposite(result, centerGuide.depth);
 }
 
 float3 LUNAR_FLOWER_TLFRRejectionColor(float rejectionCode)
@@ -674,7 +706,8 @@ float3 LUNAR_FLOWER_TLFRRejectionColor(float rejectionCode)
     if (rejectionCode < 3.5) return float3(0.95, 0.05, 0.75);
     if (rejectionCode < 4.5) return float3(0.95, 0.55, 0.05);
     if (rejectionCode < 5.5) return float3(0.05, 0.90, 0.90);
-    return float3(0.45, 0.45, 0.45);
+    if (rejectionCode < 6.5) return float3(0.45, 0.45, 0.45);
+    return float3(0.35, 0.55, 1.0);
 }
 
 float4 LUNAR_FLOWER_TLFRDisplay_PS(

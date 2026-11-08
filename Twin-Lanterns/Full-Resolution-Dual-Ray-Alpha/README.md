@@ -167,9 +167,11 @@ The uploaded shaders are not replacements for the current adaptive build.
 
 ## Controls
 
-- `Depth Light Fade`, `Depth Fade Start`, and `Depth Fade End`: fade only added
+- `Depth Fade Amount (0 = Off)`, `Depth Fade Start`, and `Depth Fade End`: fade only added
   light with receiver depth. `Depth Fade Mask` shows white where light is kept
   and black where removed (invalid depth is black).
+- Both fade amount and softening default to off. Previously saved values are
+  retained; set an existing fade amount of `1` to `0` to disable fading.
 - `Distant Light Softening` and `Light Softening Radius`: soften only the
   indirect-light field with depth/normal/coverage-gated neighbors.
   See [depth shaping and tuning](DEPTH_SHAPING_NOTES.md) for defaults, bypass,

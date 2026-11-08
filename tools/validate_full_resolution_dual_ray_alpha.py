@@ -199,9 +199,10 @@ record(
 record(
     "depth_shaping_wiring",
     "LUNAR_FLOWER_TLFRApplyDepthShaping(uv, reconstructed, centerGuide)" in effect
-    and "saturate(shaped.a) * fade" in effect
+    and "result.bounded_contribution_rgb *= fade" in effect
+    and "LUNAR_FLOWER_TLFRFadeComposite(result, centerGuide.depth)" in effect
     and "LUNAR_FLOWER_TLFRDepthFadeFactor" in effect,
-    "receiver-depth fade follows edge fill/softening and precedes render intent/composite; CPU fixtures verify behavior",
+    "receiver-depth fade scales final bounded contribution after render intent/composite; CPU fixtures verify saturated and channel-room cases",
 )
 record(
     "light_only_softening_wiring",

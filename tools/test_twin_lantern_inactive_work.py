@@ -41,6 +41,7 @@ float4 tex2D(int sampler,float2 uv){
 float smoothstep(float a,float b,float x){float t=saturate((x-a)/(b-a));return t*t*(3-2*t);}
 float3 lerp(float3 a,float3 b,float t){return a+(b-a)*t;}
 float3& operator+=(float3& a,float3 b){a=a+b;return a;}
+float3& operator*=(float3& a,float b){a=a*b;return a;}
 float3 CAMERA_OBSCURA_DebugHeat(float x){return float3(x);}
 '''
     tokens=[
@@ -58,6 +59,7 @@ float3 CAMERA_OBSCURA_DebugHeat(float x){return float3(x);}
         'float LUNAR_FLOWER_TLFRDepthPhase(', 'float LUNAR_FLOWER_TLFRDepthFadeFactor(',
         'float4 LUNAR_FLOWER_TLFRApplyDepthShaping(',
         'float4 LUNAR_FLOWER_TLFRApplyRenderIntent(',
+        'CAMERA_OBSCURA_API_TL09CompositeEvidence\nLUNAR_FLOWER_TLFRFadeComposite(',
         'CAMERA_OBSCURA_API_TL09CompositeEvidence\nLUNAR_FLOWER_TLFREvaluateComposite(',
         'float3 LUNAR_FLOWER_TLFRRejectionColor(', 'float4 LUNAR_FLOWER_TLFRDisplay_PS(',
     ]

@@ -1,0 +1,64 @@
+{
+  "schema": "lunar-flower-mill-experiment-v1",
+  "experiment": "fade-usability-and-final-bounds",
+  "date": "2026-11-08",
+  "source_revision": "bf007b562d3f36dc4046e8972ca4b00add337be3",
+  "batch_path": "/workspace/shader-mill/batches/twin-lanterns-fade-usability-2026-11-08",
+  "user_observations": [
+    "Depth Fade Mask black",
+    "Final matches Source",
+    "Fade amount was set to 1, removing light"
+  ],
+  "corrections": [
+    "Fade and softening now default off; clear 0=Off label",
+    "Fade scales final bounded contribution after both Maximum Added Light and channel-room limits",
+    "Fade diagnostics track final output and preserve existing bound failures"
+  ],
+  "existing_preset_values_retained": true,
+  "user_action_for_existing_preset": "Set Depth Fade Amount to 0 to disable fading; softening 0 restores previous shaping path",
+  "defaults": {
+    "DepthFadeStrength": 0,
+    "LightSoftening": 0,
+    "DepthFadeStart": 0.005,
+    "DepthFadeEnd": 0.05
+  },
+  "checks": {
+    "structural_passed": 53,
+    "regression_tests_passed": 16,
+    "depth_shaping_cpu_assertions": 20042,
+    "historical_voxel_comparisons_passed": 3
+  },
+  "package": {
+    "result": "PASS",
+    "scope": "Archive integrity and source-byte identity only",
+    "path": "package/Twin-Lanterns-Alpha-fade-usability-001.zip",
+    "sha256": "2398f22df8222bb1e76cd564262facfb9db1053d9e75e7dc13158f4fd1ca3a36",
+    "effect_count": 1,
+    "matching_shader_include_count": 11
+  },
+  "gates": {
+    "source_freeze": "PASS",
+    "candidate": "PASS",
+    "static": "PASS",
+    "compiler": "BLOCKED",
+    "package": "PASS",
+    "live": "PENDING"
+  },
+  "decision": "HOLD",
+  "final_verification": {
+    "batch_path": "/workspace/shader-mill/batches/twin-lanterns-fade-usability-2026-11-08",
+    "evidence_boundary": "PASS proves factory structure and internal consistency only.",
+    "failures": [],
+    "gate_logic_pass": true,
+    "manifest_pass": true,
+    "result": "PASS",
+    "structure_pass": true
+  },
+  "native_compile_performed": false,
+  "live_visual_acceptance_performed": false,
+  "limits": [
+    "No calibrated game depth values supplied; fade range remains game-specific",
+    "A fully black mask with Final matching Source indicates no visible Twin contribution; the independent partial-fade cap defect did not cause that observation",
+    "The source image is not softened or reconstructed by this change"
+  ]
+}
