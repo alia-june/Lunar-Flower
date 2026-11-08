@@ -99,6 +99,11 @@ and game-specific depth behavior remain practical limits.
 
 ## Repository Layout
 
+The [shader development Mill](development/mill/README.md) provides a local
+workspace for frozen source, working candidates, test evidence and packages.
+Its initial deployment is running; native compiler and live game checks remain
+separate from the passing CPU/source checks.
+
 ```text
 Twin-Lanterns/
   API/
