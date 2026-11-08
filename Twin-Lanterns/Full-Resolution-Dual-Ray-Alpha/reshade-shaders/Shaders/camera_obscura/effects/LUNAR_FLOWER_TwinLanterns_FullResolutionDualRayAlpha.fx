@@ -12,14 +12,14 @@ uniform bool LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaEnabled
 < ui_type = "checkbox"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Enable Indirect Light"; ui_tooltip = "Applies bounded reconstructed indirect light.\nOff returns the source image exactly while diagnostics remain available."; > = true;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength
-< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Indirect Light Strength"; ui_min = 0.00; ui_max = 4.00; ui_step = 0.001; ui_tooltip = "Scales admitted indirect light after transport normalization and reconstruction evidence.\nFine adjustment: 0.001 per step (0.1 percentage point of nominal strength).\nFor 10-30% strength, use 0.100-0.300; zero returns the source image exactly."; > = 1.00;
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Indirect Light Strength"; ui_min = 0.00; ui_max = 4.00; ui_step = 0.001; ui_tooltip = "Scales admitted indirect light after transport normalization and reconstruction evidence.\nFine adjustment: 0.001 per step (0.1 percentage point of nominal strength).\nFor 10-30% strength, use 0.100-0.300; zero returns the source image exactly."; > = 0.272000;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaMaximumContribution
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 01 Light"; ui_label = "Maximum Added Light"; ui_min = 0.00; ui_max = 0.50; ui_step = 0.005; ui_tooltip = "Hard per-channel ceiling for added normalized SDR light.\nThe result is also limited by the remaining room in each source channel."; > = 0.20;
 
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStrength
-< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Fade Amount (0 = Off)"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Optional fade of final bounded Twin Lanterns added light.\n0 = Off (default); 1 = full removal at/after Fade End.\nSaved preset values are retained; change an old value of 1 to 0 to turn fading off.\nDepth uses ReShade normalized linear depth, not world distance."; > = 0.00;
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Fade Amount (0 = Off)"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Optional fade of final bounded Twin Lanterns added light.\n0 = Off; 1 = full removal at/after Fade End.\nDefault 0.355 follows the user preset; set 0 to disable fading.\nDepth uses ReShade normalized linear depth, not world distance."; > = 0.355000;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStart
 < ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Fade Start"; ui_min = 0.00000; ui_max = 1.00000; ui_step = 0.00001; ui_tooltip = "Normalized linear depth where fading and distant-light softening begin.\nUse Depth Fade Mask to tune this for the game; these values are not calibrated distances."; > = 0.00500;
@@ -28,7 +28,7 @@ uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeEnd
 < ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Depth Fade End"; ui_min = 0.00000; ui_max = 1.00000; ui_step = 0.00001; ui_tooltip = "Normalized linear depth where fade and softening reach full authority.\nEnd is treated as at least Start plus 0.000001 to avoid a zero-width transition."; > = 0.05000;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSoftening
-< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Distant Light Softening"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Softens only the indirect-light field, increasing between Fade Start and End.\nFour neighboring taps are gated by Surface Depth and Direction Agreement.\nZero bypasses these taps. The source image is never blurred."; > = 0.00;
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Distant Light Softening"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Softens only the indirect-light field, increasing between Fade Start and End.\nFour neighboring taps are gated by Surface Depth and Direction Agreement.\nZero bypasses these taps. The source image is never blurred."; > = 1.000000;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSofteningRadiusPixels
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 02 Depth Shaping"; ui_label = "Light Softening Radius"; ui_min = 1.0; ui_max = 4.0; ui_step = 1.0; ui_tooltip = "Radius in full-resolution pixels for four surface-gated indirect-light taps.\nThe fixed radius avoids depth-driven changes in the tap footprint."; > = 2.0;
@@ -40,19 +40,19 @@ uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthSlope
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Ray Depth Slope"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.01; ui_tooltip = "Controls how quickly transport rays move through screen depth.\nHigher values search more aggressively across depth."; > = 0.16;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias
-< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Front Surface Bias"; ui_min = 0.0000; ui_max = 0.0100; ui_step = 0.000001; ui_tooltip = "Front-side hit tolerance in normalized linear depth; this does not offset the ray origin.\nLarger values admit surfaces farther in front of the ray and also widen confidence weighting; they may increase light carry.\nFine adjustment: 0.000001 per step. Zero is valid; pixel-distance self-hit rejection is separate."; > = 0.0005;
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Front Surface Bias"; ui_min = 0.0000; ui_max = 0.0100; ui_step = 0.000001; ui_tooltip = "Front-side hit tolerance in normalized linear depth; this does not offset the ray origin.\nLarger values admit surfaces farther in front of the ray and also widen confidence weighting; they may increase light carry.\nFine adjustment: 0.000001 per step. Zero is valid; pixel-distance self-hit rejection is separate."; > = 0.000052;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaBackThickness
 < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Back Surface Thickness"; ui_min = 0.0000; ui_max = 0.0200; ui_step = 0.0001; ui_tooltip = "Extends the accepted hit interval behind the ray.\nLarger values admit thicker surfaces but can increase leakage."; > = 0.0035;
 
 uniform int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayPairs
-< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Opposing Ray Pairs"; ui_min = 1; ui_max = 4; ui_step = 1; ui_tooltip = "Casts one to four opposing direction pairs per full-resolution pixel.\nTwo pairs reproduce the cardinal direction schedule; four pairs add both diagonals for eight rays total."; > = 2;
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Opposing Ray Pairs"; ui_min = 1; ui_max = 4; ui_step = 1; ui_tooltip = "Casts one to four opposing direction pairs per full-resolution pixel.\nTwo pairs reproduce the cardinal direction schedule; four pairs add both diagonals for eight rays total."; > = 1;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength
-< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Voxel Proxy Lighting"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Blends admitted radiance from the current-frame view-frustum voxel proxy into each ray direction.\nFine adjustment: 0.001 per step; 0.100-0.300 is 10-30% voxel authority.\nThis proxy contains camera-visible depth evidence only and is not world voxel lighting."; > = 0.35;
+< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Voxel Proxy Lighting"; ui_min = 0.00; ui_max = 1.00; ui_step = 0.001; ui_tooltip = "Blends admitted radiance from the current-frame view-frustum voxel proxy into each ray direction.\nFine adjustment: 0.001 per step; 0.100-0.300 is 10-30% voxel authority.\nThis proxy contains camera-visible depth evidence only and is not world voxel lighting."; > = 1.000000;
 
 uniform int LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelTraceSteps
-< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Voxel Trace Steps"; ui_min = 4; ui_max = 32; ui_step = 1; ui_tooltip = "Maximum depth samples tested along each scheduled ray.\nHigher values increase sampling density within the configured transport distance and increase cost."; > = 16;
+< ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns / 90 Transport"; ui_label = "Voxel Trace Steps"; ui_min = 4; ui_max = 32; ui_step = 1; ui_tooltip = "Maximum depth samples tested along each scheduled ray.\nHigher values increase sampling density within the configured transport distance and increase cost."; > = 24;
 
 uniform float LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthTolerance
 < ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns / 91 Reconstruction"; ui_label = "Surface Depth Agreement"; ui_min = 0.0001; ui_max = 0.0500; ui_step = 0.00001; ui_tooltip = "Maximum depth disagreement admitted during reconstruction and edge fill.\nLower values reject differing-depth neighbors more strictly; higher values admit more neighboring light and may brighten or soften boundaries.\nFine adjustment: 0.00001 per step; this is a depth tolerance, not a light strength."; > = 0.0050;

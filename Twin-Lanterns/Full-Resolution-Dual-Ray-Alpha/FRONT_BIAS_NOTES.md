@@ -55,9 +55,10 @@ specific image difference or prove native/GPU parity.
 
 Alpha now uses a fine drag control with `0.000001` steps, **100× finer** than
 the old `0.0001` step. This gives 100 intervals between `0` and `0.0001`.
-The uniform name, `0–0.01` range, `0.0005` default, stored values and shader
-functions are preserved. Zero is a valid tuning choice. Existing presets
-are not rescaled. The tooltip now describes admission and confidence rather
+The uniform name, `0–0.01` range, stored values and shader functions are
+preserved. The current default is `0.000052`, copied from the user-supplied
+`Lazara.ini` Twin Lanterns section (the original control-only update retained
+`0.0005`). Zero remains valid and existing presets are not rescaled. The tooltip now describes admission and confidence rather
 than incorrectly suggesting that positive bias independently avoids self hits.
 
 Suggested comparison values are `0`, `0.00001`, `0.000025`, `0.00005` and

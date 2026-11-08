@@ -167,11 +167,18 @@ The uploaded shaders are not replacements for the current adaptive build.
 
 ## Controls
 
+Defaults now match all 24 values in the user-supplied `Lazara.ini` Twin Lanterns
+section. [DEFAULTS_FROM_PRESET.json](DEFAULTS_FROM_PRESET.json) records the exact
+values and provenance. Seven initializers changed: Strength `0.272`, Front Bias
+`0.000052`, Ray Pairs `1`, Voxel Lighting `1`, Voxel Steps `24`, Fade `0.355`,
+and Softening `1`. Other effects and shader functions are unchanged. Existing
+presets retain their own stored values; these apply to new/reset Alpha controls.
+
 - `Depth Fade Amount (0 = Off)`, `Depth Fade Start`, and `Depth Fade End`: fade only added
   light with receiver depth. `Depth Fade Mask` shows white where light is kept
   and black where removed (invalid depth is black).
-- Both fade amount and softening default to off. Previously saved values are
-  retained; set an existing fade amount of `1` to `0` to disable fading.
+- Fade amount defaults to `0.355` and softening to `1.000`, as selected by the
+  user preset. Either can still be disabled with zero; saved values are retained.
 - `Distant Light Softening` and `Light Softening Radius`: soften only the
   indirect-light field with depth/normal/coverage-gated neighbors.
   See [depth shaping and tuning](DEPTH_SHAPING_NOTES.md) for defaults, bypass,
@@ -184,20 +191,20 @@ The uploaded shaders are not replacements for the current adaptive build.
 - `Indirect Light Strength`: fine drag adjustment and +/- steps of `0.001`
   (0.1 percentage point of nominal strength). The reported 10-30% tuning range
   is `0.100-0.300`; `1.000` is nominal 100%, not the slider maximum. The full
-  `0-4` range, default, uniform name and preset scale are preserved.
-- `Opposing Ray Pairs`: `1-4` pairs (`2-8` rays). Two pairs use the original
+  `0-4` range, uniform name and preset scale are preserved; the default is `0.272`.
+- `Opposing Ray Pairs`: `1-4` pairs (`2-8` rays), default `1`. Two pairs use the original
   east/west and north/south cardinal schedule; pairs three and four add the
   two diagonals.
 - `Voxel Proxy Lighting`: contribution authority for admitted voxel-proxy
   radiance, with fine drag adjustment and +/- steps of `0.001`. Zero leaves
-  only the screen-depth DDA/march providers. Its range and default are preserved.
+  only the screen-depth DDA/march providers. The range is preserved; default is `1.000`.
 - `Surface Depth Agreement`: fine drag adjustment and +/- steps of `0.00001`,
   with the existing `0.0001-0.0500` range and default. This is a depth tolerance:
   lower means stricter neighbor rejection. It does not change ray-hit admission
   or directly multiply lighting strength. Larger tolerances admit more
   neighboring light in both reconstruction passes and edge fill, which can
   brighten dark receivers and soften boundaries.
-- `Voxel Trace Steps`: `4-32` ray samples per scheduled direction.
+- `Voxel Trace Steps`: `4-32` ray samples per scheduled direction, default `24`.
   This effect sets the shared ray-builder/DDA step limit to 32 so the full
   voxel step range stays within the configured transport distance. Transport
   Distance remains `4-24` pixels; more steps increase sampling density rather

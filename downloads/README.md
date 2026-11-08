@@ -20,16 +20,18 @@ ReShade compile or visual acceptance of either backport.
 
 ## Alpha performance candidate
 
-The Alpha now includes receiver-depth light fade and surface-gated distant-light
-softening. Fade and softening now default to **off** (`0`). Start remains `0.005`, End
-`0.05`, Radius `2 px`; the depth endpoints require game-specific tuning.
-The fade slider is labeled `Depth Fade Amount (0 = Off)`. An existing preset
-that saved fade amount `1` must be changed to `0` manually; installing the
-update does not reset saved values. The final bounded contribution now fades
-proportionally even when contribution or channel-room limits were active.
-Use the appended `Depth Fade Mask` view to set the range. Set fade and softening
-both to zero to bypass the new shaping exactly. The source image is not blurred;
-see included `DEPTH_SHAPING_NOTES.md`. Native compile/live acceptance remain pending.
+The Alpha defaults now match all 24 Twin Lanterns values in the corrected
+user-supplied `Lazara.ini` section. Seven defaults changed: Strength `0.272`,
+Front Bias `0.000052`, Ray Pairs `1`, Voxel Lighting `1`, Voxel Steps `24`,
+Fade Amount `0.355`, and Softening `1`. Other effects and shader functions
+are unchanged. The ZIP includes `DEFAULTS_FROM_PRESET.json` with the exact
+values and source hash; no other preset sections are copied into it.
+
+These are defaults for new/reset Alpha controls; saved preset values remain
+as saved. Start `0.005`, End `0.05`, and softening Radius `2 px` also match the
+provided preset. Zero still disables fade or softening. The fade scales final
+bounded contribution, and the source image is not blurred. Native compile/live
+acceptance remain separate from source, CPU and package checks.
 
 [Download the single-effect ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Alpha-performance-candidate.zip).
 
@@ -43,7 +45,8 @@ are still pending for this candidate. It is on the review branch, not main.
 Fine tuning update: Indirect Light Strength and Voxel Proxy Lighting use drag
 controls with `0.001` steps; Surface Depth Agreement uses `0.00001` steps.
 For 10-30% nominal strength, use `0.100-0.300`. Existing preset values, ranges,
-defaults and lighting math are preserved. The included README records the
+lighting math is preserved. Current defaults are recorded in the profile above.
+The included README records the
 depth-agreement brightness investigation and its CPU-only limits.
 
 Alpha Front Surface Bias now has `0.000001` drag steps (100× finer). Exact zero
@@ -64,7 +67,7 @@ shader search path. The ZIP already includes the complete selected build.
 SHA-256:
 
 ```text
-2398f22df8222bb1e76cd564262facfb9db1053d9e75e7dc13158f4fd1ca3a36
+4ddacb5b4e5775caa090978ad056cfcc9593ce84bf9c0040a6db691a1b3f350f
 ```
 
 The adjacent `.zip.sha256` file records the same archive checksum. It verifies

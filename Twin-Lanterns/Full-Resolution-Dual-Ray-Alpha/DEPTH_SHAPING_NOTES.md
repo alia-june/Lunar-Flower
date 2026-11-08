@@ -10,22 +10,23 @@ already clipped, blurred or outlined in the source supplied by other effects.
 
 | Control | Default | Meaning |
 | --- | --- | --- |
-| Depth Fade Amount (0 = Off) | 0.000 | Optional fade authority; 1 removes added light at/after End, 0 disables fading |
+| Depth Fade Amount (0 = Off) | 0.355 | Optional fade authority; 1 removes added light at/after End, 0 disables fading |
 | Depth Fade Start | 0.00500 | Normalized linear depth where fade and softening begin |
 | Depth Fade End | 0.05000 | Depth where they reach full authority |
-| Distant Light Softening | 0.000 | Maximum blend toward the surface-gated neighboring light mean |
+| Distant Light Softening | 1.000 | Maximum blend toward the surface-gated neighboring light mean |
 | Light Softening Radius | 2 px | Fixed full-resolution radius for four neighbors |
 
 These are **normalized ReShade linear depth values**, not calibrated game
 distances. The initial range is a tuning starting point. Start/End have
 `0.00001` drag steps and allow numeric entry. End is treated as at least
 Start plus `0.000001`; equal or reversed endpoints cannot divide by zero.
-The shared source image, API and existing preset values are preserved. Both
-new shaping controls now default to off when absent from a preset. The first
-candidate incorrectly defaulted fade to 1 and softening to 0.35 without a
-calibrated game depth range. This could remove all Twin Lanterns light and
-make Final match Source. Set a previously saved fade value of 1 to 0 manually;
-installing an update does not reset saved preset values.
+The shared source image, API and existing preset values are preserved. Current
+defaults follow the user-supplied `Lazara.ini` Twin Lanterns section: fade `0.355`
+and softening `1.000`. The first candidate defaulted fade to 1 without a
+calibrated range and could remove all Twin Lanterns light. A follow-up defaulted
+shaping off; the current values are the user's explicitly selected replacement.
+Zero still disables each control. Installing the shader does not reset saved
+preset values. See `DEFAULTS_FROM_PRESET.json` for all 24 current defaults.
 
 Set **Depth Fade Amount = 0 and Distant Light Softening = 0** to reproduce the
 previous light-shaping path exactly and bypass all new neighboring samples.

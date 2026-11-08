@@ -1,0 +1,84 @@
+{
+  "schema": "lunar-flower-mill-experiment-v1",
+  "experiment": "user-preset-defaults",
+  "date": "2026-11-08",
+  "source_revision": "842b025486bab9f66ed89a27c514039ff1d85d2d",
+  "batch_path": "/workspace/shader-mill/batches/twin-lanterns-preset-defaults-2026-11-08",
+  "source_preset_sha256": "64b4ec0363087f5f0fbe40e38490fa8eb99912474d91273459f28d59ffbc5a12",
+  "scope": "Twin Lanterns Full Resolution Dual Ray Alpha only; other preset sections and effects not changed",
+  "matched_uniform_count": 24,
+  "changed_default_count": 7,
+  "changed_defaults": [
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength",
+      "before": "1.00",
+      "after": "0.272000"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaDepthFadeStrength",
+      "before": "0.00",
+      "after": "0.355000"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaLightSoftening",
+      "before": "0.00",
+      "after": "1.000000"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaFrontBias",
+      "before": "0.0005",
+      "after": "0.000052"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaRayPairs",
+      "before": "2",
+      "after": "1"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength",
+      "before": "0.35",
+      "after": "1.000000"
+    },
+    {
+      "uniform": "LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelTraceSteps",
+      "before": "16",
+      "after": "24"
+    }
+  ],
+  "shader_function_changes": false,
+  "other_effect_changes": false,
+  "checks": {
+    "structural_passed": 53,
+    "regression_tests_passed": 16,
+    "default_match_passed": 24
+  },
+  "package": {
+    "result": "PASS",
+    "scope": "Same tested shader defaults; refreshed performance documentation to agree with the user-selected defaults",
+    "path": "package/Twin-Lanterns-Alpha-preset-defaults-002.zip",
+    "sha256": "4ddacb5b4e5775caa090978ad056cfcc9593ce84bf9c0040a6db691a1b3f350f",
+    "effect_count": 1,
+    "matching_shader_include_count": 11,
+    "defaults_matched": 24
+  },
+  "gates": {
+    "source_freeze": "PASS",
+    "candidate": "PASS",
+    "static": "PASS",
+    "compiler": "BLOCKED",
+    "package": "PASS",
+    "live": "PENDING"
+  },
+  "decision": "HOLD",
+  "final_verification": {
+    "batch_path": "/workspace/shader-mill/batches/twin-lanterns-preset-defaults-2026-11-08",
+    "evidence_boundary": "PASS proves factory structure and internal consistency only.",
+    "failures": [],
+    "gate_logic_pass": true,
+    "manifest_pass": true,
+    "result": "PASS",
+    "structure_pass": true
+  },
+  "native_compile_performed": false,
+  "live_visual_test_performed": false
+}

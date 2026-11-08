@@ -132,3 +132,8 @@ reported black mask and Final/Source match. It defaults the new shaping off,
 clarifies the fade slider, and fixes partial fading being hidden by contribution
 or channel-room caps. Its separate Mill batch retains the before-correction
 diagnostic and 20,042 depth-shaping assertions; saved presets are not reset.
+
+The [user preset defaults run](experiments/preset-defaults.json) applies only
+the corrected `Lazara.ini` Twin Lanterns Alpha section. All 24 default values
+match; seven initializers changed, with shader functions and other effects
+preserved. The exact profile is shipped as `DEFAULTS_FROM_PRESET.json`.
