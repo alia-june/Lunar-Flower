@@ -1,0 +1,17 @@
+..F..........
+======================================================================
+FAIL: test_allowed_root_comparison_uses_windows_case_rules (test_controller.MillControllerTests.test_allowed_root_comparison_uses_windows_case_rules)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/tooling/xOSG-prototype/Instrumentation/mill-controllers/creation/tests/test_controller.py", line 169, in test_allowed_root_comparison_uses_windows_case_rules
+    self.assertEqual("permitted", receipt["admission"])
+AssertionError: 'permitted' != 'not_permitted'
+- permitted
++ not_permitted
+? ++++
+
+
+----------------------------------------------------------------------
+Ran 13 tests in 1.128s
+
+FAILED (failures=1)

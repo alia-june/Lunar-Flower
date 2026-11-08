@@ -87,5 +87,17 @@
     "One upstream Windows case-insensitive path test fails on Linux; exact-case paths exercised successfully",
     "Native compiler absent; target-game visual/performance testing not performed",
     "Upstream Mill and frontdoor source trees unchanged; cloud environment configuration not published"
+  ],
+  "tracked_issues": [
+    {
+      "id": "MILL-001",
+      "status": "OPEN",
+      "path": "issues/MILL-001.md",
+      "intended_upstream_repository": "alia-june/xOSG-prototype",
+      "github_issue_created": false,
+      "github_api_result": "Forbidden for GraphQL/REST reads and gh issue create submission",
+      "evidence_log": "issues/MILL-001-creation-controller-tests.log",
+      "evidence_sha256": "c8b6eaa472fd99bff890a7a61b97be4f4e879c1da003a64c3244ad9fa6f07603"
+    }
   ]
 }

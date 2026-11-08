@@ -62,6 +62,11 @@ passing. Exact-case paths work in the deployed Linux workflow. An initial
 verification test invocation had no fixture and skipped 14 cases; only the
 later fully bound run is counted above.
 
+The failure is tracked as [MILL-001](issues/MILL-001.md), with reproduction,
+the retained log, expected platform behavior and resolution criteria. GitHub's
+issue API returned `Forbidden`; this is a page-level issue record, not a
+created upstream GitHub issue ticket.
+
 The first batch has `PASS` for source freeze, candidate assembly, static
 checks and packaging. Native compilation is `BLOCKED`, live game testing is
 `PENDING`, and its decision remains `HOLD`. Offline compiler results from the
