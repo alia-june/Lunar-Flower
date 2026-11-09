@@ -47,7 +47,8 @@ available as a separate capture sequence.
 These additional user-supplied captures are preserved byte-for-byte. Capture 01
 is identified as using [FlexAgX by
 El-Greco1541](https://github.com/El-Greco1541/FlexAgX). Capture 02 is identified
-as **No Effects**, and Capture 03 as **Light Controlled Twin Lanterns**. The
+as **No Effects**, Capture 03 as **Light Controlled Twin Lanterns**, and Capture
+04 as **Lazara + Twin Lanterns** in Elden Ring. The
 [gallery manifest](assets/twin-lanterns-gallery.json) records these supplied
 assignments, source filenames, dimensions, and matching source/repository
 hashes.
@@ -72,6 +73,13 @@ pixel-level A/B comparison.
 #### Capture 03 — Light Controlled Twin Lanterns
 
 ![Light Controlled Twin Lanterns](assets/twin-lanterns-gallery-03.png)
+
+### Capture 04 — Lazara + Twin Lanterns
+
+[![Elden Ring with Lazara + Twin Lanterns](assets/twin-lanterns-gallery-04.png)](assets/twin-lanterns-gallery-04.png)
+
+An original 2560×1440 Elden Ring capture, also featured on the
+[Crystal Spider - Beta download page](../downloads/README.md#crystal-spider---beta).
 
 Like the comparison above, these captures contain third-party game imagery and
 are not included in the repository's MIT software grant.

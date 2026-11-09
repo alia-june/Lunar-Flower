@@ -20,6 +20,13 @@ ReShade compile or visual acceptance of either backport.
 
 ## Crystal Spider - Beta
 
+### Lazara + Twin Lanterns
+
+[![Elden Ring with Lazara + Twin Lanterns](../Twin-Lanterns/assets/twin-lanterns-gallery-04.png)](../Twin-Lanterns/assets/twin-lanterns-gallery-04.png)
+
+*Elden Ring — Lazara + Twin Lanterns.* User-supplied capture, preserved at its
+original 2560×1440 resolution. Click the image to view the full frame.
+
 The Alpha defaults now match all 24 Twin Lanterns values in the corrected
 user-supplied `Lazara.ini` section. Seven defaults changed: Strength `0.272`,
 Front Bias `0.000052`, Ray Pairs `1`, Voxel Lighting `1`, Voxel Steps `24`,

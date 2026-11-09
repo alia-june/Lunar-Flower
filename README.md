@@ -24,6 +24,8 @@ history.
 
 ## Visual Comparison
 
+Latest capture: [Lazara + Twin Lanterns in Elden Ring, on the Crystal Spider - Beta page](downloads/README.md#crystal-spider---beta).
+
 ![No Effects, Twin Lanterns Full, and Twin Lanterns Full plus Lazara](Twin-Lanterns/assets/twin-lanterns-full-lazara-comparison.png)
 
 Left: **No Effects** · Center: **Twin Lanterns Full** · Right: **Twin Lanterns Full + Lazara**

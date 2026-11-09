@@ -1,7 +1,7 @@
 {
   "schema": "lunar-flower-source-gallery-v1",
   "description": "User-supplied gallery captures preserved as byte-identical PNG copies.",
-  "semantic_status": "User-supplied assignments: capture 01 uses FlexAgX by El-Greco1541; capture 02 is No Effects; capture 03 is Light Controlled Twin Lanterns.",
+  "semantic_status": "User-supplied assignments: capture 01 uses FlexAgX by El-Greco1541; capture 02 is No Effects; capture 03 is Light Controlled Twin Lanterns. Capture 04 is Lazara + Twin Lanterns in Elden Ring, supplied for the Crystal Spider - Beta page.",
   "transformation": "None. Repository files are direct byte copies of the supplied sources.",
   "captures": [
     {
@@ -38,6 +38,20 @@
       "repository_sha256": "1E7F03B0595BEF2DF8591EEB4728C475324D6C20E4A0FD2573BD67763DFAE1D1",
       "effect_context": "Light Controlled Twin Lanterns",
       "presentation_role": "Two-way effect state",
+      "exact_copy": true
+    },
+    {
+      "gallery_id": "04",
+      "repository_file": "twin-lanterns-gallery-04.png",
+      "source_file": "eldenring 2026-11-09 08-03-27_211.png",
+      "source_archive": "eldenring 2026-11-09 08-03-27_211.zip",
+      "width": 2560,
+      "height": 1440,
+      "source_sha256": "3F33E51908EF224CD8875A64B657C92F54DB8D9CE6A58FF16E22374237811701",
+      "repository_sha256": "3F33E51908EF224CD8875A64B657C92F54DB8D9CE6A58FF16E22374237811701",
+      "effect_context": "Lazara + Twin Lanterns",
+      "game": "Elden Ring",
+      "presentation_role": "Crystal Spider - Beta gallery capture",
       "exact_copy": true
     }
   ],
