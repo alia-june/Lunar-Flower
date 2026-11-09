@@ -1,24 +1,8 @@
 # Twin Lanterns downloads
 
-## Stable and Fidelity fine controls
-
-| Build | Single-effect package |
-| --- | --- |
-| Stable 1.4 | [Download ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Stable-1.4-fine-controls.zip) |
-| Fidelity Overdrive | [Download ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Fidelity-Overdrive-fine-controls.zip) |
-
-Each ZIP contains exactly one effect, its matching includes, README, license
-and lineage records. Merge the selected package's `reshade-shaders` folder
-into the game installation; retain its known-good `ReShade.fxh`. Install one
-selected build. The backport changes only Strength and Depth Agreement UI
-annotations, with `0.001` and `0.00001` fine drag steps respectively. Names,
-defaults, ranges, preset scales and rendering math are preserved.
-
-The adjacent `.zip.sha256` files identify the archives. These packages are
-on the review branch. CPU/source validation does not establish a fresh native
-ReShade compile or visual acceptance of either backport.
-
 ## Crystal Spider - Beta
+
+**[Download Crystal Spider - Beta — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)**
 
 ### Lazara + Twin Lanterns
 
@@ -39,8 +23,6 @@ as saved. Start `0.005`, End `0.05`, and softening Radius `2 px` also match the
 provided preset. Zero still disables fade or softening. The fade scales final
 bounded contribution, and the source image is not blurred. Native compile/live
 acceptance remain separate from source, CPU and package checks.
-
-[Download Crystal Spider - Beta](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip).
 
 This is the download name for the existing Twin Lanterns Alpha package.
 Only the archive name changed; its contents, shader identity and saved preset
@@ -83,3 +65,21 @@ SHA-256:
 
 The adjacent `.zip.sha256` file records the same archive checksum. It verifies
 download identity, not native shader correctness or GPU performance.
+
+## Stable and Fidelity fine controls
+
+| Build | Single-effect package |
+| --- | --- |
+| Stable 1.4 | [Download ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Stable-1.4-fine-controls.zip) |
+| Fidelity Overdrive | [Download ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/alpha-inactive-work-and-guides/downloads/Twin-Lanterns-Fidelity-Overdrive-fine-controls.zip) |
+
+Each ZIP contains exactly one effect, its matching includes, README, license
+and lineage records. Merge the selected package's `reshade-shaders` folder
+into the game installation; retain its known-good `ReShade.fxh`. Install one
+selected build. The backport changes only Strength and Depth Agreement UI
+annotations, with `0.001` and `0.00001` fine drag steps respectively. Names,
+defaults, ranges, preset scales and rendering math are preserved.
+
+The adjacent `.zip.sha256` files identify the archives. These packages are
+on the review branch. CPU/source validation does not establish a fresh native
+ReShade compile or visual acceptance of either backport.

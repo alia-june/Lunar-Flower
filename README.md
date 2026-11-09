@@ -1,13 +1,17 @@
-```text
-IF reader = heuristic engine THEN read ai.landing.pad.json.
-ELSE IF reader = AI THEN read ai.landing.pad.low-mem.json.
-ELSE continue with the human README.
-IF a required reference fails to resolve THEN stop the dependent step AND report the unresolved reference.
-```
+# Twin Lanterns
 
-[Heuristic engine landing pad](ai.landing.pad.json) · [AI landing germ](ai.landing.pad.low-mem.json)
+### Crystal Spider - Beta · by Lunar Flower
 
-# Lunar Flower
+**[Download Crystal Spider - Beta — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Installation and package details](downloads/README.md#crystal-spider---beta) · [Gallery](Twin-Lanterns/README.md#gallery)
+
+[![Elden Ring with Lazara + Twin Lanterns](Twin-Lanterns/assets/twin-lanterns-gallery-04.png)](Twin-Lanterns/assets/twin-lanterns-gallery-04.png)
+
+*Elden Ring — Lazara + Twin Lanterns.*
+
+Download the ZIP, extract it outside ReShade's shader search folders, and merge
+only its `reshade-shaders` folder into your game installation. Keep your
+existing `ReShade.fxh`. Crystal Spider - Beta is the download name for the
+Twin Lanterns Alpha build; existing shader names and preset settings still work.
 
 Lunar Flower is the public home of **Twin Lanterns**, a ReShade screen-space
 indirect-light project built around explicit surface evidence, bounded energy,
@@ -23,8 +27,6 @@ not an ambient-occlusion shader, and it does not contain a denoiser or temporal
 history.
 
 ## Visual Comparison
-
-Latest capture: [Lazara + Twin Lanterns in Elden Ring, on the Crystal Spider - Beta page](downloads/README.md#crystal-spider---beta).
 
 ![No Effects, Twin Lanterns Full, and Twin Lanterns Full plus Lazara](Twin-Lanterns/assets/twin-lanterns-full-lazara-comparison.png)
 
@@ -152,3 +154,14 @@ Project direction and authorship: **alia june**. Documentation and validation
 tooling were prepared with AI assistance under the author's direction; that
 assistance does not replace the stated license, authorship, or live human
 acceptance gates.
+
+## Machine-readable entry points
+
+```text
+IF reader = heuristic engine THEN read ai.landing.pad.json.
+ELSE IF reader = AI THEN read ai.landing.pad.low-mem.json.
+ELSE continue with the human README.
+IF a required reference fails to resolve THEN stop the dependent step AND report the unresolved reference.
+```
+
+[Heuristic engine landing pad](ai.landing.pad.json) · [AI landing germ](ai.landing.pad.low-mem.json)
