@@ -2,11 +2,11 @@
 
 ### Crystal Spider - Beta · by Lunar Flower
 
-**[Download Crystal Spider - Beta — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Installation and package details](downloads/README.md#crystal-spider---beta) · [Gallery](Twin-Lanterns/README.md#gallery)
+**[Download Crystal Spider - Beta — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package) · [Installation and package details](downloads/README.md#crystal-spider---beta) · [Gallery](Twin-Lanterns/README.md#gallery)
 
 [![Elden Ring with Lazara + Twin Lanterns](Twin-Lanterns/assets/twin-lanterns-gallery-04.png)](Twin-Lanterns/assets/twin-lanterns-gallery-04.png)
 
-*Elden Ring — Lazara + Twin Lanterns.*
+*Elden Ring — [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package) + Twin Lanterns.*
 
 Download the ZIP, extract it outside ReShade's shader search folders, and merge
 only its `reshade-shaders` folder into your game installation. Keep your

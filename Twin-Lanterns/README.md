@@ -1,6 +1,6 @@
 # Twin Lanterns
 
-**[Download Crystal Spider - Beta — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Installation and package details](../downloads/README.md#crystal-spider---beta)
+**[Download Crystal Spider - Beta — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package) · [Installation and package details](../downloads/README.md#crystal-spider---beta)
 
 Twin Lanterns is Lunar Flower's bounded screen-space indirect-light family for
 ReShade. The project favors visible evidence and controlled reconstruction over
