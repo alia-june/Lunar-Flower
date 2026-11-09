@@ -89,11 +89,10 @@ bool LUNAR_FLOWER_TLFRSourceOnly()
 [shader("compute")]
 void LUNAR_FLOWER_TLFRBuildVoxelProxyCS(uint3 id : SV_DispatchThreadID)
 {
+    // Transport uses fine depth directly; only atlas diagnostics need a build.
     if (!LUNAR_FLOWER_TLFRSourceOnly() &&
-        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView != 17 &&
-        (LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength > 0.000001 ||
-         (LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView >= 14 &&
-          LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView <= 16)))
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView >= 14 &&
+        LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaView <= 16)
         LUNAR_FLOWER_API_BuildTwinLanternVoxelTile(id);
 }
 

@@ -99,7 +99,7 @@
       "name": "adaptive camera-visible surface proxy",
       "status": "experimental alpha; bounded surface hierarchy; excluded from the 0.1.0 shared stability contract",
       "path": "experimental/LUNAR_FLOWER_API_TwinLanternVoxelProxy.fxh",
-      "sha256": "13FA361AB611996BB5610580668C52C2381AC368A759C5D31894A170AF66A31B",
+      "sha256": "EDC2D51C534542D23CFFF9E7B9EAB7163274130A435DFAF48AF524DA58ADEF7A",
       "type": "LUNAR_FLOWER_API_TwinLanternVoxelEvidence",
       "entrypoints": [
         "LUNAR_FLOWER_API_DefaultTwinLanternVoxelEvidence",

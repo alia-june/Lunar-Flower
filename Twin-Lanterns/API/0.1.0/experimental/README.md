@@ -8,6 +8,12 @@ XY store sampled depth bounds, Z stores coverage, and W stores signed center
 depth (-1 marks a branch). Final donor color is fetched at a full-resolution,
 depth-validated ray sample. No coarse donor RGB is stored.
 
+The atlas is diagnostic data. Its five-probe bounds are not conservative
+bounds for every pixel: a narrow surface can fall between all probes. Transport
+therefore reads fine depth directly, independently of atlas contents. The Alpha
+effect builds the atlas only for voxel diagnostics, retaining the same bounded
+trace budget, fine hit checks and public identifiers.
+
 This file is distributed for inspection and Alpha integration, but it is not
 part of the shared API 0.1.0 stability promise. It expects the shared Camera
 Obscura API and ReShade bindings to be loaded first, requires compute and 3D

@@ -8,6 +8,11 @@ establish which pass is expensive or whether a presentation threshold is involve
 
 ## Confirmed source-level work removed
 
+- November 9 tile correction: normal lighting no longer samples or builds the
+  diagnostic atlas. The fine trace reads depth for each eligible ray sample,
+  including samples the old sparse bounds incorrectly rejected. This removes
+  atlas lookup/build work but can increase fine depth reads on rejected rays;
+  GPU frame-time improvement is unmeasured. See [tile correction](TILE_ARTIFACT_FIX_NOTES.md).
 - The preceding adaptive candidate skipped per-ray voxel tracing at zero voxel
   strength but still built the hierarchy every frame. The Alpha effect now uses
   a guarded compute entrypoint. Final Image with voxel strength zero skips node
@@ -22,8 +27,9 @@ establish which pass is expensive or whether a presentation threshold is involve
 - Final reconstruction, edge fill, depth shaping and receiver admission reuse one center guide.
 
 All working fields remain full resolution. Ray counts, traversal budgets,
-hierarchy detail, donor admission, reconstruction and additive bounds are not
-reduced. Public standalone experimental wrappers remain available; the Alpha
+hierarchy detail, reconstruction and additive bounds are not reduced. Fine
+depth now controls donor admission independently of the diagnostic atlas.
+Public standalone experimental wrappers remain available; the Alpha
 effect chooses the guarded/cached variants.
 
 ## CPU evidence, not a GPU benchmark

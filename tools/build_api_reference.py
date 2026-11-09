@@ -105,9 +105,9 @@ FUNCTION_DESCRIPTIONS = {
     "LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance": "Returns a depth-relative subdivision/lookup tolerance with a small absolute floor.",
     "LUNAR_FLOWER_API_LoadTwinLanternVoxelNode": "Descends root/child/grandchild records for a UV and returns depth bounds/coverage/signed center depth plus the selected detail level.",
     "LUNAR_FLOWER_API_TwinLanternVoxelDetailLevel": "Returns the selected hierarchy level (0, 1 or 2) for the detail diagnostic.",
-    "LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface": "Returns full-resolution visible color and depth-bounds-validated occupancy for diagnostics.",
-    "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy": "Gates ray candidates using the adaptive hierarchy, rejects self samples, validates full-resolution depth, and fetches current-frame donor color at the accepted UV.",
-    "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver": "Performs the same adaptive trace with a supplied current-pixel receiver guide, avoiding repeated receiver depth reads across directions.",
+    "LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface": "Returns full-resolution visible color and valid-depth occupancy for diagnostics; sparse atlas bounds cannot veto a visible surface.",
+    "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxy": "Runs the bounded fine-depth proxy trace, rejects self samples and incompatible depths, and fetches current-frame donor color at the accepted UV. Sparse diagnostic atlas metadata cannot veto hits.",
+    "LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver": "Performs the same fine-depth trace with a supplied current-pixel receiver guide, avoiding repeated receiver depth reads across directions.",
 }
 
 

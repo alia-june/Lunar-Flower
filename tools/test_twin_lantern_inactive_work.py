@@ -187,7 +187,7 @@ int main(){
   LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength=1;
   LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaVoxelLightingStrength=1;
   resetReads();LUNAR_FLOWER_TLFRBuildVoxelProxyCS(uint3(32,18,0));
-  check(nodeWrites>0,"active final lighting lost its voxel build");
+  check(nodeWrites==0&&depthSamples==0&&colorSamples==0,"final lighting built the diagnostic-only atlas");
   LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength=.0000001f;
   check(!LUNAR_FLOWER_TLFRSourceOnly(),"source-only guard discarded a positive strength");
   LUNAR_FLOWER_TwinLanternsFullResolutionDualRayAlphaStrength=1;

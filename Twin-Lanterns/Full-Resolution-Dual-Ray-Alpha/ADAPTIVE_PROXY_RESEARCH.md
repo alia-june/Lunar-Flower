@@ -58,7 +58,11 @@ Record layout:
 | W | Center depth for a leaf; -1 for an internal branch |
 
 An empty record is zero. A leaf can have an invalid center but valid sampled
-corners; its bounds/coverage can still nominate a candidate for fine validation.
+corners. These bounds describe the five probes, not every pixel in the tile.
+The November 9 correction removes them from transport admission: a missed
+probe must not reject a valid fine-depth donor. The atlas now builds only for
+diagnostics; the bounded transport trace checks fine depth directly. See
+[the regression and cost boundary](TILE_ARTIFACT_FIX_NOTES.md).
 The texture's Z coordinate is a node index, not a depth bin. The resource uses
 the versioned `LUNAR_FLOWER_TLAdaptiveAtlasV1` identity; **no coarse RGB is stored**.
 See [COMPILER_NOTES.md](COMPILER_NOTES.md) for the layout identity and explicit-LOD
@@ -72,8 +76,8 @@ No stale child is permitted when a formerly complex tile becomes uniform.
 
 ## Lighting lookup
 
-Lookup descends at most two levels. The leaf's sampled depth interval nominates
-ray candidates; it never authorizes the final color by itself. Each candidate
+Diagnostic lookup descends at most two levels. Lighting does not use the leaf's
+sampled interval as a rejection gate. Each eligible ray sample
 must pass full-resolution depth validity and the ray's bias/thickness interval,
 and must be farther than the self-hit exclusion. Color is then fetched from
 the current full-resolution back buffer at that accepted UV. This removes the
@@ -82,11 +86,11 @@ specific mechanism of applying one stored cell color across a large rectangle.
 The tracer follows the actual shared ray step budget, including consumers whose
 shared cap is 24 rather than Alpha's 32. Voxel strength zero skips the per-ray
 proxy trace. Following the reported Elden Ring slowdown, the effect also skips
-the build at zero voxel strength in Final Image view. Voxel diagnostics still
-request a current build. See [performance follow-up](PERFORMANCE_NOTES.md).
+the build in all normal lighting views after the tile correction. Voxel
+diagnostics still request a current build. See [performance follow-up](PERFORMANCE_NOTES.md).
 
 `Voxel Detail Level` exposes levels 0, 1 and 2. `Voxel Surface Occupancy` and
-`Voxel Surface Radiance` show depth-bounds-validated visible surfaces and their
+`Voxel Surface Radiance` show fine-depth-valid visible surfaces and their
 fine-resolution color. Existing diagnostic indices are preserved; the new view
 is appended.
 

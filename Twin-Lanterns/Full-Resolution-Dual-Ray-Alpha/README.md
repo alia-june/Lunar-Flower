@@ -12,9 +12,14 @@ contracts while changing the transport representation:
 - every scheduled direction retains the independent DDA and parametric-march
   providers;
 - a compute pass builds an adaptive current-frame camera-visible surface
-  proxy, with `64 x 36` root tiles and up to two subdivision levels;
+  diagnostic proxy, with `64 x 36` root tiles and up to two subdivision levels;
 - each ray may admit proxy radiance under an independent strength and trace
   budget before the existing surface reconstruction and hard composite bounds.
+
+The [camera-dependent tile correction](TILE_ARTIFACT_FIX_NOTES.md) removes
+sparse atlas bounds from donor admission. Transport checks full-resolution
+depth directly; the atlas builds only for voxel diagnostic views. All 24
+user-selected defaults and existing preset identifiers remain unchanged.
 
 ## Truth Boundary
 
@@ -62,7 +67,8 @@ Lunar Flower - Twin Lanterns: Full Resolution Dual Ray Alpha
 ## Five-Pass Graph
 
 1. **Voxel Build** clears the bounded node atlas and subdivides detected depth,
-   coverage or color changes. Uniform areas stay coarse.
+   coverage or color changes for voxel diagnostics. Normal lighting skips the
+   build; transport does not use sparse atlas samples as a rejection mask.
 2. **Transport** casts the selected opposing ray pairs at full resolution. Each
    direction evaluates DDA, parametric march, and the voxel proxy, then merges
    only admitted evidence.
