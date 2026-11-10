@@ -1,0 +1,2 @@
+# Patch contexts include the original Lazara.ini CRLF bytes.
+Lazara-Fog-Guard-V2.patch -text

@@ -1,0 +1,2443 @@
+From ba43d16508bfdd3b818683f4e53e517530961a65 Mon Sep 17 00:00:00 2001
+From: darkest eleven <darkest.eleven@gmail.com>
+Date: Tue, 10 Nov 2026 06:49:17 +0000
+Subject: [PATCH 1/3] Replace Fog Guard darkening with same-frame capture and
+ restoration
+
+---
+ DEPENDENCIES.md                               |  10 +-
+ FOG_GUARD_V2.md                               |  87 +++++++
+ FOG_GUARD_VALIDATION.json                     |  40 +++
+ LICENSES/VENDORED-SOURCE-NOTICE.md            |   4 +
+ Lazara.ini                                    |  12 +-
+ README.md                                     |  25 +-
+ VENDORED_SHA256SUMS.txt                       |   2 +-
+ dependencies.lock.json                        |  23 +-
+ packaging/vortex/NEXUS_README.txt             |   6 +-
+ patches/fog-guard-v2.patch                    | 237 ++++++++++++++++++
+ .../effects/BlackWand_10_FogLight_Guard.fx    | 199 ++++++++++++---
+ tools/build_vortex_package.ps1                |   5 +
+ tools/package_fog_guard.py                    |  60 +++++
+ tools/test_fog_guard.py                       | 183 ++++++++++++++
+ tools/validate_package.ps1                    |  33 ++-
+ tools/validate_vortex_package.ps1             |   2 +
+ 16 files changed, 878 insertions(+), 50 deletions(-)
+ create mode 100644 FOG_GUARD_V2.md
+ create mode 100644 FOG_GUARD_VALIDATION.json
+ create mode 100644 patches/fog-guard-v2.patch
+ create mode 100644 tools/package_fog_guard.py
+ create mode 100644 tools/test_fog_guard.py
+
+diff --git a/DEPENDENCIES.md b/DEPENDENCIES.md
+index 98a6c53..e46654c 100644
+--- a/DEPENDENCIES.md
++++ b/DEPENDENCIES.md
+@@ -1,6 +1,6 @@
+ # Dependency Registry
+ 
+-`Lazara.ini` enables 18 techniques from 15 effect files. Three independent
++`Lazara.ini` enables 19 techniques from 15 effect files. Three independent
+ same-frame cache pairs provide color, luma, and reference-detail capture and
+ reapplication. Each cache has its own capture and reapply technique, accounting
+ for the different totals.
+@@ -41,3 +41,11 @@ upstream `ReShade.fxh` preprocessing copy.
+ 
+ `ReShade.fxh` is the only external shader-framework dependency admitted by the
+ package validator.
++
++## Local Fog Guard V2 patch
++
++The Occult Box pin remains the upstream baseline. Only Fog Guard is patched
++locally; `patches/fog-guard-v2.patch` and the lock record its base, patch and
++result hashes. The vendored manifest identifies the patched runtime bytes.
++Fog Guard adds a late Restore technique in the same file. Other dependency
++bytes and preset controls remain unchanged. See [migration notes](FOG_GUARD_V2.md).
+diff --git a/FOG_GUARD_V2.md b/FOG_GUARD_V2.md
+new file mode 100644
+index 0000000..ac9784c
+--- /dev/null
++++ b/FOG_GUARD_V2.md
+@@ -0,0 +1,87 @@
++# Fog / Light Guard V2 — test build
++
++The original guard was a single early pass. With default Outside Shade `0.18`,
++it could darken unprotected RGB by 18% even when no later effect needed
++correction. It also used uncorrected raw hardware depth, and could not restore
++fog/light after the following filters. V2 changes that behavior explicitly.
++
++## Install and order
++
++The single-effect test ZIP contains the updated `BlackWand_10_FogLight_Guard.fx`
++and its unchanged include closure. Extract outside the shader search tree and
++merge only `reshade-shaders` into the existing installation, replacing that
++same effect path. Keep the installed `ReShade.fxh`; do not install another copy
++of the effect beside it.
++
++Use this order in ReShade:
++
++1. **@BlackWand - Fog / Light Guard (Capture)**
++2. Crystal Spider and/or the other effects you want the guard to contain
++3. **@BlackWand - Fog / Light Guard (Restore)**
++
++The old Capture technique identifier is retained. Restore is a new second
++technique in the same effect file. Enabling Capture alone records a reference;
++it does not protect against later filters until Restore is enabled after them.
++The source repository's `Lazara.ini` appends Restore after its original 18 stages.
++Other effects' settings and the existing relative technique order are preserved.
++
++**Existing presets retain their saved values. Set Outside Shade to `0`.**
++If adopting the new depth mask, set Depth Window Start `0.005`, End `0.05`,
++Depth Influence `0.5`, Mask Softening `0.5`, and Mask Radius `1 px`, or reset
++only Fog Guard's controls. The packaged Lazara preset keeps its saved Strength
++`0.672`; the shader's reset/default Strength remains `1`. Do not replace your
++whole custom preset merely to change these Fog Guard settings.
++
++## What changed
++
++- Capture stores current-frame reference RGB and full-resolution coverage.
++  Default capture output is unchanged: Outside Shade is now an optional style
++  control, off by default.
++- Fog distance uses `ReShade::GetLinearizedDepth`, honoring the installed
++  framework's depth orientation/linearization definitions. It no longer reads
++  raw depth with an assumed direction. Depth endpoints/invalid samples fall
++  back to color/contrast classification; far fog stays supported beyond End.
++  The normalized depth controls are fractions of the configured linearized
++  depth range, not meters or calibrated game distances.
++- Four neighboring coverage samples soften the mask. Relative-depth and
++  luminance gates prevent carrying that coverage across dissimilar surfaces.
++  Only coverage is softened; captured RGB is not blurred. There is no coarse
++  tile grid, stochastic threshold or temporal accumulation.
++- Restore blends filtered RGB toward the captured reference under Mask ×
++  Strength × Protection Amount. Each channel stays between its two inputs;
++  no global outside darkening is added. Outside regions remain filtered.
++- A separate 1×1 RGBA32F stamp stores both exact 16-bit halves of the uint frame
++  counter plus frame dimensions. Missing, stale, first-use/uninitialized,
++  dimension-mismatched or wrongly ordered capture leaves current RGB unchanged.
++  No previous frame is intentionally reused. Counter rollover after 2^32 frames
++  has the same identity as any uint frame counter.
++
++## Cost and validation boundary
++
++This is a functional capture/restore pair, not a free single-pass darkening
++adjustment. It adds one full-resolution RGBA16F reference/coverage texture and a
++1×1 RGBA32F stamp. The extra allocation is 28.125 MiB at 2560×1440, or
++63.28125 MiB at 3840×2160, plus 16 bytes and runtime overhead. Capture has
++reference, stamp and preview passes; Restore adds one output pass. Default
++softening measures a center and four full-resolution mask taps; disabling
++softening removes the four neighbor measurements. GPU cost is unmeasured.
++
++`python -B -m unittest discover -s tools -p 'test_fog_guard.py'` compiles actual
++shader function bodies with C++ vector/texture shims. It covers default neutral
++capture, bounded fog/depth classification, depth/luma boundaries, mask continuity,
++late restoration, zero bypass and stale/misordered frame rejection around
++16-bit and float integer precision boundaries. This does not establish native
++ReShade/FXC compilation or reproduce the reported game capture.
++
++Retest the same angle with the whole guard pair off, then on around Crystal
++Spider. Compare a small camera move, Outside Shade zero, and mask diagnostic
++views. Keep the original effect as a rollback outside shader discovery.
++
++## Source provenance
++
++Only the curated Fog Guard effect is locally patched from the locked Occult
++Box baseline. `patches/fog-guard-v2.patch` and `dependencies.lock.json` record the
++base and result hashes. The manual test ZIP carries the Fog Guard subset in
++`SOURCE_PROVENANCE.json`. Other vendor bytes and author/license notices remain
++intact. Updating the vendored manifest records this deliberate patch; it does
++not imply byte identity to the unpatched upstream revision.
+diff --git a/FOG_GUARD_VALIDATION.json b/FOG_GUARD_VALIDATION.json
+new file mode 100644
+index 0000000..40308d0
+--- /dev/null
++++ b/FOG_GUARD_VALIDATION.json
+@@ -0,0 +1,40 @@
++{
++  "schema": "lazara-fog-guard-validation-v1",
++  "date": "2026-11-10",
++  "baseline_revision": "49e64006431e5e86e8a447bef517cbd926968e18",
++  "modified_effect": "reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx",
++  "modified_effect_sha256": "2aa3441883b4b8a896f5e80fb3fdb9bf55760cfadb1749d2aff7f9cf87cb479a",
++  "checks": {
++    "cpu_test_methods_passed": 2,
++    "shader_extracted_assertions_passed": 22286,
++    "package_contract_checks_passed": 6,
++    "techniques": 19,
++    "effect_files": 15,
++    "shader_closure_files": 110,
++    "vendored_manifest_files": 104,
++    "local_patches_checked": 1,
++    "other_effect_bytes_changed": false,
++    "other_preset_sections_changed": false,
++    "original_technique_order_preserved": true
++  },
++  "default_changes": {
++    "BWBlackWandX_Guard_ShadeOutside": {
++      "before": 0.18,
++      "after": 0.0
++    },
++    "BWBlackWandX_Guard_DepthStart": {
++      "before": 0.25,
++      "after": 0.005
++    },
++    "BWBlackWandX_Guard_DepthEnd": {
++      "before": 1.0,
++      "after": 0.05
++    }
++  },
++  "preset_strength_preserved": 0.672,
++  "source_default_strength_preserved": 1.0,
++  "native_reshade_compile_performed": false,
++  "gpu_timing_performed": false,
++  "reported_game_scene_reproduced": false,
++  "status": "Source/CPU/package-contract checks passed; native compile and target-game test pending"
++}
+diff --git a/LICENSES/VENDORED-SOURCE-NOTICE.md b/LICENSES/VENDORED-SOURCE-NOTICE.md
+index 8c28c7b..e993684 100644
+--- a/LICENSES/VENDORED-SOURCE-NOTICE.md
++++ b/LICENSES/VENDORED-SOURCE-NOTICE.md
+@@ -21,3 +21,7 @@ The repository owner expressly directed this temporary publication on
+ expand existing grants, transfer ownership, or replace the authoritative source
+ repositories. Guided Detail's MIT license and third-party notice are retained
+ beside this notice.
++
++Fog Guard V2 is a documented local patch to the locked Occult Box baseline.
++See `dependencies.lock.json` and `patches/fog-guard-v2.patch` for exact
++base/patch/result hashes. This patch does not change ownership or license terms.
+diff --git a/Lazara.ini b/Lazara.ini
+index 28dd315..b5c6ef0 100644
+--- a/Lazara.ini
++++ b/Lazara.ini
+@@ -1,4 +1,4 @@
+-Techniques=CAMERA_OBSCURA_StabilizedColorCaptureV1@CAMERA_OBSCURA_StabilizedColorCacheV1.fx,CAMERA_OBSCURA_StabilizedLumaCaptureV1@CAMERA_OBSCURA_StabilizedLumaCacheV1.fx,CAMERA_OBSCURA_StabilizedDetailCaptureV1@CAMERA_OBSCURA_StabilizedDetailCacheV1.fx,BlackWand_FogLight_Guard@BlackWand_10_FogLight_Guard.fx,BlackWand_MicroDetail_Clarity@BlackWand_12_MicroDetail_Clarity.fx,BlackWand_ToneDetail_Richness@BlackWand_07_ToneDetail_Richness.fx,GoldenWeave_RMGI_Redux@GoldenWeave_RMGI_Redux.fx,BlackWand_BloomBurst_Corona@BlackWand_14_BloomBurst_Corona.fx,BlackWand_GI_ColorBleed@BlackWand_05_GI_ColorBleed.fx,FoolsGold@FoolsGold.fx,OSCO_GuidedDetailReclamation@OSCO_GuidedDetailReclamation.fx,OCCULT_lazara@OCCULT_lazara.fx,CAMERA_OBSCURA_ExternalImageDenoiseV1@CAMERA_OBSCURA_ExternalImageDenoiseV1.fx,CAMERA_OBSCURA_StabilizedLumaReapplyV1@CAMERA_OBSCURA_StabilizedLumaCacheV1.fx,CAMERA_OBSCURA_StabilizedColorReapplyV1@CAMERA_OBSCURA_StabilizedColorCacheV1.fx,CAMERA_OBSCURA_StabilizedDetailReapplyV1@CAMERA_OBSCURA_StabilizedDetailCacheV1.fx,BlackWand_EdgeChromaWard@BlackWand_21_EdgeChromaWard.fx,OSCO_GuidedInkLines@OSCO_GuidedInkLines.fx
++Techniques=CAMERA_OBSCURA_StabilizedColorCaptureV1@CAMERA_OBSCURA_StabilizedColorCacheV1.fx,CAMERA_OBSCURA_StabilizedLumaCaptureV1@CAMERA_OBSCURA_StabilizedLumaCacheV1.fx,CAMERA_OBSCURA_StabilizedDetailCaptureV1@CAMERA_OBSCURA_StabilizedDetailCacheV1.fx,BlackWand_FogLight_Guard@BlackWand_10_FogLight_Guard.fx,BlackWand_MicroDetail_Clarity@BlackWand_12_MicroDetail_Clarity.fx,BlackWand_ToneDetail_Richness@BlackWand_07_ToneDetail_Richness.fx,GoldenWeave_RMGI_Redux@GoldenWeave_RMGI_Redux.fx,BlackWand_BloomBurst_Corona@BlackWand_14_BloomBurst_Corona.fx,BlackWand_GI_ColorBleed@BlackWand_05_GI_ColorBleed.fx,FoolsGold@FoolsGold.fx,OSCO_GuidedDetailReclamation@OSCO_GuidedDetailReclamation.fx,OCCULT_lazara@OCCULT_lazara.fx,CAMERA_OBSCURA_ExternalImageDenoiseV1@CAMERA_OBSCURA_ExternalImageDenoiseV1.fx,CAMERA_OBSCURA_StabilizedLumaReapplyV1@CAMERA_OBSCURA_StabilizedLumaCacheV1.fx,CAMERA_OBSCURA_StabilizedColorReapplyV1@CAMERA_OBSCURA_StabilizedColorCacheV1.fx,CAMERA_OBSCURA_StabilizedDetailReapplyV1@CAMERA_OBSCURA_StabilizedDetailCacheV1.fx,BlackWand_EdgeChromaWard@BlackWand_21_EdgeChromaWard.fx,OSCO_GuidedInkLines@OSCO_GuidedInkLines.fx,BlackWand_FogLight_GuardRestore@BlackWand_10_FogLight_Guard.fx
+ 
+ [BlackWand_05_GI_ColorBleed.fx]
+ BWT_GI_ColorBleedSaturation=1.150000
+@@ -28,15 +28,19 @@ BWT_Tone_ToneWidth=0.300000
+ [BlackWand_10_FogLight_Guard.fx]
+ BWBlackWandX_Guard_ContrastReject=0.900000
+ BWBlackWandX_Guard_DebugView=0
+-BWBlackWandX_Guard_DepthEnd=1.000000
+-BWBlackWandX_Guard_DepthStart=0.250000
++BWBlackWandX_Guard_DepthEnd=0.050000
++BWBlackWandX_Guard_DepthStart=0.005000
+ BWBlackWandX_Guard_FogSensitivity=1.150000
+ BWBlackWandX_Guard_LightSoftness=0.120000
+ BWBlackWandX_Guard_LightThreshold=0.780000
+ BWBlackWandX_Guard_ProtectAmount=0.850000
+-BWBlackWandX_Guard_ShadeOutside=0.180000
++BWBlackWandX_Guard_ShadeOutside=0.000000
+ BWBlackWandX_Guard_Strength=0.672000
++BWBlackWandX_Guard_DepthInfluence=0.500000
++BWBlackWandX_Guard_MaskSoftening=0.500000
++BWBlackWandX_Guard_MaskRadius=1.000000
+ 
++
+ [BlackWand_12_MicroDetail_Clarity.fx]
+ BWBlackWandX_Micro_DebugView=0
+ BWBlackWandX_Micro_DetailAmount=0.950000
+diff --git a/README.md b/README.md
+index 026b6d4..2f83070 100644
+--- a/README.md
++++ b/README.md
+@@ -60,17 +60,28 @@ frame—not free-floating saturation, sharpening, or fabricated texture.
+ 
+ ### One deliberate chain
+ 
+-The preset coordinates 18 enabled techniques across 15 effect files. Color,
++The preset coordinates 19 enabled techniques across 15 effect files. Color,
+ light, denoising, guided detail, and final edge treatment are ordered as one
+ reproducible image path rather than a loose pile of effects.
+ 
++## Fog Guard V2 test build
++
++[Download the Fog Guard V2 test package](https://raw.githubusercontent.com/dastardlyrat/Lazara-Reshade-Revival-Package/fix/fog-guard-depth-and-restoration/downloads/Lazara-Fog-Guard-V2.zip).
++
++Fog Guard now captures protection before filtering and restores it at the end.
++The default Outside Shade is zero, so it does not darken the unprotected frame.
++The full-resolution mask uses ReShade linear depth and surface-aware softening.
++Enable **Capture → other effects → Restore**. Existing presets may retain
++Outside Shade `0.18`; set it to `0` or reset Fog Guard controls. See
++[installation, migration and validation limits](FOG_GUARD_V2.md).
++
+ ## Architecture
+ 
+ Lazara is an ordered frame graph. [`Lazara.ini`](Lazara.ini) establishes the
+ runtime sequence, and [`tools/validate_package.ps1`](tools/validate_package.ps1)
+ locks that sequence as part of package validation. Three cache effect files
+-each expose a capture and a reapply technique, which is why 18 techniques are
+-implemented by 15 effect files.
++each expose a capture and a reapply technique. Fog Guard also exposes Capture
++and Restore, so 19 techniques are implemented by 15 effect files.
+ 
+ ### Runtime dataflow
+ 
+@@ -82,7 +93,9 @@ flowchart TD
+     D --> E["Guided recovery<br/>Guided Detail · Lazara · external denoiser"]
+     E --> F["Bounded reapply<br/>luma → color → detail"]
+     F --> G["Final cleanup<br/>edge chroma ward → guided ink"]
+-    G --> H["ReShade output"]
++    G --> J["Fog/light reference restore"]
++    J --> H["ReShade output"]
++    C -. "same-frame fog/light reference + coverage" .-> J
+     B -. "three isolated same-frame RGBA16F caches" .-> F
+ ```
+ 
+@@ -100,6 +113,7 @@ stack; the cached signals return only at their explicit reapply points.
+ | 11–13 | Guided recovery | `GuidedDetailReclamation`, `OCCULT_lazara`, `ExternalImageDenoiseV1` | Recover supported detail and observed color, then reduce source-domain spatial/temporal noise. |
+ | 14–16 | Bounded reapply | `StabilizedLumaReapply`, `StabilizedColorReapply`, `StabilizedDetailReapply` | Restore only the captured signals, in luma→color→detail order, under independent limits. |
+ | 17–18 | Final cleanup | `EdgeChromaWard`, `GuidedInkLines` | Remove thin color fringes and apply the final stable, same-surface line treatment. |
++| 19 | Fog/light restore | `FogLight_GuardRestore` | Restore protected fog/light toward the current-frame reference; stale or missing capture is bypassed. |
+ 
+ The table describes the supplied preset, not a claim that every stage is
+ universally required. Reordering capture/reapply stages changes their reference
+@@ -133,6 +147,7 @@ cache, saved history, or cross-session learning system.
+ | Color cache | Luma floor, stored relative-chroma limit, applied-delta limit, zero-luma projection, and gamut fit | Stale or disabled cache contributes no correction. |
+ | Luma cache | Applied scalar limit plus per-channel headroom before output saturation | Stale or disabled cache contributes no correction. |
+ | Detail cache | Color/depth support, capture threshold, stored limit, reapply limit, and final gamut clamp | Stale or disabled cache contributes no detail. |
++| Fog Guard V2 | Full-resolution reference, surface-gated mask softening and convex restoration toward the captured RGB | Missing, stale or wrongly ordered capture leaves current RGB unchanged; no default outside shading. |
+ | External denoiser | Multiscale noise targets, local-range clamps, history matching, residual rejection, and independent spatial/temporal authority | Invalid history removes temporal authority; the spatial path remains separately bounded. |
+ 
+ The external denoiser owns its own source and denoised history textures. It is
+@@ -249,7 +264,7 @@ Run the package validator from the repository root:
+ powershell -ExecutionPolicy Bypass -File .\tools\validate_package.ps1
+ ```
+ 
+-Validation establishes the accepted 18-stage order, preset coverage, technique
++Validation establishes the accepted 19-stage order, preset coverage, technique
+ ownership, the 110-file local include closure, pinned copied bytes, and the
+ absence of Git submodules. It does not substitute for a new live ReShade
+ compile, performance pass, or visual acceptance run.
+diff --git a/VENDORED_SHA256SUMS.txt b/VENDORED_SHA256SUMS.txt
+index 0d39b8b..209774a 100644
+--- a/VENDORED_SHA256SUMS.txt
++++ b/VENDORED_SHA256SUMS.txt
+@@ -32,7 +32,7 @@ DDA1A4EA811C2D528CFD37ED035247FBA9344BD901E4A249BB11F32F3EFCF3CB  reshade-shader
+ 74B47F0ECE2F074504C26E575239D55ED62C9276F0459A0343B7E8EBD34E0FDB  reshade-shaders/Shaders/vendor/lazara/rm/header/OCCULT_Box_All.fxh
+ E729421AC891AC3F044E49E5133849B87D0784E8B0409C82EB1540B071211F1F  reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_05_GI_ColorBleed.fx
+ A4B83C558A2AE700362A9047589398C1598C4639BD418CBEE963C805F08253A6  reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_07_ToneDetail_Richness.fx
+-9E886347E8CD630F703CCCB8926661C409D484DE6796C3D117698A6D5E7C6742  reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx
++2AA3441883B4B8A896F5E80FB3FDB9BF55760CFADB1749D2AFF7F9CF87CB479A  reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx
+ 225FB598279E9896E3C53B572B2398BA131A0AF27E853FD81E0EEA101E0DB58A  reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_12_MicroDetail_Clarity.fx
+ 0943D72490456DA1906BFBC39E098A06E38954A8DFB916B5AFCE3B2EAE7ED14D  reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_14_BloomBurst_Corona.fx
+ 3AA2FE0B35014242EA27BA106271DA882A0B5394530ED0EA028410FED176F705  reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_21_EdgeChromaWard.fx
+diff --git a/dependencies.lock.json b/dependencies.lock.json
+index bc397c7..5cb4555 100644
+--- a/dependencies.lock.json
++++ b/dependencies.lock.json
+@@ -10,7 +10,9 @@
+     "purpose": "play-pretend staging for installation convenience, fun, and profitless humour"
+   },
+   "preset": "Lazara.ini",
+-  "external_framework_files": ["ReShade.fxh"],
++  "external_framework_files": [
++    "ReShade.fxh"
++  ],
+   "vendored_sources": [
+     {
+       "repository": "https://github.com/dastardlyrat/lazara.git",
+@@ -18,7 +20,9 @@
+       "vendor_path": "reshade-shaders/Shaders/vendor/lazara",
+       "closure_files": 28,
+       "license_status": "No project-wide license declared; temporary owner-authorized copy.",
+-      "effect_files": ["OCCULT_lazara.fx"]
++      "effect_files": [
++        "OCCULT_lazara.fx"
++      ]
+     },
+     {
+       "repository": "https://github.com/dastardlyrat/Occult-Box.git",
+@@ -35,6 +39,16 @@
+         "BlackWand_21_EdgeChromaWard.fx",
+         "FoolsGold.fx",
+         "GoldenWeave_RMGI_Redux.fx"
++      ],
++      "local_patches": [
++        {
++          "path": "patches/fog-guard-v2.patch",
++          "sha256": "02943E037D216E04330A90F44430C51522EE895881E4B5D7251A40550F9558E8",
++          "effect_path": "reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx",
++          "base_sha256": "9E886347E8CD630F703CCCB8926661C409D484DE6796C3D117698A6D5E7C6742",
++          "patched_sha256": "2AA3441883B4B8A896F5E80FB3FDB9BF55760CFADB1749D2AFF7F9CF87CB479A",
++          "reason": "Fog/light current-frame capture and late restore, corrected depth mask, neutral default outside shade"
++        }
+       ]
+     },
+     {
+@@ -43,7 +57,10 @@
+       "vendor_path": "reshade-shaders/Shaders/vendor/guided_detail",
+       "closure_files": 4,
+       "license_status": "MIT",
+-      "effect_files": ["OSCO_GuidedDetailReclamation.fx", "OSCO_GuidedInkLines.fx"]
++      "effect_files": [
++        "OSCO_GuidedDetailReclamation.fx",
++        "OSCO_GuidedInkLines.fx"
++      ]
+     }
+   ],
+   "direct_sources": [
+diff --git a/packaging/vortex/NEXUS_README.txt b/packaging/vortex/NEXUS_README.txt
+index de8a351..ae20f54 100644
+--- a/packaging/vortex/NEXUS_README.txt
++++ b/packaging/vortex/NEXUS_README.txt
+@@ -36,7 +36,7 @@ Lazara.ini through ReShade.
+ 
+ CONTENTS AND BOUNDARIES
+ 
+-- Lazara.ini enables 18 techniques from 15 effect files.
++- Lazara.ini enables 19 techniques from 15 effect files.
+ - The archive carries the complete local shader/include closure.
+ - FlexAgX is credited in the repository showcase but is not included here.
+ - ReShade itself and ReShade.fxh are not included.
+@@ -59,3 +59,7 @@ the pinned package payload recorded by the included manifests.
+ SOURCE
+ 
+ https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package
++
++Fog Guard V2: Capture must precede filtering and Restore must follow it.
++Outside Shade defaults to 0; old saved values may require a manual reset.
++See Lazara-Documentation/FOG_GUARD_V2.md.
+diff --git a/patches/fog-guard-v2.patch b/patches/fog-guard-v2.patch
+new file mode 100644
+index 0000000..d91a841
+--- /dev/null
++++ b/patches/fog-guard-v2.patch
+@@ -0,0 +1,237 @@
++diff --git a/reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx b/reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx
++index af02c73..518d659 100644
++--- a/reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx
+++++ b/reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx
++@@ -26,7 +26,7 @@ uniform int BWBlackWandX_Guard_DebugView < ui_type = "combo"; ui_label = "@Black
++  ui_items = "Final Image\0Protected Area\0Fog Estimate\0Light Estimate\0Local Contrast\0Depth Window\0"; ui_tooltip = "Final Image shows the guarded result. Diagnostic views show the protected fog/light region and the inputs used to build it.";
++     ui_category_closed = true;
++ > = 0;
++-uniform float BWBlackWandX_Guard_Strength < ui_type = "slider"; ui_label = "Strength"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.001; ui_tooltip = "Overall amount of the fog/light guard applied to the source image."; > = 1.0;
+++uniform float BWBlackWandX_Guard_Strength < ui_type = "slider"; ui_label = "Strength"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.001; ui_tooltip = "Overall amount of late fog/light restoration. Enable Capture before filtering and Restore after filtering."; > = 1.0;
++ uniform float BWBlackWandX_Guard_ShadeOutside <
++     ui_type = "slider";
++     ui_label = "Outside Shade";
++@@ -34,10 +34,10 @@ uniform float BWBlackWandX_Guard_ShadeOutside <
++     ui_min = 0.0;
++     ui_max = 1.0;
++     ui_step = 0.001;
++-    ui_tooltip = "Amount of shading applied outside the protected fog/light area.";
+++    ui_tooltip = "Optional styling darkens outside the protected area. Zero (default) leaves the capture-stage image unchanged. Existing presets may retain 0.18; set zero to remove that darkening.";
++     ui_category_closed = true;
++-> = 0.18;
++-uniform float BWBlackWandX_Guard_ProtectAmount < ui_type = "slider"; ui_label = "Protection Amount"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; ui_tooltip = "How strongly detected fog and light return to the original source color."; > = 0.85;
+++> = 0.0;
+++uniform float BWBlackWandX_Guard_ProtectAmount < ui_type = "slider"; ui_label = "Protection Amount"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; ui_tooltip = "How strongly the Restore technique returns protected regions toward this frame's Capture reference. Requires both techniques in the correct order."; > = 0.85;
++ uniform float BWBlackWandX_Guard_FogSensitivity < ui_type = "slider"; ui_label = "Fog Sensitivity"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls";
++  ui_min = 0.0; ui_max = 4.0; ui_step = 0.001; ui_tooltip = "Raises detection of low-contrast desaturated far-field haze."; > = 1.15;
++ uniform float BWBlackWandX_Guard_LightThreshold < ui_type = "slider"; ui_label = "Light Threshold"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls";
++@@ -62,45 +62,182 @@ uniform float BWBlackWandX_Guard_ContrastReject <
++     ui_tooltip = "Rejects high-contrast texture so fog detection favors smooth haze.";
++     ui_category_closed = true;
++ > = 0.90;
++-static const int BWBlackWandX_Guard_DepthMode = black_wand_PRIMITIVE_DEPTH_MODE_RAW; // internal fixed control; hidden from the clean menu
++ uniform float BWBlackWandX_Guard_DepthStart < ui_type = "slider"; ui_label = "Depth Window Start"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls";
++- ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; ui_tooltip = "Near edge of the fog/light diagnostic depth window."; > = 0.25;
+++ ui_min = 0.0; ui_max = 1.0; ui_step = 0.00001; ui_tooltip = "Near edge of optional fog distance support in ReShade normalized linear depth. Missing depth uses color-only detection."; > = 0.005;
++ uniform float BWBlackWandX_Guard_DepthEnd <
++     ui_type = "slider";
++     ui_label = "Depth Window End";
++     ui_category = "@BlackWand - Fog / Light Guard / 99 Advanced / Depth";
++     ui_min = 0.0;
++     ui_max = 1.0;
++-    ui_step = 0.001;
++-    ui_tooltip = "Far edge of the fog/light diagnostic depth window.";
+++    ui_step = 0.00001;
+++    ui_tooltip = "Depth where far-field fog support reaches full weight. Larger depths remain supported; this is not raw hardware depth.";
++     ui_category_closed = true;
++-> = 1.0;
+++> = 0.05;
++ static const float BWBlackWandX_Guard_DebugFloor = 0.0; // internal fixed control; hidden from the clean menu
++ 
+++
+++uniform float BWBlackWandX_Guard_DepthInfluence
+++< ui_type = "slider"; ui_label = "Depth Influence"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; ui_tooltip = "Optional linear-depth support for fog detection. Zero uses color/contrast only; invalid depth falls back to color detection."; > = 0.5;
+++uniform float BWBlackWandX_Guard_MaskSoftening
+++< ui_type = "slider"; ui_label = "Mask Softening"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; ui_tooltip = "Softens only protection coverage using four full-resolution neighbors gated by depth and luminance. The source image is not blurred."; > = 0.5;
+++uniform float BWBlackWandX_Guard_MaskRadius
+++< ui_type = "slider"; ui_label = "Mask Radius (Pixels)"; ui_category = "@BlackWand - Fog / Light Guard / 99 Advanced / Tunable Controls"; ui_min = 0.5; ui_max = 3.0; ui_step = 0.1; > = 1.0;
+++uniform uint BWBlackWandX_Guard_FrameCount < source = "framecount"; >;
+++
+++// Current-frame reference and coverage. No history accumulation or coarse grid.
+++texture2D BWBlackWandX_GuardReferenceV2Tex
+++{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+++sampler2D BWBlackWandX_GuardReferenceV2Sampler
+++{ Texture = BWBlackWandX_GuardReferenceV2Tex; MinFilter = POINT; MagFilter = POINT; MipFilter = POINT; AddressU = CLAMP; AddressV = CLAMP; };
+++texture2D BWBlackWandX_GuardStateV2Tex
+++{ Width = 1; Height = 1; Format = RGBA32F; };
+++sampler2D BWBlackWandX_GuardStateV2Sampler
+++{ Texture = BWBlackWandX_GuardStateV2Tex; MinFilter = POINT; MagFilter = POINT; MipFilter = POINT; AddressU = CLAMP; AddressV = CLAMP; };
+++
+++struct BWBlackWandX_GuardEvidence
+++{
+++    float depth;
+++    float luma;
+++    float contrast;
+++    float depthSupport;
+++    float fog;
+++    float light;
+++    float mask;
+++};
+++
+++float BWBlackWandX_Guard_ValidDepth(float depth)
+++{
+++    // Endpoints/NaN cannot become an authoritative near/far classification.
+++    return (depth > 0.000001 && depth < 0.999999) ? 1.0 : 0.0;
+++}
+++
+++float BWBlackWandX_Guard_DepthSupport(float depth)
+++{
+++    if (BWBlackWandX_Guard_ValidDepth(depth) < 0.5) return 1.0;
+++    float start = min(saturate(BWBlackWandX_Guard_DepthStart), saturate(BWBlackWandX_Guard_DepthEnd));
+++    float end = max(max(saturate(BWBlackWandX_Guard_DepthStart), saturate(BWBlackWandX_Guard_DepthEnd)), start + 0.000001);
+++    float phase = smoothstep(start, end, depth);
+++    float support = lerp(1.0 - saturate(BWBlackWandX_Guard_DepthInfluence), 1.0, phase);
+++    // Fade into color-only detection near an unusable near-plane sentinel.
+++    return lerp(1.0, support, smoothstep(0.000001, 0.0001, depth));
+++}
+++
+++BWBlackWandX_GuardEvidence BWBlackWandX_Guard_Measure(float2 uv)
+++{
+++    BWBlackWandX_GuardEvidence e;
+++    float3 color = black_wand_Proc_SourceColor(uv);
+++    e.depth = ReShade::GetLinearizedDepth(saturate(uv));
+++    e.luma = black_wand_BWT_Luma(color);
+++    e.contrast = BWBlackWandX_LocalContrast(uv, 2.0, 12.0);
+++    e.depthSupport = BWBlackWandX_Guard_DepthSupport(e.depth);
+++    e.fog = saturate((1.0 - black_wand_Proc_ColorSaturationApprox(color)) *
+++        (1.0 - saturate(e.contrast * BWBlackWandX_Guard_ContrastReject)) *
+++        e.depthSupport * max(BWBlackWandX_Guard_FogSensitivity, 0.0));
+++    e.light = BWBlackWandX_HighlightMask(e.luma, BWBlackWandX_Guard_LightThreshold, BWBlackWandX_Guard_LightSoftness);
+++    e.mask = saturate(max(e.fog, e.light));
+++    return e;
+++}
+++
+++float BWBlackWandX_Guard_TapWeight(BWBlackWandX_GuardEvidence center, BWBlackWandX_GuardEvidence tap)
+++{
+++    float centerValid = BWBlackWandX_Guard_ValidDepth(center.depth);
+++    float tapValid = BWBlackWandX_Guard_ValidDepth(tap.depth);
+++    if (centerValid != tapValid) return 0.0;
+++    float depthWeight = 1.0;
+++    if (centerValid > 0.5)
+++        depthWeight = 1.0 - saturate(abs(tap.depth - center.depth) / max(0.00001, abs(center.depth) * 0.02));
+++    float lumaWeight = 1.0 - saturate(abs(tap.luma - center.luma) / 0.12);
+++    return depthWeight * lumaWeight;
+++}
+++
+++float BWBlackWandX_Guard_SoftMask(float2 uv, BWBlackWandX_GuardEvidence center)
+++{
+++    if (BWBlackWandX_Guard_MaskSoftening <= 0.0) return center.mask;
+++    float2 pixel = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT) * clamp(BWBlackWandX_Guard_MaskRadius, 0.5, 3.0);
+++    BWBlackWandX_GuardEvidence a = BWBlackWandX_Guard_Measure(saturate(uv + float2(pixel.x, 0.0)));
+++    BWBlackWandX_GuardEvidence b = BWBlackWandX_Guard_Measure(saturate(uv - float2(pixel.x, 0.0)));
+++    BWBlackWandX_GuardEvidence c = BWBlackWandX_Guard_Measure(saturate(uv + float2(0.0, pixel.y)));
+++    BWBlackWandX_GuardEvidence d = BWBlackWandX_Guard_Measure(saturate(uv - float2(0.0, pixel.y)));
+++    float wa = BWBlackWandX_Guard_TapWeight(center, a);
+++    float wb = BWBlackWandX_Guard_TapWeight(center, b);
+++    float wc = BWBlackWandX_Guard_TapWeight(center, c);
+++    float wd = BWBlackWandX_Guard_TapWeight(center, d);
+++    float mask = (center.mask * 2.0 + a.mask * wa + b.mask * wb + c.mask * wc + d.mask * wd) / (2.0 + wa + wb + wc + wd);
+++    return saturate(lerp(center.mask, mask, saturate(BWBlackWandX_Guard_MaskSoftening)));
+++}
+++
+++float4 BWBlackWandX_Guard_Capture_PS(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
+++{
+++    float3 sourceColor = black_wand_Proc_SourceColor(uv);
+++    if (BWBlackWandX_Guard_Strength <= 0.0) return float4(sourceColor, 0.0);
+++    BWBlackWandX_GuardEvidence e = BWBlackWandX_Guard_Measure(uv);
+++    return float4(sourceColor, BWBlackWandX_Guard_SoftMask(uv, e));
+++}
+++
+++float4 BWBlackWandX_Guard_FrameStamp()
+++{
+++    // Two exact 16-bit parts avoid float's 24-bit integer precision boundary.
+++    return float4(float(BWBlackWandX_Guard_FrameCount & 65535u),
+++        float(BWBlackWandX_Guard_FrameCount >> 16u), float(BUFFER_WIDTH), float(BUFFER_HEIGHT));
+++}
+++
+++float4 BWBlackWandX_Guard_Stamp_PS(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
+++{
+++    return BWBlackWandX_Guard_FrameStamp();
+++}
+++
+++float BWBlackWandX_Guard_CurrentCapture(float4 state)
+++{
+++    float4 expected = BWBlackWandX_Guard_FrameStamp();
+++    return (state.x == expected.x && state.y == expected.y && state.z == expected.z && state.w == expected.w) ? 1.0 : 0.0;
+++}
+++
+++float3 BWBlackWandX_Guard_RestoreColor(float3 filtered, float3 reference, float mask)
+++{
+++    float amount = saturate(BWBlackWandX_Guard_Strength) * saturate(BWBlackWandX_Guard_ProtectAmount) * saturate(mask);
+++    return lerp(filtered, reference, amount);
+++}
+++
++ float4 BWBlackWandX_Guard_PS(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
++ {
++     float3 sourceColor = black_wand_Proc_SourceColor(uv);
++-    float lumaValue = black_wand_BWT_Luma(sourceColor);
++-    float saturationValue = black_wand_Proc_ColorSaturationApprox(sourceColor);
++-    float localContrast = BWBlackWandX_LocalContrast(uv, 2.0, 12.0);
++-    float depthValue = black_wand_Proc_DepthValue(uv, BWBlackWandX_Guard_DepthMode);
++-    float depthWindow = BWBlackWandX_DepthWindow(depthValue, BWBlackWandX_Guard_DepthStart, BWBlackWandX_Guard_DepthEnd, 0.035);
++-    float fogEstimate = saturate((1.0 - saturationValue) * (1.0 - saturate(localContrast * BWBlackWandX_Guard_ContrastReject)) * depthWindow * BWBlackWandX_Guard_FogSensitivity);
++-    float lightEstimate = BWBlackWandX_HighlightMask(lumaValue, BWBlackWandX_Guard_LightThreshold, BWBlackWandX_Guard_LightSoftness);
++-    float protectedArea = saturate(max(fogEstimate, lightEstimate));
++-    float3 shadedColor = sourceColor * (1.0 - BWBlackWandX_Guard_ShadeOutside * (1.0 - protectedArea));
++-    float3 guardedColor = lerp(shadedColor, sourceColor, protectedArea * BWBlackWandX_Guard_ProtectAmount);
++-    float3 outputColor = lerp(sourceColor, guardedColor, saturate(BWBlackWandX_Guard_Strength));
++-    if (BWBlackWandX_Guard_DebugView == 1) return black_wand_Proc_OutScalar(protectedArea, 1.0, BWBlackWandX_Guard_DebugFloor);
++-    if (BWBlackWandX_Guard_DebugView == 2) return black_wand_Proc_OutScalar(fogEstimate, 1.0, BWBlackWandX_Guard_DebugFloor);
++-    if (BWBlackWandX_Guard_DebugView == 3) return black_wand_Proc_OutScalar(lightEstimate, 1.0, BWBlackWandX_Guard_DebugFloor);
++-    if (BWBlackWandX_Guard_DebugView == 4) return black_wand_Proc_OutScalar(localContrast, 1.0, BWBlackWandX_Guard_DebugFloor);
++-    if (BWBlackWandX_Guard_DebugView == 5) return black_wand_Proc_OutScalar(depthWindow, 1.0, BWBlackWandX_Guard_DebugFloor);
++-    return black_wand_Proc_OutColor(outputColor, BWBlackWandX_Guard_DebugFloor);
++-}
++-
++-technique BlackWand_FogLight_Guard < ui_label = "@BlackWand - Fog / Light Guard"; ui_tooltip = "Protects fog-like haze and bright light regions from later heavy filtering, with useful diagnostics for the guard mask."; >
++-{
++-    pass { VertexShader = PostProcessVS; PixelShader = BWBlackWandX_Guard_PS; }
+++    if (BWBlackWandX_Guard_Strength <= 0.0) return float4(sourceColor, 1.0);
+++    if (BWBlackWandX_Guard_DebugView == 0 && BWBlackWandX_Guard_ShadeOutside <= 0.0)
+++        return float4(sourceColor, 1.0);
+++    BWBlackWandX_GuardEvidence e = BWBlackWandX_Guard_Measure(uv);
+++    float mask = BWBlackWandX_Guard_SoftMask(uv, e);
+++    if (BWBlackWandX_Guard_DebugView == 1) return black_wand_Proc_OutScalar(mask, 1.0, BWBlackWandX_Guard_DebugFloor);
+++    if (BWBlackWandX_Guard_DebugView == 2) return black_wand_Proc_OutScalar(e.fog, 1.0, BWBlackWandX_Guard_DebugFloor);
+++    if (BWBlackWandX_Guard_DebugView == 3) return black_wand_Proc_OutScalar(e.light, 1.0, BWBlackWandX_Guard_DebugFloor);
+++    if (BWBlackWandX_Guard_DebugView == 4) return black_wand_Proc_OutScalar(e.contrast, 1.0, BWBlackWandX_Guard_DebugFloor);
+++    if (BWBlackWandX_Guard_DebugView == 5) return black_wand_Proc_OutScalar(e.depthSupport, 1.0, BWBlackWandX_Guard_DebugFloor);
+++    float shade = saturate(BWBlackWandX_Guard_ShadeOutside) * (1.0 - mask) *
+++        (1.0 - mask * saturate(BWBlackWandX_Guard_ProtectAmount));
+++    return float4(sourceColor * (1.0 - shade * saturate(BWBlackWandX_Guard_Strength)), 1.0);
+++}
+++
+++float4 BWBlackWandX_Guard_Restore_PS(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
+++{
+++    float3 sourceColor = black_wand_Proc_SourceColor(uv);
+++    if (BWBlackWandX_Guard_Strength <= 0.0 || BWBlackWandX_Guard_ProtectAmount <= 0.0 || BWBlackWandX_Guard_DebugView != 0)
+++        return float4(sourceColor, 1.0);
+++    float4 state = tex2Dlod(BWBlackWandX_GuardStateV2Sampler, float4(0.5, 0.5, 0.0, 0.0));
+++    if (BWBlackWandX_Guard_CurrentCapture(state) < 0.5) return float4(sourceColor, 1.0);
+++    float4 reference = tex2Dlod(BWBlackWandX_GuardReferenceV2Sampler, float4(saturate(uv), 0.0, 0.0));
+++    return float4(BWBlackWandX_Guard_RestoreColor(sourceColor, reference.rgb, reference.a), 1.0);
++ }
++ 
+++technique BlackWand_FogLight_Guard
+++< ui_label = "@BlackWand - Fog / Light Guard (Capture)"; ui_tooltip = "Place before filtering. Captures current-frame color/protection without default darkening. Enable the matching Restore technique after filtering."; >
+++{
+++    pass Capture { VertexShader = PostProcessVS; PixelShader = BWBlackWandX_Guard_Capture_PS; RenderTarget = BWBlackWandX_GuardReferenceV2Tex; }
+++    pass Stamp { VertexShader = PostProcessVS; PixelShader = BWBlackWandX_Guard_Stamp_PS; RenderTarget = BWBlackWandX_GuardStateV2Tex; }
+++    pass Preview { VertexShader = PostProcessVS; PixelShader = BWBlackWandX_Guard_PS; }
+++}
+++
+++technique BlackWand_FogLight_GuardRestore
+++< ui_label = "@BlackWand - Fog / Light Guard (Restore)"; ui_tooltip = "Place after filtering. Restores protected fog/light toward this frame's Capture reference. Missing, stale or wrongly ordered capture returns the current image unchanged."; >
+++{
+++    pass Restore { VertexShader = PostProcessVS; PixelShader = BWBlackWandX_Guard_Restore_PS; }
+++}
+diff --git a/reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx b/reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx
+index af02c73..518d659 100644
+--- a/reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx
++++ b/reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx
+@@ -26,7 +26,7 @@ uniform int BWBlackWandX_Guard_DebugView < ui_type = "combo"; ui_label = "@Black
+  ui_items = "Final Image\0Protected Area\0Fog Estimate\0Light Estimate\0Local Contrast\0Depth Window\0"; ui_tooltip = "Final Image shows the guarded result. Diagnostic views show the protected fog/light region and the inputs used to build it.";
+     ui_category_closed = true;
+ > = 0;
+-uniform float BWBlackWandX_Guard_Strength < ui_type = "slider"; ui_label = "Strength"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.001; ui_tooltip = "Overall amount of the fog/light guard applied to the source image."; > = 1.0;
++uniform float BWBlackWandX_Guard_Strength < ui_type = "slider"; ui_label = "Strength"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.001; ui_tooltip = "Overall amount of late fog/light restoration. Enable Capture before filtering and Restore after filtering."; > = 1.0;
+ uniform float BWBlackWandX_Guard_ShadeOutside <
+     ui_type = "slider";
+     ui_label = "Outside Shade";
+@@ -34,10 +34,10 @@ uniform float BWBlackWandX_Guard_ShadeOutside <
+     ui_min = 0.0;
+     ui_max = 1.0;
+     ui_step = 0.001;
+-    ui_tooltip = "Amount of shading applied outside the protected fog/light area.";
++    ui_tooltip = "Optional styling darkens outside the protected area. Zero (default) leaves the capture-stage image unchanged. Existing presets may retain 0.18; set zero to remove that darkening.";
+     ui_category_closed = true;
+-> = 0.18;
+-uniform float BWBlackWandX_Guard_ProtectAmount < ui_type = "slider"; ui_label = "Protection Amount"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; ui_tooltip = "How strongly detected fog and light return to the original source color."; > = 0.85;
++> = 0.0;
++uniform float BWBlackWandX_Guard_ProtectAmount < ui_type = "slider"; ui_label = "Protection Amount"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; ui_tooltip = "How strongly the Restore technique returns protected regions toward this frame's Capture reference. Requires both techniques in the correct order."; > = 0.85;
+ uniform float BWBlackWandX_Guard_FogSensitivity < ui_type = "slider"; ui_label = "Fog Sensitivity"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls";
+  ui_min = 0.0; ui_max = 4.0; ui_step = 0.001; ui_tooltip = "Raises detection of low-contrast desaturated far-field haze."; > = 1.15;
+ uniform float BWBlackWandX_Guard_LightThreshold < ui_type = "slider"; ui_label = "Light Threshold"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls";
+@@ -62,45 +62,182 @@ uniform float BWBlackWandX_Guard_ContrastReject <
+     ui_tooltip = "Rejects high-contrast texture so fog detection favors smooth haze.";
+     ui_category_closed = true;
+ > = 0.90;
+-static const int BWBlackWandX_Guard_DepthMode = black_wand_PRIMITIVE_DEPTH_MODE_RAW; // internal fixed control; hidden from the clean menu
+ uniform float BWBlackWandX_Guard_DepthStart < ui_type = "slider"; ui_label = "Depth Window Start"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls";
+- ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; ui_tooltip = "Near edge of the fog/light diagnostic depth window."; > = 0.25;
++ ui_min = 0.0; ui_max = 1.0; ui_step = 0.00001; ui_tooltip = "Near edge of optional fog distance support in ReShade normalized linear depth. Missing depth uses color-only detection."; > = 0.005;
+ uniform float BWBlackWandX_Guard_DepthEnd <
+     ui_type = "slider";
+     ui_label = "Depth Window End";
+     ui_category = "@BlackWand - Fog / Light Guard / 99 Advanced / Depth";
+     ui_min = 0.0;
+     ui_max = 1.0;
+-    ui_step = 0.001;
+-    ui_tooltip = "Far edge of the fog/light diagnostic depth window.";
++    ui_step = 0.00001;
++    ui_tooltip = "Depth where far-field fog support reaches full weight. Larger depths remain supported; this is not raw hardware depth.";
+     ui_category_closed = true;
+-> = 1.0;
++> = 0.05;
+ static const float BWBlackWandX_Guard_DebugFloor = 0.0; // internal fixed control; hidden from the clean menu
+ 
++
++uniform float BWBlackWandX_Guard_DepthInfluence
++< ui_type = "slider"; ui_label = "Depth Influence"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; ui_tooltip = "Optional linear-depth support for fog detection. Zero uses color/contrast only; invalid depth falls back to color detection."; > = 0.5;
++uniform float BWBlackWandX_Guard_MaskSoftening
++< ui_type = "slider"; ui_label = "Mask Softening"; ui_category = "@BlackWand - Fog / Light Guard / 01 Controls"; ui_min = 0.0; ui_max = 1.0; ui_step = 0.001; ui_tooltip = "Softens only protection coverage using four full-resolution neighbors gated by depth and luminance. The source image is not blurred."; > = 0.5;
++uniform float BWBlackWandX_Guard_MaskRadius
++< ui_type = "slider"; ui_label = "Mask Radius (Pixels)"; ui_category = "@BlackWand - Fog / Light Guard / 99 Advanced / Tunable Controls"; ui_min = 0.5; ui_max = 3.0; ui_step = 0.1; > = 1.0;
++uniform uint BWBlackWandX_Guard_FrameCount < source = "framecount"; >;
++
++// Current-frame reference and coverage. No history accumulation or coarse grid.
++texture2D BWBlackWandX_GuardReferenceV2Tex
++{ Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
++sampler2D BWBlackWandX_GuardReferenceV2Sampler
++{ Texture = BWBlackWandX_GuardReferenceV2Tex; MinFilter = POINT; MagFilter = POINT; MipFilter = POINT; AddressU = CLAMP; AddressV = CLAMP; };
++texture2D BWBlackWandX_GuardStateV2Tex
++{ Width = 1; Height = 1; Format = RGBA32F; };
++sampler2D BWBlackWandX_GuardStateV2Sampler
++{ Texture = BWBlackWandX_GuardStateV2Tex; MinFilter = POINT; MagFilter = POINT; MipFilter = POINT; AddressU = CLAMP; AddressV = CLAMP; };
++
++struct BWBlackWandX_GuardEvidence
++{
++    float depth;
++    float luma;
++    float contrast;
++    float depthSupport;
++    float fog;
++    float light;
++    float mask;
++};
++
++float BWBlackWandX_Guard_ValidDepth(float depth)
++{
++    // Endpoints/NaN cannot become an authoritative near/far classification.
++    return (depth > 0.000001 && depth < 0.999999) ? 1.0 : 0.0;
++}
++
++float BWBlackWandX_Guard_DepthSupport(float depth)
++{
++    if (BWBlackWandX_Guard_ValidDepth(depth) < 0.5) return 1.0;
++    float start = min(saturate(BWBlackWandX_Guard_DepthStart), saturate(BWBlackWandX_Guard_DepthEnd));
++    float end = max(max(saturate(BWBlackWandX_Guard_DepthStart), saturate(BWBlackWandX_Guard_DepthEnd)), start + 0.000001);
++    float phase = smoothstep(start, end, depth);
++    float support = lerp(1.0 - saturate(BWBlackWandX_Guard_DepthInfluence), 1.0, phase);
++    // Fade into color-only detection near an unusable near-plane sentinel.
++    return lerp(1.0, support, smoothstep(0.000001, 0.0001, depth));
++}
++
++BWBlackWandX_GuardEvidence BWBlackWandX_Guard_Measure(float2 uv)
++{
++    BWBlackWandX_GuardEvidence e;
++    float3 color = black_wand_Proc_SourceColor(uv);
++    e.depth = ReShade::GetLinearizedDepth(saturate(uv));
++    e.luma = black_wand_BWT_Luma(color);
++    e.contrast = BWBlackWandX_LocalContrast(uv, 2.0, 12.0);
++    e.depthSupport = BWBlackWandX_Guard_DepthSupport(e.depth);
++    e.fog = saturate((1.0 - black_wand_Proc_ColorSaturationApprox(color)) *
++        (1.0 - saturate(e.contrast * BWBlackWandX_Guard_ContrastReject)) *
++        e.depthSupport * max(BWBlackWandX_Guard_FogSensitivity, 0.0));
++    e.light = BWBlackWandX_HighlightMask(e.luma, BWBlackWandX_Guard_LightThreshold, BWBlackWandX_Guard_LightSoftness);
++    e.mask = saturate(max(e.fog, e.light));
++    return e;
++}
++
++float BWBlackWandX_Guard_TapWeight(BWBlackWandX_GuardEvidence center, BWBlackWandX_GuardEvidence tap)
++{
++    float centerValid = BWBlackWandX_Guard_ValidDepth(center.depth);
++    float tapValid = BWBlackWandX_Guard_ValidDepth(tap.depth);
++    if (centerValid != tapValid) return 0.0;
++    float depthWeight = 1.0;
++    if (centerValid > 0.5)
++        depthWeight = 1.0 - saturate(abs(tap.depth - center.depth) / max(0.00001, abs(center.depth) * 0.02));
++    float lumaWeight = 1.0 - saturate(abs(tap.luma - center.luma) / 0.12);
++    return depthWeight * lumaWeight;
++}
++
++float BWBlackWandX_Guard_SoftMask(float2 uv, BWBlackWandX_GuardEvidence center)
++{
++    if (BWBlackWandX_Guard_MaskSoftening <= 0.0) return center.mask;
++    float2 pixel = float2(BUFFER_RCP_WIDTH, BUFFER_RCP_HEIGHT) * clamp(BWBlackWandX_Guard_MaskRadius, 0.5, 3.0);
++    BWBlackWandX_GuardEvidence a = BWBlackWandX_Guard_Measure(saturate(uv + float2(pixel.x, 0.0)));
++    BWBlackWandX_GuardEvidence b = BWBlackWandX_Guard_Measure(saturate(uv - float2(pixel.x, 0.0)));
++    BWBlackWandX_GuardEvidence c = BWBlackWandX_Guard_Measure(saturate(uv + float2(0.0, pixel.y)));
++    BWBlackWandX_GuardEvidence d = BWBlackWandX_Guard_Measure(saturate(uv - float2(0.0, pixel.y)));
++    float wa = BWBlackWandX_Guard_TapWeight(center, a);
++    float wb = BWBlackWandX_Guard_TapWeight(center, b);
++    float wc = BWBlackWandX_Guard_TapWeight(center, c);
++    float wd = BWBlackWandX_Guard_TapWeight(center, d);
++    float mask = (center.mask * 2.0 + a.mask * wa + b.mask * wb + c.mask * wc + d.mask * wd) / (2.0 + wa + wb + wc + wd);
++    return saturate(lerp(center.mask, mask, saturate(BWBlackWandX_Guard_MaskSoftening)));
++}
++
++float4 BWBlackWandX_Guard_Capture_PS(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
++{
++    float3 sourceColor = black_wand_Proc_SourceColor(uv);
++    if (BWBlackWandX_Guard_Strength <= 0.0) return float4(sourceColor, 0.0);
++    BWBlackWandX_GuardEvidence e = BWBlackWandX_Guard_Measure(uv);
++    return float4(sourceColor, BWBlackWandX_Guard_SoftMask(uv, e));
++}
++
++float4 BWBlackWandX_Guard_FrameStamp()
++{
++    // Two exact 16-bit parts avoid float's 24-bit integer precision boundary.
++    return float4(float(BWBlackWandX_Guard_FrameCount & 65535u),
++        float(BWBlackWandX_Guard_FrameCount >> 16u), float(BUFFER_WIDTH), float(BUFFER_HEIGHT));
++}
++
++float4 BWBlackWandX_Guard_Stamp_PS(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
++{
++    return BWBlackWandX_Guard_FrameStamp();
++}
++
++float BWBlackWandX_Guard_CurrentCapture(float4 state)
++{
++    float4 expected = BWBlackWandX_Guard_FrameStamp();
++    return (state.x == expected.x && state.y == expected.y && state.z == expected.z && state.w == expected.w) ? 1.0 : 0.0;
++}
++
++float3 BWBlackWandX_Guard_RestoreColor(float3 filtered, float3 reference, float mask)
++{
++    float amount = saturate(BWBlackWandX_Guard_Strength) * saturate(BWBlackWandX_Guard_ProtectAmount) * saturate(mask);
++    return lerp(filtered, reference, amount);
++}
++
+ float4 BWBlackWandX_Guard_PS(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
+ {
+     float3 sourceColor = black_wand_Proc_SourceColor(uv);
+-    float lumaValue = black_wand_BWT_Luma(sourceColor);
+-    float saturationValue = black_wand_Proc_ColorSaturationApprox(sourceColor);
+-    float localContrast = BWBlackWandX_LocalContrast(uv, 2.0, 12.0);
+-    float depthValue = black_wand_Proc_DepthValue(uv, BWBlackWandX_Guard_DepthMode);
+-    float depthWindow = BWBlackWandX_DepthWindow(depthValue, BWBlackWandX_Guard_DepthStart, BWBlackWandX_Guard_DepthEnd, 0.035);
+-    float fogEstimate = saturate((1.0 - saturationValue) * (1.0 - saturate(localContrast * BWBlackWandX_Guard_ContrastReject)) * depthWindow * BWBlackWandX_Guard_FogSensitivity);
+-    float lightEstimate = BWBlackWandX_HighlightMask(lumaValue, BWBlackWandX_Guard_LightThreshold, BWBlackWandX_Guard_LightSoftness);
+-    float protectedArea = saturate(max(fogEstimate, lightEstimate));
+-    float3 shadedColor = sourceColor * (1.0 - BWBlackWandX_Guard_ShadeOutside * (1.0 - protectedArea));
+-    float3 guardedColor = lerp(shadedColor, sourceColor, protectedArea * BWBlackWandX_Guard_ProtectAmount);
+-    float3 outputColor = lerp(sourceColor, guardedColor, saturate(BWBlackWandX_Guard_Strength));
+-    if (BWBlackWandX_Guard_DebugView == 1) return black_wand_Proc_OutScalar(protectedArea, 1.0, BWBlackWandX_Guard_DebugFloor);
+-    if (BWBlackWandX_Guard_DebugView == 2) return black_wand_Proc_OutScalar(fogEstimate, 1.0, BWBlackWandX_Guard_DebugFloor);
+-    if (BWBlackWandX_Guard_DebugView == 3) return black_wand_Proc_OutScalar(lightEstimate, 1.0, BWBlackWandX_Guard_DebugFloor);
+-    if (BWBlackWandX_Guard_DebugView == 4) return black_wand_Proc_OutScalar(localContrast, 1.0, BWBlackWandX_Guard_DebugFloor);
+-    if (BWBlackWandX_Guard_DebugView == 5) return black_wand_Proc_OutScalar(depthWindow, 1.0, BWBlackWandX_Guard_DebugFloor);
+-    return black_wand_Proc_OutColor(outputColor, BWBlackWandX_Guard_DebugFloor);
+-}
+-
+-technique BlackWand_FogLight_Guard < ui_label = "@BlackWand - Fog / Light Guard"; ui_tooltip = "Protects fog-like haze and bright light regions from later heavy filtering, with useful diagnostics for the guard mask."; >
+-{
+-    pass { VertexShader = PostProcessVS; PixelShader = BWBlackWandX_Guard_PS; }
++    if (BWBlackWandX_Guard_Strength <= 0.0) return float4(sourceColor, 1.0);
++    if (BWBlackWandX_Guard_DebugView == 0 && BWBlackWandX_Guard_ShadeOutside <= 0.0)
++        return float4(sourceColor, 1.0);
++    BWBlackWandX_GuardEvidence e = BWBlackWandX_Guard_Measure(uv);
++    float mask = BWBlackWandX_Guard_SoftMask(uv, e);
++    if (BWBlackWandX_Guard_DebugView == 1) return black_wand_Proc_OutScalar(mask, 1.0, BWBlackWandX_Guard_DebugFloor);
++    if (BWBlackWandX_Guard_DebugView == 2) return black_wand_Proc_OutScalar(e.fog, 1.0, BWBlackWandX_Guard_DebugFloor);
++    if (BWBlackWandX_Guard_DebugView == 3) return black_wand_Proc_OutScalar(e.light, 1.0, BWBlackWandX_Guard_DebugFloor);
++    if (BWBlackWandX_Guard_DebugView == 4) return black_wand_Proc_OutScalar(e.contrast, 1.0, BWBlackWandX_Guard_DebugFloor);
++    if (BWBlackWandX_Guard_DebugView == 5) return black_wand_Proc_OutScalar(e.depthSupport, 1.0, BWBlackWandX_Guard_DebugFloor);
++    float shade = saturate(BWBlackWandX_Guard_ShadeOutside) * (1.0 - mask) *
++        (1.0 - mask * saturate(BWBlackWandX_Guard_ProtectAmount));
++    return float4(sourceColor * (1.0 - shade * saturate(BWBlackWandX_Guard_Strength)), 1.0);
++}
++
++float4 BWBlackWandX_Guard_Restore_PS(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
++{
++    float3 sourceColor = black_wand_Proc_SourceColor(uv);
++    if (BWBlackWandX_Guard_Strength <= 0.0 || BWBlackWandX_Guard_ProtectAmount <= 0.0 || BWBlackWandX_Guard_DebugView != 0)
++        return float4(sourceColor, 1.0);
++    float4 state = tex2Dlod(BWBlackWandX_GuardStateV2Sampler, float4(0.5, 0.5, 0.0, 0.0));
++    if (BWBlackWandX_Guard_CurrentCapture(state) < 0.5) return float4(sourceColor, 1.0);
++    float4 reference = tex2Dlod(BWBlackWandX_GuardReferenceV2Sampler, float4(saturate(uv), 0.0, 0.0));
++    return float4(BWBlackWandX_Guard_RestoreColor(sourceColor, reference.rgb, reference.a), 1.0);
+ }
+ 
++technique BlackWand_FogLight_Guard
++< ui_label = "@BlackWand - Fog / Light Guard (Capture)"; ui_tooltip = "Place before filtering. Captures current-frame color/protection without default darkening. Enable the matching Restore technique after filtering."; >
++{
++    pass Capture { VertexShader = PostProcessVS; PixelShader = BWBlackWandX_Guard_Capture_PS; RenderTarget = BWBlackWandX_GuardReferenceV2Tex; }
++    pass Stamp { VertexShader = PostProcessVS; PixelShader = BWBlackWandX_Guard_Stamp_PS; RenderTarget = BWBlackWandX_GuardStateV2Tex; }
++    pass Preview { VertexShader = PostProcessVS; PixelShader = BWBlackWandX_Guard_PS; }
++}
++
++technique BlackWand_FogLight_GuardRestore
++< ui_label = "@BlackWand - Fog / Light Guard (Restore)"; ui_tooltip = "Place after filtering. Restores protected fog/light toward this frame's Capture reference. Missing, stale or wrongly ordered capture returns the current image unchanged."; >
++{
++    pass Restore { VertexShader = PostProcessVS; PixelShader = BWBlackWandX_Guard_Restore_PS; }
++}
+diff --git a/tools/build_vortex_package.ps1 b/tools/build_vortex_package.ps1
+index 366e957..e2dff3a 100644
+--- a/tools/build_vortex_package.ps1
++++ b/tools/build_vortex_package.ps1
+@@ -62,6 +62,7 @@ try {
+     $documentationRoot = Join-Path $stagingRoot 'Lazara-Documentation'
+     New-Item -ItemType Directory -Path $documentationRoot | Out-Null
+     foreach ($name in @(
++        'FOG_GUARD_V2.md',
+         'DEPENDENCIES.md',
+         'dependencies.lock.json',
+         'VENDORED_SHA256SUMS.txt'
+@@ -73,6 +74,10 @@ try {
+     Copy-PackageFile `
+         -Source (Join-Path $repositoryRoot 'packaging\vortex\NEXUS_README.txt') `
+         -Destination (Join-Path $documentationRoot 'NEXUS_README.txt')
++    Copy-Item `
++        -LiteralPath (Join-Path $repositoryRoot 'patches') `
++        -Destination (Join-Path $documentationRoot 'patches') `
++        -Recurse
+     Copy-Item `
+         -LiteralPath (Join-Path $repositoryRoot 'LICENSES') `
+         -Destination (Join-Path $documentationRoot 'LICENSES') `
+diff --git a/tools/package_fog_guard.py b/tools/package_fog_guard.py
+new file mode 100644
+index 0000000..aac45e1
+--- /dev/null
++++ b/tools/package_fog_guard.py
+@@ -0,0 +1,60 @@
++#!/usr/bin/env python3
++"""Package only Fog Guard V2 and its exact include closure for a manual retest."""
++import argparse
++import hashlib
++import json
++from pathlib import Path
++import re
++import subprocess
++from zipfile import ZipFile, ZIP_DEFLATED
++
++ROOT=Path(__file__).resolve().parents[1]
++EFFECT=ROOT/'reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx'
++
++
++def closure():
++    pending=[EFFECT];seen=set()
++    while pending:
++        path=pending.pop().resolve()
++        if path in seen:continue
++        if not path.is_relative_to(ROOT) or not path.is_file():raise ValueError(f'Missing/escaping include: {path}')
++        seen.add(path)
++        for name in re.findall(r'^\s*#include\s+"([^"]+)"',path.read_text(),re.M):
++            if name=='ReShade.fxh':continue
++            pending.append(path.parent/name.replace('\\','/'))
++    return sorted(seen)
++
++
++def package(output):
++    paths=closure()
++    assert [p.name for p in paths if p.suffix=='.fx']==[EFFECT.name]
++    revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
++    # Keep the source revision meaningful: artifact files may be dirty, shader
++    # and included documentation/provenance must match the recorded commit.
++    frozen=[str(p.relative_to(ROOT)) for p in paths]+['FOG_GUARD_V2.md','patches/fog-guard-v2.patch','dependencies.lock.json']
++    subprocess.run(['git','diff','--exit-code','HEAD','--',*frozen],cwd=ROOT,check=True,capture_output=True)
++    manifest={'schema':'lazara-fog-guard-test-package-v1','source_revision':revision,
++              'effect_count':1,'techniques':['BlackWand_FogLight_Guard','BlackWand_FogLight_GuardRestore'],
++              'shader_file_count':len(paths),'external_dependencies':['ReShade.fxh'],
++              'native_compile_performed':False,'live_visual_test_performed':False,
++              'files':{p.relative_to(ROOT).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}}
++    lock=json.loads((ROOT/'dependencies.lock.json').read_text())
++    vendor=next(v for v in lock['vendored_sources'] if v['vendor_path'].endswith('/occult_box'))
++    provenance={'source_repository':vendor['repository'],'baseline_commit':vendor['commit'],
++                'local_patches':vendor['local_patches'],'scope':'Only the Fog Guard effect and unchanged include closure'}
++    payload={p.relative_to(ROOT).as_posix():p.read_bytes() for p in paths}
++    payload.update({'README.md':(ROOT/'FOG_GUARD_V2.md').read_bytes(),
++                    'patches/fog-guard-v2.patch':(ROOT/'patches/fog-guard-v2.patch').read_bytes(),
++                    'LICENSES/VENDORED-SOURCE-NOTICE.md':(ROOT/'LICENSES/VENDORED-SOURCE-NOTICE.md').read_bytes(),
++                    'PACKAGE_MANIFEST.json':(json.dumps(manifest,indent=2)+'\n').encode(),
++                    'SOURCE_PROVENANCE.json':(json.dumps(provenance,indent=2)+'\n').encode()})
++    output.parent.mkdir(parents=True,exist_ok=True)
++    with output.open('xb') as stream, ZipFile(stream,'w',compression=ZIP_DEFLATED) as archive:
++        for name,data in sorted(payload.items()):archive.writestr(name,data)
++    print(json.dumps({'output':str(output),'source_revision':revision,'shader_files':len(paths),
++                      'sha256':hashlib.sha256(output.read_bytes()).hexdigest()},indent=2))
++
++
++if __name__=='__main__':
++    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True)
++    package(parser.parse_args().output)
+diff --git a/tools/test_fog_guard.py b/tools/test_fog_guard.py
+new file mode 100644
+index 0000000..46d15f5
+--- /dev/null
++++ b/tools/test_fog_guard.py
+@@ -0,0 +1,183 @@
++"""Execute Fog Guard shader functions in CPU fixtures; not native FXC/GPU tests."""
++from pathlib import Path
++import re
++import shutil
++import subprocess
++import tempfile
++import unittest
++
++ROOT=Path(__file__).resolve().parents[1]
++EFFECT=ROOT/'reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx'
++
++SHIM=r'''
++#include <algorithm>
++#include <cmath>
++#include <cstdint>
++#include <iostream>
++#include <limits>
++#include <stdexcept>
++using std::min;using std::max;using std::abs;using std::clamp;
++using uint=uint32_t;
++#define BUFFER_WIDTH 2560
++#define BUFFER_HEIGHT 1440
++#define BUFFER_RCP_WIDTH (1.f/BUFFER_WIDTH)
++#define BUFFER_RCP_HEIGHT (1.f/BUFFER_HEIGHT)
++struct float2 { float x,y; float2(float a,float b):x(a),y(b){} };
++float2 operator+(float2 a,float2 b){return {a.x+b.x,a.y+b.y};}
++float2 operator-(float2 a,float2 b){return {a.x-b.x,a.y-b.y};}
++float2 operator*(float2 a,float b){return {a.x*b,a.y*b};}
++struct float3 { float x,y,z; float3(float a,float b,float c):x(a),y(b),z(c){} };
++float3 operator*(float3 a,float b){return {a.x*b,a.y*b,a.z*b};}
++struct float4 {
++ float x,y,z;union{float w;float a;};
++ float4(float a,float b,float c,float d):x(a),y(b),z(c),w(d){}
++ float4(float2 c,float z,float w):x(c.x),y(c.y),z(z),w(w){}
++ float4(float3 c,float a):x(c.x),y(c.y),z(c.z),w(a){}
++ float3 rgb()const{return {x,y,z};}
++};
++float saturate(float x){return min(max(x,0.f),1.f);}
++float2 saturate(float2 p){return {saturate(p.x),saturate(p.y)};}
++float lerp(float a,float b,float w){return a+(b-a)*w;}
++float3 lerp(float3 a,float3 b,float w){return {lerp(a.x,b.x,w),lerp(a.y,b.y,w),lerp(a.z,b.z,w)};}
++float smoothstep(float a,float b,float x){float t=saturate((x-a)/(b-a));return t*t*(3-2*t);}
++float3 sourceColor(.4f,.1f,.1f);
++float linearDepth=.02f;
++int sourceReads=0,depthReads=0,referenceReads=0,stateReads=0;
++int depthMode=0,colorMode=0;
++float edge=.5f;
++float3 black_wand_Proc_SourceColor(float2 uv){
++ ++sourceReads;
++ if(colorMode==1){float v=.2f+.2f*uv.x;return {v,v,v};}
++ if(colorMode==2){return abs(uv.x-.5f)<BUFFER_RCP_WIDTH*.1f&&abs(uv.y-.5f)<BUFFER_RCP_HEIGHT*.1f?float3(.4f,.4f,.4f):float3(.8f,.28f,.35f);}
++ return sourceColor;
++}
++namespace ReShade {float GetLinearizedDepth(float2 uv){
++ ++depthReads;
++ if(depthMode==1)return uv.x<edge?.01f:.1f;
++ return linearDepth;
++}}
++float black_wand_BWT_Luma(float3 c){return c.x*.2126f+c.y*.7152f+c.z*.0722f;}
++float black_wand_Proc_ColorSaturationApprox(float3 c){float hi=max(max(c.x,c.y),c.z);float lo=min(min(c.x,c.y),c.z);return (hi-lo)/max(hi,.00001f);}
++float BWBlackWandX_LocalContrast(float2 uv,float radius,float gain){
++ float2 p(BUFFER_RCP_WIDTH*radius,BUFFER_RCP_HEIGHT*radius);
++ float3 a=black_wand_Proc_SourceColor(uv+float2(p.x,0));float3 b=black_wand_Proc_SourceColor(uv-float2(p.x,0));
++ float3 c=black_wand_Proc_SourceColor(uv+float2(0,p.y));float3 d=black_wand_Proc_SourceColor(uv-float2(0,p.y));
++ float average=(black_wand_BWT_Luma(a)+black_wand_BWT_Luma(b)+black_wand_BWT_Luma(c)+black_wand_BWT_Luma(d))*.25f;
++ return saturate(abs(black_wand_BWT_Luma(black_wand_Proc_SourceColor(uv))-average)*gain);
++}
++float BWBlackWandX_HighlightMask(float x,float start,float width){return smoothstep(start-max(width,.000001f),start+max(width,.000001f),x);}
++float4 black_wand_Proc_OutScalar(float x,float,float){return {x,x,x,1};}
++int BWBlackWandX_GuardReferenceV2Sampler=1;
++int BWBlackWandX_GuardStateV2Sampler=2;
++float4 referencePixel(0,0,0,0),statePixel(0,0,0,0);
++float4 tex2Dlod(int sampler,float4){
++ if(sampler==1){++referenceReads;return referencePixel;}
++ ++stateReads;return statePixel;
++}
++bool close(float a,float b){return abs(a-b)<.000002f;}
++bool same(float3 a,float3 b){return close(a.x,b.x)&&close(a.y,b.y)&&close(a.z,b.z);}
++int assertions=0;
++void check(bool ok,const char* reason){++assertions;if(!ok)throw std::runtime_error(reason);}
++'''
++
++CASES=r'''
++int main(){try{
++ float2 uv(.5f,.5f);float4 pos(0,0,0,1);
++ check(BWBlackWandX_Guard_ShadeOutside==0,"default outside shade still darkens every unprotected pixel");
++ check(same(BWBlackWandX_Guard_PS(pos,uv).rgb(),sourceColor),"default capture stage changed source RGB");
++ check(sourceReads==1&&depthReads==0,"neutral preview did mask/depth work");
++ for(float depth: {0.f,1.f,std::numeric_limits<float>::quiet_NaN()})
++  check(BWBlackWandX_Guard_DepthSupport(depth)==1,"unusable depth did not use color-only fallback");
++ float last=0;
++ for(int i=1;i<10000;++i){
++  float d=(float)i/10000;
++  float support=BWBlackWandX_Guard_DepthSupport(d);
++  check(support>=last&&support>=0&&support<=1,"far-field support is nonmonotonic or unbounded");last=support;
++ }
++ check(close(BWBlackWandX_Guard_DepthSupport(.9f),1),"far fog falls out of the protection window");
++ auto center=BWBlackWandX_Guard_Measure(uv);auto tap=center;
++ tap.depth=center.depth+.1f;check(BWBlackWandX_Guard_TapWeight(center,tap)==0,"mask crosses a depth discontinuity");
++ tap=center;tap.depth=0;check(BWBlackWandX_Guard_TapWeight(center,tap)==0,"mask mixes valid depth with missing depth");
++ tap=center;tap.luma+=.5f;check(BWBlackWandX_Guard_TapWeight(center,tap)==0,"mask crosses a bright edge");
++ sourceColor={.4f,.4f,.4f};auto captured=BWBlackWandX_Guard_Capture_PS(pos,uv);
++ check(same(captured.rgb(),sourceColor),"mask softening blurred captured RGB");
++ check(captured.a>=0&&captured.a<=1,"captured coverage is unbounded");
++ colorMode=2;auto isolated=BWBlackWandX_Guard_Measure(uv);
++ float softened=BWBlackWandX_Guard_SoftMask(uv,isolated);
++ check(softened<isolated.mask&&softened>0,"surface-aware coverage softening failed to reduce an isolated mask spike");
++ check(same(BWBlackWandX_Guard_Capture_PS(pos,uv).rgb(),float3(.4f,.4f,.4f)),"softened capture changed center RGB");
++ BWBlackWandX_Guard_MaskSoftening=0;depthReads=0;
++ check(BWBlackWandX_Guard_SoftMask(uv,isolated)==isolated.mask&&depthReads==0,"zero softening still sampled neighbor masks");
++ BWBlackWandX_Guard_MaskSoftening=.5f;colorMode=0;
++ referencePixel=captured;
++ for(uint frame: {0u,1u,65535u,65536u,16777215u,16777216u,16777217u,4294967295u}){
++  BWBlackWandX_Guard_FrameCount=frame;statePixel=BWBlackWandX_Guard_Stamp_PS(pos,uv);
++  check(BWBlackWandX_Guard_CurrentCapture(statePixel)==1,"current frame rejected");
++  BWBlackWandX_Guard_FrameCount=frame+1;
++  check(BWBlackWandX_Guard_CurrentCapture(statePixel)==0,"stale frame accepted at integer precision boundary");
++ }
++ BWBlackWandX_Guard_FrameCount=42;statePixel={0,0,0,0};sourceColor={.1f,.2f,.3f};referenceReads=0;
++ check(same(BWBlackWandX_Guard_Restore_PS(pos,uv).rgb(),sourceColor)&&referenceReads==0,"uninitialized capture changed output or read stale RGB");
++ statePixel=BWBlackWandX_Guard_FrameStamp();statePixel.z+=1;
++ check(same(BWBlackWandX_Guard_Restore_PS(pos,uv).rgb(),sourceColor),"dimension mismatch accepted");
++ statePixel=BWBlackWandX_Guard_FrameStamp();referencePixel={.5f,.6f,.7f,1};
++ auto restored=BWBlackWandX_Guard_Restore_PS(pos,uv);
++ check(restored.x>sourceColor.x&&restored.x<referencePixel.x,"late restore did not recover protected fog");
++ referencePixel.a=0;check(same(BWBlackWandX_Guard_Restore_PS(pos,uv).rgb(),sourceColor),"unprotected output changed");
++ BWBlackWandX_Guard_Strength=0;stateReads=referenceReads=0;
++ check(same(BWBlackWandX_Guard_Restore_PS(pos,uv).rgb(),sourceColor)&&stateReads==0&&referenceReads==0,"zero strength failed exact cheap bypass");
++ BWBlackWandX_Guard_Strength=1;BWBlackWandX_Guard_ProtectAmount=0;
++ check(same(BWBlackWandX_Guard_Restore_PS(pos,uv).rgb(),sourceColor),"zero protection changed source");
++ BWBlackWandX_Guard_ProtectAmount=.85f;
++ for(int i=0;i<=100;++i)for(int j=0;j<=100;++j){
++  float a=(float)i/100,b=(float)j/100;
++  auto out=BWBlackWandX_Guard_RestoreColor({a,b,a},{b,a,b},a);
++  check(out.x>=min(a,b)-.000001f&&out.x<=max(a,b)+.000001f,"restore exceeds the source/reference interval");
++ }
++ colorMode=1;linearDepth=.02f;float previous=-1;
++ for(int i=0;i<=1024;++i){
++  float2 p(.25f+(float)i/2048,.5f);
++  auto e=BWBlackWandX_Guard_Measure(p);float m=BWBlackWandX_Guard_SoftMask(p,e);
++  check(m>=0&&m<=1,"soft mask out of bounds");
++  if(previous>=0)check(abs(m-previous)<.001f,"smooth camera sweep produced mask jumps");previous=m;
++ }
++ std::cout<<"PASS: "<<assertions<<" Fog Guard shader-extracted assertions; neutral capture, fine mask, depth/fog bounds, late restore, stale-frame rejection and camera sweep.\n";
++}catch(const std::exception& e){std::cerr<<"FAIL: "<<e.what()<<"\n";return 1;}}
++'''
++
++
++def shader_cpp():
++    s=EFFECT.read_text();s=s[s.index('uniform int BWBlackWandX_Guard_DebugView'):s.index('\ntechnique BlackWand_FogLight_Guard\n')]
++    s=re.sub(r'uniform\s+(int|float)\s+(\w+)\s*<.*?>\s*=\s*([^;]+);',r'\1 \2 = \3;',s,flags=re.S)
++    s=re.sub(r'uniform uint (\w+)\s*<.*?>;',r'uint \1=0;',s,flags=re.S)
++    s=re.sub(r'(?:texture2D|sampler2D)\s+\w+\s*\{.*?\};','',s,flags=re.S)
++    s=re.sub(r'\s*:\s*(?:SV_Position|SV_Target|TEXCOORD)\b','',s)
++    s=s.replace('.rgb','.rgb()')
++    s=re.sub(r'\b(\d+\.\d+)(?![\w.])',r'\1f',s)
++    return SHIM+s+CASES
++
++
++class FogGuardTests(unittest.TestCase):
++    @unittest.skipUnless(shutil.which('c++'),'requires a C++17 compiler')
++    def test_actual_shader_math_and_pass_entrypoints(self):
++        with tempfile.TemporaryDirectory(prefix='fog-guard-fixture-') as tmp:
++            src=Path(tmp)/'fixture.cpp';src.write_text(shader_cpp());exe=Path(tmp)/'fixture'
++            r=subprocess.run(['c++','-std=c++17','-O2',str(src),'-o',str(exe)],text=True,capture_output=True)
++            self.assertEqual(r.returncode,0,r.stderr)
++            r=subprocess.run([str(exe)],text=True,capture_output=True)
++            self.assertEqual(r.returncode,0,r.stdout+r.stderr)
++            print(r.stdout,end='')
++
++    def test_local_guard_and_preset_contract(self):
++        s=EFFECT.read_text();preset=(ROOT/'Lazara.ini').read_text()
++        techniques=next(l.split('=',1)[1] for l in preset.splitlines() if l.startswith('Techniques=')).split(',')
++        capture='BlackWand_FogLight_Guard@BlackWand_10_FogLight_Guard.fx'
++        restore='BlackWand_FogLight_GuardRestore@BlackWand_10_FogLight_Guard.fx'
++        self.assertEqual(techniques.count(capture),1);self.assertEqual(techniques.count(restore),1)
++        self.assertLess(techniques.index(capture),techniques.index(restore));self.assertEqual(techniques[-1],restore)
++        self.assertNotIn('black_wand_Proc_DepthValue(',s)
++        self.assertNotRegex(s,r'\b(?:tex2D|tex2Dbias|ddx|ddy|fwidth)\s*\(')
++        self.assertIn('Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F;',s)
++        self.assertEqual(len(re.findall(r'^technique\s+',s,re.M)),2)
++
++if __name__=='__main__':unittest.main()
+diff --git a/tools/validate_package.ps1 b/tools/validate_package.ps1
+index 91d544b..18a88a2 100644
+--- a/tools/validate_package.ps1
++++ b/tools/validate_package.ps1
+@@ -46,11 +46,12 @@ $expectedTechniques = @(
+     'CAMERA_OBSCURA_StabilizedColorReapplyV1@CAMERA_OBSCURA_StabilizedColorCacheV1.fx',
+     'CAMERA_OBSCURA_StabilizedDetailReapplyV1@CAMERA_OBSCURA_StabilizedDetailCacheV1.fx',
+     'BlackWand_EdgeChromaWard@BlackWand_21_EdgeChromaWard.fx',
+-    'OSCO_GuidedInkLines@OSCO_GuidedInkLines.fx'
++    'OSCO_GuidedInkLines@OSCO_GuidedInkLines.fx',
++    'BlackWand_FogLight_GuardRestore@BlackWand_10_FogLight_Guard.fx'
+ )
+ 
+-if ($techniques.Count -ne 18) {
+-    $failures.Add("Expected 18 techniques; found $($techniques.Count).")
++if ($techniques.Count -ne 19) {
++    $failures.Add("Expected 19 techniques; found $($techniques.Count).")
+ }
+ if ($effectNames.Count -ne 15) {
+     $failures.Add("Expected 15 unique effect files; found $($effectNames.Count).")
+@@ -167,6 +168,29 @@ foreach ($file in $vendorFiles) {
+     }
+ }
+ 
++$patchCount = 0
++foreach ($vendor in $lock.vendored_sources) {
++    foreach ($patch in @($vendor.local_patches)) {
++        if ($null -eq $patch) { continue }
++        $patchCount++
++        $patchPath = Join-Path $root $patch.path
++        $effectPath = Join-Path $root $patch.effect_path
++        if (-not (Test-Path -LiteralPath $patchPath) -or -not (Test-Path -LiteralPath $effectPath)) {
++            $failures.Add("Missing local patch or effect: $($patch.path)")
++            continue
++        }
++        if ($patch.base_sha256 -notmatch '^[0-9A-F]{64}$' -or
++            (Get-FileHash -LiteralPath $patchPath -Algorithm SHA256).Hash -ne $patch.sha256 -or
++            (Get-FileHash -LiteralPath $effectPath -Algorithm SHA256).Hash -ne $patch.patched_sha256) {
++            $failures.Add("Local patch provenance mismatch: $($patch.path)")
++        }
++        & git -C $root apply --reverse --check $patchPath
++        if ($LASTEXITCODE -ne 0) {
++            $failures.Add("Local patch does not describe the current source: $($patch.path)")
++        }
++    }
++}
++
+ foreach ($file in $lock.direct_sources) {
+     $path = Join-Path $root ($file.path -replace '/', '\')
+     $actual = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+@@ -188,4 +212,5 @@ if ($failures.Count -ne 0) {
+ "PASS|shader_closure=$($visited.Count)|external=ReShade.fxh"
+ "PASS|vendored_files=$($vendorFiles.Count)|manifest_entries=$($manifestLines.Count)"
+ "PASS|git_submodules=0"
+-"SUMMARY|passed=5|failed=0"
++"PASS|local_patches=$patchCount|hashes_and_reverse_application=verified"
++"SUMMARY|passed=6|failed=0"
+diff --git a/tools/validate_vortex_package.ps1 b/tools/validate_vortex_package.ps1
+index 014a8d2..47d9d88 100644
+--- a/tools/validate_vortex_package.ps1
++++ b/tools/validate_vortex_package.ps1
+@@ -116,6 +116,8 @@ try {
+ 
+     $sourceMappings = [ordered]@{
+         'Lazara.ini' = 'Lazara.ini'
++        'Lazara-Documentation/FOG_GUARD_V2.md' = 'FOG_GUARD_V2.md'
++        'Lazara-Documentation/patches/fog-guard-v2.patch' = 'patches/fog-guard-v2.patch'
+         'vortex_override_instructions.json' = 'packaging/vortex/vortex_override_instructions.json'
+         'Lazara-Documentation/NEXUS_README.txt' = 'packaging/vortex/NEXUS_README.txt'
+         'Lazara-Documentation/DEPENDENCIES.md' = 'DEPENDENCIES.md'
+-- 
+2.52.0
+
+
+From 581a08a0dff189febafc6905218b05f513195772 Mon Sep 17 00:00:00 2001
+From: darkest eleven <darkest.eleven@gmail.com>
+Date: Tue, 10 Nov 2026 06:51:01 +0000
+Subject: [PATCH 2/3] Publish verified single-effect Fog Guard V2 test download
+
+---
+ downloads/Lazara-Fog-Guard-V2.zip        | Bin 0 -> 71921 bytes
+ downloads/Lazara-Fog-Guard-V2.zip.sha256 |   1 +
+ 2 files changed, 1 insertion(+)
+ create mode 100644 downloads/Lazara-Fog-Guard-V2.zip
+ create mode 100644 downloads/Lazara-Fog-Guard-V2.zip.sha256
+
+diff --git a/downloads/Lazara-Fog-Guard-V2.zip b/downloads/Lazara-Fog-Guard-V2.zip
+new file mode 100644
+index 0000000000000000000000000000000000000000..6b88120a9d8c3f706fc191741485b3584b56e90c
+GIT binary patch
+literal 71921
+zcmbTdQ*bU!w6*)jwv!dxwr$(CZQHi(tk||~+gP!a|J(n$Is06mo9^n-S6ww{)qKXN
+zR*(h(MFju=kN^rcD_zQ!l#K`w0Kfzs03iBLm5~${l~Wc~rdJb{6OmUE6`@s@S5*=g
+zrInLc`R|I()+AO{Hhzl@vFA!1c3wCz^rYov&el#gkw{<*b*G@mOC*kl43#or`L=2u
+zKVN*}b3qiIcRg)nA)DQPH^#4kpOht7d14#txu^wASBxK&^w@_<D(cYLn&`Qv_d%0F
+za_zH!U_CMAE>=XUR>3^yVqFPShbcFqkq=(50;*S70I>j}g|(_Z0OG=zWg<MrVGo-c
+zWwu;z`vwtPOk%ha&`$~sbkemeh1^3E<u79uI|M>MjPByP(pNju{<wnXI!Kp<ZfymX
+z13K+JWxN5=&#B83s&oW`g@K|yHQ^DSb1RpFR33nE4%V==46&DCLMmnz4u3*(VO*xc
+zaW{#Y5Tok%$LaW=Purs$a=4?Uzekh}(3)^qnsM)814?>=;6M7eL|beO(K#^`RFw2!
+zftyskzl|og1ZD}4unQ{j$qCB#EUbuZbZ6*A^(-cYMbHUGcH5%8_=Lx>f}6u3kA}eF
+z$;cmXaj@__d4ZJB|B?lMb|oWfFEBVaFsD0YQRW6Lq1>jU^v;J^3qfKJ6Yb7k_!sq^
+z%#GykCGeRfzkb{zXGIi&!WmNchj<}m<424&)8zB>%U}R`EW~^k+(m6`X}>4^<N>)<
+zs<^N05W6;QvcAqdmqU)!UQKqbUVYVT)k6(h_Eo~U!PUgQ^VrQV(G@DYIJ9%eEfiCN
+zWZ?FTzDid0m0uhDGL)iORlS;P+0Sa$EvMg(ZM^5I%70m%TXgL;*ri@R|M*n=h)=qc
+zAXto<%<>RDO6Yl^-S*C1n1)QgZVx=<Usi<mpZo=JI@jM9F(&W*JaTN?ylMU1iL$Pw
+zD)ms^`RBLx=dGP<`O{0;UTsSle)sV4b8JomlD#Ku&yfu{!b}Nis8m)!aG!1FY-tda
+z9>yS#<}S)g^=9h1Q>Qll2@iZy)J$9tU4&W#Up|c(jl?@>V&dDKR2!8bVeCe;p4p6K
+zWQ2!$#vcwQy$F!qCL=c?Y}F8H(ACXl20U^F*HWU%oi#GlY(kmWnYvW8S}>I-j7_gg
+z#Db`acqf99(KhXtWWqPb;q%WNVD9{@d%|gkS`%i6XL5zcCNU@3lJYf-($;%u;)Xlm
+zs$v{$;0|<+PW@5>HnX;_p6MK?=NGw~OBPlRC3Wa}G<U*jPJ35%;_}E+%jelIM#*&e
+z?DC5JJ?&Xvx=Ax|!kh5k{Zwii-Zt3OthvE1{0pb>zxr5UmXXi~7651^2LRCi>th8$
+zVQE2eQGHoKIY}{5WfeLrXM4MrEN%PjF{H4&M`~dGwdXv99%*OrB(nOYG66-%rmiM7
+zBrO%nNmrcXzE{nvG82dkQNi8uG!HLM?#J0jzvDT4->>`Rtsg1<sbqeiFB9tDv>u+^
+zu5@|*-3dP)-t(J-i`b|9<5E6f<NU8%kKdi0-m4Y8JsUgruB+#MvH^tbB1+r11MLP<
+zH2z?*zYC}5va)JQ-TuJ2%AW^Sceiy2JezpG9`iq!UXStIJty-1NAzDe@!EPH;vIPE
+z`qz4XO`h+U4$mixu0C16j-SpZcP}3y-rwJP57bzleOcMHd3tQC-i-DLoqcIHEAu!#
+zcwRf~@uWO!7*`E_`S$v}JUcCa*z8xCdwMnJJc>U%w)$2FhRSU0pFPTNI$=mVk2=(G
+z{g3RVm%MuN@AU2eir32Dq3!W`-|zYF71*}<w_bhQdAD12wasmMJ*xj6@9=lgpWifv
+zducohN_v1?734%945S@uTZl@@GFve=y>n{WGLPoS<TGW>6vC4`pK5;6bhIT@cUOP?
+zl0K%^aq}v@U)(-l?L0TMTA&CHVXj(56>6YJxzeUz=rWSF*pyg0(UBD!R?W<Mg=pR^
+zWuA(0{cWAQfZ03{PIT_%thukac5I)HE>DrEB~>-oW>NNXPnImWGjG~unN%Zvsal$K
+zgHPP^`(DGC`^)$Kb5(8c)|HLH^qk9;%3}5+Y(>*D-LIHdFw;)fWWgp@ezl~ul$Gtw
+zyT&4R+X^}~|KSJkir}wV+O=`HRsGjR`cdEaVS+oicOO>N_hKOiT?(%bPWno+X~<Q)
+zDKk?{a_Ln`=!w&L^~n@@Vx|k`>gzUl_Bd8Gzh<s3WPj&;#;STi>I}m=?2gTY*{gm>
+zx`GSbsOLftPC1pn#<|NEF)I_JcvEaDG7`6ixz&n#?2<)_f|zV;m}n|pM^|l6{M-$j
+z>xic5aZ8AQDcD9%OLp80RU3x&az<o{*qk?vx!Sa4eZJCNpZ$QVPPKSFMY_5=7sFe#
+zmR^sC9}VsC(J0AyRr>FeGSd(3P!)Lg7zKQMNf!2sVSEoPG4fhf_RcB{%(tPtZ`S8U
+ztR$8>el0V;C5JS5E7j2Qg7o3<m&8-xg{I}Q1VTI^qt}!+=j*nA8GE?8dOmE2VO#H#
+zg*iN2Hqw+#Dba%XY^&iVD=6G(YTEKx1#f+FSmeN*M&lb@gDdYVjV~ock5}O*I|B5Q
+zjPkPA)kl5eqND}KNla}`6P~5nH2%@xF5`4UIZm?PO_GgWOP=O|y3=`Il~L1SXJ#E;
+zy%T4>zsGY*_DM-HJ)h@I#iZfReh!D#xX|H-x9jP4@Q*b)w%?*M+7k$V0PMuox-8}b
+z5mJRgf{cUQJ3hc@QbS&=tfh$!*PQ;ar=Onfb885}$yqB!b5zD~b5q%ZijD-c!l`ES
+zyLsH2Cby_`zdEohF2Zp0n9L3eL`UqzeeL70fIT1I@pd^iGitOf?9sTnv}50C=$~!%
+zL>rf`&hc<B)+{}XWZjrZ@GxIir*qdlccpuHc31K!R=EjVfn_l^2`EGW1M-vLTH*?s
+zR)LywKig9S$zu**y#~48-nS_W-=6KWcE|U{i%15b#69P>re9uDRF=+rt2$P|WNw2_
+z--R=lD_J^83N%H1XcQ<bNAr~3%lGrZrwJ2duWVO?qLjkH+<+^)L8hXZZk4rNp;j@r
+zo>3apdVpO^#0Jwmt$p&fP-L>)3LE8yx_MVjYR5aBIa_DM<SMmdzKQ*-B+C_4$Plu@
+z**Wqo?d{v|(aU+-I9?}$*dz$0o+AsuO=FjXT?IR9&BSSxcbFt!8;nN5PHb?$>)z_|
+zaAr3S5u1P8+Vu@m=WMfYY}F2TlEQU34a-`7jqZgCE&?dxnXJL%Tg?F?RF#UM*OfVO
+z49tg((2~8nx15A}Ypg2{|I;AO&sap3=oxiQtd-*UTAI0;Ly#6^)sZpTGAOSg$xzcS
+zKVB$t({mJ55DVf8mkLMOZw_w0d`M#*fgabRc*v^zcun_C@X$UY&j&RX6Oanhs5$0x
+z%wT@1VLifxKU<ndtHPE(mh1}=#*#9Sv|-heGifSHu8@2%a4i^4iDT*!k}$}06X9$g
+zr&>ES078e5R=lkeOK18)Y@~#N(lLELEVzS7zZ)r`q@e^Xyu;)m4GG=Q5-IH!<F`(#
+zr)ADLFwTTx%r_T{g+P>l)qYjpT7nhLK(<+-ndUm18&u_N9VBbSf0Q#Sbi4@K_|JqT
+zpEQ}%;@p!lGyX5OKr<zQeWTp^A@TiWgGct7DyY0l#fb2JK-~ZY5fJh=NoID|GGaJA
+z`GZI4eKU5p>*PHppQcPsU^m?0iRq=N&Irjsw3Jm1C3*o$Sh=Dm7cdOFGh-(IW#_D$
+z6OnR+?hF=qSZdM=P+u??SpW^jp7kHqlxtiql8|T4^NrE@zyiSehUx9U<E|bX{JSw3
+zITr!<-1gW*exSODZKQ5j;dVvr5;ko2%cmm6)nz~!RD5ghx6lG{;vMa{z|Wbf?><2w
+z{#VzN<TY}-W3Gxe@|q3=<-p@AkV}s9X*ZoAIQC%@Q@r8V)Xh#MKQ8zT7r#&(Z87tC
+z&s-LDU!Aphg>pT6vrX)>CYfy{oQfZ1DO^v@`c5q$dbBC|Vo)hQME16{l~j>yjAA%9
+z;hw5ZrW%bwI#r#5>|H2X1MSFT@tEYb`R1)2Us_d3Asy*L07>3_ROl)OWUX~3ALfgn
+zEV4rw@}iVOBb%^&X<PqlOnM458E+akt42`py>S?Dxgk&w5~GI73cU1qjGNF{(G2Ml
+zrR8`sRXEG=tlK~potjt8G6tKM7A*`K64g}B>ad>p97&4;B&KnOo)u`a(-LP8oPx6X
+zML6DEUxu7ieE*XMmFzf&;&kDzv3v+Ly;RxoZ)W}h7lpaG?8JmY_~;*RWVF715*?+>
+zqOw;mRWYWpSX2@-W-Uf5r!_X(iDJibyd|Zg++)sh$za$?-xdj$KpeVqm%=6EQVA3{
+z6H_^hnLoPB%Z)KMM0TdB-<zH|va90Mo&t1!JuQTxt}vxKau@k-*;^2ql;+pF0R@s0
+z0=e~^yqd^i2(Bq4VIu;3cPo;!^%gT79Cj~;|GhD2SO3>zuWS|FG#Y`8x7r7nLQRSf
+z`rMYV&N}Bx3B>?gnZ8DS%Y{{_c6J=B#g9Jx8SBjQ^)E~?^@!)bN)x4MWMQkSaTkc*
+zht3Stpi2DCp{|Ju<S3b)zV(%p(A~znqvBbGvD6BKFzLK%k+@n6wV4--k-Vlgec=&A
+zSVbh92|`aAvLjd}2Fo(o{NALnRGguJpQRx(qCE7ot1m}KgorkY?Ir-mr2@|w7*rN7
+zjwS-k;%`kY43%$uQ8BgPXCq}d>eMS4JZa?Hbr#9i#NbjHYVHv^Up7&~j>J<KTf|9_
+z#PeBS_mYOSOTBZpr!Tg`T8paz7NUusO;(2%DZMH%3?Ye3yZjqk2GRRbJx0w5?<N23
+z{4sRJaWxPtl`S+8#7mzu@~Rwd<(N_@nHL7M38TWhq;-&gq>MuvLI}QP4}Kv6-}?Aq
+zP)VBIhAG;a6zGdoM49#*C@Zs<wlciUYzkzpt!<^%V&^Kw8Ck_AkzYXr)}2fUn<%w5
+znHYN{&g{vtvg!E90HC0Ev!9!@7bvZ#+747qZdPeb{lm@q`$6j0l}oo(`Vq2Ft&$zH
+z&J_0$g|kDhge+UI^Ev}wJPbw=(5Z00#Dgt;@u$i!sn%}vw)M^qFAdJHO)<ZcW}ta>
+z|HFs0zDoVW=1HGwg{iKQ4`x2%=vBn7G3@>JtOLAj=f+R##H%B9YiWd-%PPo#51d-C
+za39-8AK?B)HaKX&;i0JThsI^riwq<{Lx5Q|eb$Ng;MvTVKS=!6Rp)u<XW+9@43V(W
+ze`+x(KXstsg(<?wEWtWJ+{c{p_#;d_wnc8usV-$9|3vE4`*8H=s%AGNLYW1llb*4>
+z+l;04nK!+PIB~}7sgZ&s#41ej3yUV75{Yxuv+Rl2)p^NnZSnJz1#T1$*_KqBRi6>o
+z)EkSz+&6z11Ua`i{esyucN~R^mnv=K2KzB*_Tk{j8@dhP5rd#`g*DjO-q)3&b#;aO
+zY|*gUT1M<$=;YL0A=h4cMLgaRR_<-o!Qa=N{W@T6Fc|jC<qZONeQ1}IO6;I)l1;<6
+zbS|<BjE)jz8z*3PGZ@KImGKPLtk3sxQv3_}-*^JsIqF&i1ps)X0094O03}gD5!wIi
+zCTMIqZFQpgo~av<ElFMxE2bs2=e?Ci$|v2kkk78qNR}hC5Fn!>1p{CLl2Xh4M9d!q
+z-;@0$*LDGxxy=Z^_Zr>TSDV(h{~|rET8#*IuWWHfx&%M8zB-YAf6n?uR0yMH3S@Or
+z{Vh`+^z2(w#cbXydtim43T{>@3QO1_7N!uT?ls5Mma7tjBM-eI1lOdtTao?O%1<7A
+zc&S}bQ*mTytuF3T(SmP!qN}2+(An?wqGtqY=KRT*;a^{9e>BKrVkTi$SUhAjO085e
+zQXld7TbfGSqlB{dhY<}->fh0SUY+Q*M7q=U2<!M-nF(!kiR<a0<7INyMUPrxhC&nI
+zIHSiq9Y@=F8&PA~+9N;}^Q%(bs)6$oDiW<u<hVg!=W%o|EZ|KQc|3{gY$6shUrv2$
+zeW*;THh9VhO@Fpl#D|TGm)YvK3jdOV_4(PFxc*|H-=>wjpQEu~#^I>4AzTI7Twzie
+z$3gYkn1Z8rG10;5r5?@*KOyJo+=6W&EF;hZW2?6id6iO37AgBh%W1PX$5zb?KR#J#
+z3^}-bHG0hxDoMIXDJVghQ5eS?TyUk9LN+QJ_jzG$DSc^H=D{7mQuN`B%nQ)nd<ZSa
+z;S`k*a`N0NX8kC%lX1$Uvqw2EAeH{0Qc&V5CEmA=tLdYUG@_D|`)5^Aoc@CR>+4JL
+z6{-Aja8jy~a=bt|*4uu`nm(uvl{S!AD1i*(Xa`a@Al{P_4g@}7L!bM>A7h8|Jm#3e
+zM9d5ZVyIfZ^oNybRAajoQ?>&#CHt(R6ZOlclZqL}y9s&i<nUT5v%_xzW+0Q%=wMu~
+zTF7RZrCJ}|UN)Jn7V|Wvb`@OG;tt5=N<LE=rxj#9t(-0fLKL%&8&Wz3x6M1Pq+Wt-
+zA5cH8a~C{17+NA&y*p9AFs-cBgV}hUBuZFNV-gU^x3KV}n<tYo)YQR$J)xXLgvtwq
+zxML4^j_U8^rn4J_brePzrtT9qjXpd+o_T}Uk2Btx$Q#|4;30Qgg#AZvw-PS{K~N*V
+zM*88k0;$=>SJt7hO>RcGFyX*oY%ntS_1V<gvK75W;Y(7*!|U6SSE$VT+y5)-bvw!C
+z5WPC@>UE5PiQEQH+IUQ=UwZsL8(Z@n@Ifc~8*tUnWUlfr1BC)B<{Tin#vL3|A<mmX
+z9jTzC?}R(d8^+;4t^{W%i06j01#CC>(>{pE|1h<bphGLhiHSdY64znZqmzDUo^F}(
+zCcL2YZnVdBF2!2#y>pIzU4qC2hvkgxIe0ElDHALI^qD!%*<_?RO<uuVlyCzGt#{n@
+z$clryqY+T)GGj1{gUH2-*i*>OeV~xggk+&PQ8rC3SoMntd5a9!{|SJU1!)d96*O=N
+z*+)bW8_=rb)>>jI@$JwuP2?yBM<f*mw}e44?)7<>8+j!FzIawwWoDV*S=E%07~LFh
+zau~F{&FvFcM*jKt=fV6T?3z^gD;l^Tb+IonH1&9mkWwhF2Bapjf{fZb$=d|%2A^xc
+za5b5Pyxl0y8{!5M#+H$xlZ@*UPRSAx$Ho@WJe)K74u&Bdq(udiY|s;B+}XcGfSm$D
+zi3{j0yvrqz+^ztTh(8VC5*`-?<Kp;`T5y0QuJ@eAK^B&hH4z=y5wl+y)yk;MV@Tb7
+zUY@}MX;z+g!YqJ3WzR$Nl0L`MMpc>vk7tCKvsa=PJC=!r$WwKbBN33v^RUeGNkWA&
+z41*UDkKG$oE}-le5-E86VVJxwcGUF501icVDTk{9d$%WnART6f`+TawGgf#Wfjn&X
+zx)^@M5nfVcMtOtP>!$N1=npzUN?Ci334;oNP*#HsR|8LCNRnPD<Og)rR2AYZ#tE!o
+zVc~WPfaaGFbI04wQAx>S1$+IO9za%RF7^Elqab5?|B>~P=@i-bUEw@OB#|>}Dl}}K
+zG?}+i*``L#Tc^IoJq1z5p)-Klu#Md!*mabas;0E(?3dM5W*m)tv6=!%(XgEeT=W1#
+zJtq|qrtS67Qr4=^so7Ho)Ztf}A6d}hSx{={&9Eb`t7YY8A#xh%EcP>T6X25U;v{$w
+zRcpCVhOy-JDfHc>aS_4=Y+B$S{!wYbq(N}Z3c&*M^0D2$n4i#SiSllF#kA`WE=5ci
+zQ)8C8#fwbhW?8^7ybLy$v0?`cQzCTPREyX*Sft(@YfwHR;i+BXM%F=pTG`95U91+N
+z>R&kOOiIi1Ky;a{4=>J&L6fBMzvxFBUYn+k>|^r)d~?q$i4radEfG9TcX9TK?tT`!
+zY?ecf88<_p!R5{}$8%7ae1kcKAdk9iRsiX1W%;2(TfIMA-w-=tENzQEC$!QIQ%C=T
+zODO4y!f>-O9U;Fe0#`peb$A8Z3Fj1P^l)&GOwHxzC*@(7&rPnpFWi`)%{h9v@C@08
+z%{;(%3jGm^<E^!%AO>3rnwyfuS_m+T@=9Zr{_Bw4(5@h=((a)%HHvKlBtza`6DOLX
+zmLw<16|I0zH6maTN?P>Q;3X14G>NAtU}`DN+ZdAQ%#HT2aUEeHj=zjQ{O|UNe4oTb
+zcJ|exN&7V%G7<H0&1m-^EzSoxnEo~?W2lw5Hske>a;G!+eEZ%@|0TTKTI0q`mL~2V
+zw}kRR(P|i@U)_4!RJZ%<g1iBQUT|%6HC)YIQguT=BW_X+&Z3KwiOU>nBx<r**97-7
+zmSi?bh_(R5DTIe-P6<l#u^E>^uqmkZ$!BuL-cNNG2sy^V3M_dHxS7GJza7nYqK1l>
+zlY&Xt@iitnaV!@dgrH>cz~Zg>kQezRA07cR-~&s`Q1d3Ldy;1N=b0&;^&nSW<qzv+
+zq12cv7sZ>Tt#j!7G|tFOwuJD*8YCUBuC%lXSJpzpQV?q~w*zAt3*Kv#%QkV<rPn4(
+z2|yg%2<AFh3Gv#D|Jp@mq}jrG!kV^iH4z=1h4$clm^)YNfii|a4-xC(f!RtfY%yZw
+z3+sRlH%$Ryoc{(ybiitsiL-?E*b!nDUctQxVJP1ed5Imbnx!WM=k?7O&U7@T*9}2q
+zAgE}k9QEqSMFZgKT(|AhM)iJ}#jFeBqF~1W>Y5>wsvp#J<>N*I0hTGPQVcAJ)4f>b
+zQ*&N2vi!&QrJt?%Q2^ieVJM8vFQ<5|Z7tu9Zg1PSyW{71CR`n#ZjZ!Y!I<y4kc{=;
+zgM__PzmK;~vq6@?6v0QKSS?+E`m`-2-vUIMqr4m&YRkf97!eM_;Fo5hm@QirYc7l<
+z;X`8kemvUx1^o4|V$(x-(m-4b{zrhVs9R73%Rj0o{Qo`D-A}kRKm!8+*#D(R=>Ls$
+z|4&Y&ub?FVUvwlW_g_}@KbEs>61V*p18V5&7xZA0ZQ>z!cAhS@$@zRC1!z<W4RNDI
+zg32YqxIaB<xdR3?2hYcB55$)TumQ&QVarW-Pp3oNY~NkpfL+Wzc3#u9OWe^SeoL2$
+zSZGCe=59~aM)c|wDne-&Zn9~czF-fu8`oT`^sO{9%IGHH9qA<_(Wpg9MnMP;$J01P
+zDoRKyR<r3fd`6C%vb(BcJX^`0KPgf`{Ef`og^^C7ewd9z`H-a~G4Afe5t&`a431c;
+za%-m{9h4oxscW1D2-IkOLOp4Sfrg^UW4C2UiBLgUO7khFC|F?1pqdgD_PxQTVLg}I
+z@900aP)zT2Is8U^{XKSWoHOP&*5&8hwCCi-zdQJ>+1Im>njKR7$%};REw@kKKG?>u
+zwmYXB+jyDQ<vYe$8;}DG2eB1aVTMzLbyZcUOy)6#Q39GMf|p^A6I43H!<ndH)s{ol
+zqmn;>J!zKThR34*5CTF6Nhw9h39U`Y^|ba{Y0cIYC-Cal3hCj<n#UqrPwHy5e^n$p
+z=m@QCRPCOoWiySIx^U+s-rQqD`zs^BwRMj7=q14YB}HJB(@#&=coykCTv{M8J)=lE
+zDjqw*8*~fRl$OC#wZLt|4s7T)J9n+yb1px-d5ZJ5R%=h`o?Z}+%>=PPt#$)FzqIa|
+z&lRW2Qe1OhTFA2UbS0H;^7-=qK>xdXgk4qRr{DnqAc6lX=)dZ5Fmy4tFm<Lkvp1(T
+zcQte}p><=T`@iCjwzczCEAn@pe&DGv)kqS}gj<%1qa7|k^4#%3!%n+1IWu-d2+6KO
+z$Yi)F`HX*G7YrgOrBsRWnVTJRByJMG&9OediQwET8S2WVOmF(ljiLz4T{PS;Y~dyJ
+z$CnmZJ#1^y5t$z^_GIQ|{cQGZAqnEPHA5x@MSSb;zg4tttY`0H6i(kOS@ZjI*FoVn
+z?heBvd`_<+7#+u<w-R;-zl{sG*N?gFa_>3KzBTX8uB~$yE`B$+*xK4!e4e2_KjYki
+zr5AdeXum;IWDgXq*-VV#>y^}tpYTg&F61MVj|CLzmmtzzie6pF);T;*C%&}!FpsG-
+z<AbA~y$a{x16g|XM@aiT51`kLiyZlp@?A{|<9Vg_YXa0SWrQc=F~#c{Pgr?L)lV(1
+z`DX=i$MNDf<vR(QL#(bK(WEJPUQ(X4#rPgkLF8yNC#(h!vUOB*AYdRBf!e7!9zHmd
+zaffx*X{w^KWhcXw?D30M`N<HY%ZUIWyyamSbjd#rBtc>gCP%}Mx~C&M;=&oM#gW_v
+zA1YyO#AE5}Hu)olMEmd3Z}#@<=OrHUJ`>VNeG$S)GKOWG{lt49#1sU1Y^rU_3maPd
+z^)*9?r?zGLq*x9sSJWn@_?5fP^a5~Qysjhm`&I>ii!^AKhxGa&Kf|q&oc7Fp=uj94
+zISEUcAT5C~^=W+M3&Y}xGeh9_Bcs92kvM!2SJywzhK_>qI8maFupTh4Yo_8r_+G%c
+zkE1!Dz;Iytfw8^)XoTo9k_hvZA%F~_?abz!7#giG87q7M*5KRgFvh*2JTo95R-57A
+z0pOU5Zf;xOcw0(+H5pFo7g*yPv_hTsdy@k@=OtO@8Tgnrj3LN&n_ng99kY9!A*4^I
+zwJU=BG!BsjgCh5}@y4AzUo=4$GZ`$%pKXw&)}2O!gm29m^lvQ+juVQ~+mS{w>c^0P
+zZ04f@m39M2cD!MVghs$8BBJx@7rG4TX@J7tEq^u>hjib8gMm^Z#`Lucpn}?EC2&Qo
+zR4&w1hi>dZNpbsFyOz(37fb=weEgH}Z*0Fe@FE}3BT(hvv<@O|&xguoG(*WC7O{!>
+zY$d6Mfyu;PSY`Sv*ZiBn%x;;P7B0JQ=Xqg=MFLQ&S>U@l5sQCBQ(!6&pw8*iD&%>d
+zNZBDibbfI%AuuB%0ts#+7-3(`_x+n28bU7YAmRzGsbk{|A%TXvfSNBZ6^K6qXTUit
+z(LL7my|qC6gO<<j^lxyj@IO1)|MH#bfeBJJibM^t6Q|;eJCJxHIrb+e$~@OIJ%BSN
+zV*DE#t^3dwSi+~UoD`shRX|F~Y`wN|D5lBfA#QefTfzE1=D=H!r6!T*M*Qc+YC_Bk
+zCFY3OKrXOc8rlh^V@O1UVUM8t(g^<zb%=N`Ypfo7?wm<H6SNY~fhrQ1)AoTYeadx0
+zI*6T#o1c~6$<fR6<Hg6t&C%_}?D}$W;pO7%z-_#+!IKKb$e`STi*Q4C6Ut1xf>Gd2
+zc06E?vjb&E6I3?*D;XD^9^x99C_9Yd+VS4uevOpB14GDkAPlejC(lm&MQ7PVQriSz
+z>KE{XI8Z$_l|miQA&7N`w5O3mhrues5-1@47y{Nnxb@ZtJ<SJ%6M%JH=VFKsGf3=#
+z>gFfOi-VJS66&%jpFdl@v(;`g){N=C>Dg5lI!7WbYu%j9Z3KG9YV4!MTEVqszPnyB
+z^(EgifC#@pTkD7cqhU^E3aHr~($Kkd_6mIFV9~6T04?^RQglu2J~&W4J&293CX8O-
+z4dPZUL;8b2f&3!{&7Kd<p==ghCUvR`S|kfZPlOS`nFf~nLeZaOVEw&|VT`TC=7}KS
+zfg|$^vg~V6Wna&r^Cw4O5)E)#k7FuzxiLI^|5F4LFdf_`yD6xS2Rylk2&7}1ghGKD
+z_|vbG5Udo=WWQG}%)WPj{umm9j3gb%MPUqK=Jl0JKut;%L{XZYk$@Z7!m=ufic2mq
+zH8H~_z*~~9kPYCqi}Cc9GO_TfZXiv|50J_kKQ%Q(A$sm@$OlZh^nqMESFj{kuq{?`
+zTIU6NzbjsG|C@zao)WRgO`#jeYXRjRAw5sO=_9dzn}kAs6V@HF02S0ee2$}2)`Mq6
+z7C___VF+#)mS?V$k4~&JOYccXRISfxH{Etj@;r1FbrQB19+IfHJnz^UO)IksE=C@i
+zT^itrryG$qzM?Ln!C3Xp@A>#XK7R9YarJU}HyhtokeIdW<K*-GK6QeG6lNOzJo~GU
+z`;?ytyTP6zI(!DBAEJs(ufm+-Re5pjR~jcg{x|?-yC-nfgiwAb80+rS=`^K{YLDAa
+zx9;=Az0K+4{qJ^q`#obv@R=P5yoOc}tlFM%nZBTrxgszMua%4_6Zsc}MZi%aO)gUt
+zUq3isiR+_kvDe8J8dvxeJ_IqZD-rzZK&lTW70n5OfcrRHxWd`}6!Fh~*rK~_|9gaH
+z@PpA((mK;+@Ewq<wuHl>#V4=-+#fsz4-ov^;$OzRVP-5Z3B<a<C?TdTa3PS39FW%>
+zkGRbQmEsHE#ImRodRE~ekKeb3xH|g!<3fJg7y1~IYxN%b2iqf_IGTb<^Fvt;XJ$YZ
+zNM-$+l&k6hO)zWGpjp14fK6Gc(?+`{+Ok#CWLSV>b!sv(@UaP^MfTfWAZg1pOY1cB
+zaVWhRj}X5yDfQ?pnX5&ymTjyJ9{P;V3l_&!Q6$V-rP`<h<2+<%bLzf}Nqr9rjeY-%
+ziRF&aY8YDvsHBKwbo=t)84!u-I7WZ%SNBEfW{Yy{)(eR;%O-TXAJ>YSmH!oPFH1HI
+zo?ySy3x~mkt63}#I5Jy3cUI4d^@jpiF^p7Z_**j+@s(Ur^_K-dExiBtb4$b?^29K(
+zqGqQi=6S~Ra6$^k)8(bp6Z$QiWMoY#VScEB4E^RJE-GestUa57<$<~20E{uc>TC_S
+z$#){=oq21iZ7n1MkaHn+VC5g0fZv^S&*pU$R?HvD%_`O|@)aDB_Xg->Z=oOUj!21B
+zv%kVpG}m$V`((TVi)$*;D|Nf>+IyfAj(`r@<Y=rRG4xdO_N_`KG07X*A|^WhhY_@e
+z0A$RV5pH1XVJ21C<P3VP(3~nS#V<N`V(RAV)}5q&FpxDIVC>URW1$AuH_JU(vqtg1
+z3A`2o)I-tJONSctln|z2EsJxl8hmj~H~WHijs542xX*eb*@j0x!Q>Su1qpuh-Brhm
+z-3*8Spi2d@7$`C#Yrj#f&!w&eaY(({kz9%sDP*aX{pyNL=_@=~sLRZYH<E!&`q4G?
+zfiN!{D>Z-L4>GABH>W#`t$;$%E#`e1<e*eL3qS8#8nUDew-`kA?8+_68i2V;+-s>U
+zcY78L%fb>IeF<~#&<}maWW0uvBo=LH39Yxij$|f7DR6Y_2KZr|EoqKI<E$BUZ#d{&
+zbb^<x#LMR$XSUV3JKy8D;8<wo0m5OZ@K^my(g36A*qIf~x<Ae*{i)V<Ix*0)EBT#@
+z)>h3fFo}aSkoPRo!EDO>?23~)`fW^$VoRH}GbfiP2j|yCl{mB}plD+wV+)zXPc*@7
+z%ncBDI(Wa1ZwEu~iqfo|!#C?3`RQ&?W}^qW9$Q%oskw?1;*_PfOGzbv{%#UaPMIGe
+zWs2dD*hVd57K!3sTmC{!qC>`aI6XR1X0{(F=)UH=jpCsaD|m>+=u3}Bvuw{H;ao2g
+zZ)=Z!{}ZM7Lq8a0K$F~ma$wtLgZxyT5^w6Q7{9U9)05j%vNGFfpX*1jAJjWfZEJIb
+zhGu_xtpGwCbXHiSY^>OTn#!qZKVrEi$vT7qTGT)9W{8V%3FlWigEqX01InWF8g_G+
+z&A5MgZ%kV5o$c+A&HI+*{g2eUewtUKZck^Oa!CbWNkOhUyYf+K(6-#p-i>rijes^u
+z&DYD?-<UwU2M=nv%&jAtpktJTE1ptxS;kUYyHvUJ!KR0EcL{N04gB+mVPhg$d4D2O
+zL%CLq_>5bu43Flbx6nq1yTBf!+r2uhRxtwq@6!1=k4@Ur-t~<CM8$`zwO~{6^?&|V
+zuirnImiHz@`N+k&Sv@@v3fv{(c2YENL&kZ(=oSyW-K-N2yTel7hZA>0(L`)bEqjW=
+zSS&sjT)Rp`c>aU;QzJ#YgUwm$?aA0i;W6~k?2n8aNAT+^;nXrixzZv6UoNgxk%3X<
+zT{BML#C+Wg>=R>cy$qQ{QRFkzjiIeco3a?P#WLj8fA!b@xJnXx3k^l}!KUf@jXc+<
+zXB6!1?0k&<Fu=fBQO7sNhobf>3Hi)Z5o-JGaKWzU@8_YfR}}iAgxrz({B%-bXt(|{
+z9=3^<FHFR#WvzxHa4ieg4!&Ys?PC7*p)b^B9rW0{@0kmlZC~ixaFqDIwkIHRJqAJe
+z8*W4P_H66+)IF1y$5p{1>2p;gD?&~*t&TZdb3Wr${HQw6y019g+Zaz2GZOnT3$}M9
+zXdi;0f1nGC)kDONAPqH};Oku<RFjWp;u=#GZqxD*(S@A7LiT*jFCv(+g<C-fbjR?>
+z1*Dq#+wxV>y3OUNVjsX?v(JU3V&B2ve9qOt><#uXzjy^Y`z4*yWl<o>mm67AQBRZK
+z7(t#YOG+R9q^9<*RpW#*Ley1qdpf|JWz^kibS9u)^UKbyef_u3%IB)S($dVFU$BW=
+zT*4b41VK0|dmxd12YKZYLV5F|zd7=+|I@?Yr&R%kbxB2SiqIp7=jK^>5!+>-=YqtA
+zT|Z(Srr>TiRc;ba+a?6&!Hf0Y<IxPlGbSEm6;b7<%=RpvP*&E)TGdhDZ#Dj?t1|p#
+zk?DzCc4cz9T9A-&rGN;=Z{D=$N|lcTTqm@G-dR|E##+B4rI(3ZN47(z3wPSrQ<e?9
+zS432(g4~B2Er_XJP3#4^o$qJKR~BmvWBkiTR!$f&Kc`OvpLiq7miG(O?rOA4yQ`Xd
+z3+T!gk<vZ1)h|#f{I7CnK0d#|(X@|j>W_1%Im2wZOKWPbpxPS06XHSDD;e64UFw7r
+z${yrju>Xy~*NmkZ2XFwu0y_Yp{T~85nL1k-nwZl5-_^;PUip7c|Ltz3b|&^t^!CQa
+zt~M_EM)n@`MmC1V*81*-b|&<uW@e_wF3$8q|0AjYr|2^>=!@B#%UGIQxaf=j4@uLR
+zd8}xA+HY~7|L)}nB?B|Njk;ZzT)16!c5!9{W&$~qQKNyuX%|{s8!M1V@pCWS_g*EU
+zihRbUvW*x7=@ah~<NMqn&SC5^+ifJ`@IT$ndp@(fntsNTv#WnbX1?D~#{BNiziRxy
+zKUX$(P9%T7jzmwu5WRt@rR6tM3+F7mh4zYt-KNY{SGWs;cop~!U5l{Sd5(c#j5ai?
+zzcdN|6?cL<;DPX7Bthk>UkIqcdDqHm&8XE9PY|P%D+*MF9oVYBB>5ldAH&HhJ-?45
+zE|1?X4(Cp;MPbxP`C|>2?>=SmFH%$x4X8lH|GM;4l6y2$Jyl-TAE)`QqyUB3;~b!E
+z;X}pqCV+bs1d3+~&#Do7ztq2r1{18LbXcINZ_E1h`VpdBOAlWP)v1h43Mqxz>qOwW
+zxe{`2iphoOCTW{m<r3!GHnvZ~pttYVH@1oYIA1HDJrcv|9KOYXlOWMp$!H`b6rPRI
+zco`?NjC0}#R^WFpaFE@hV0Xwm;dr9Zzm(MkvYjV!6a_-^<|i5slan0vMvl>J4k7I>
+zWgyuofjp1mJ?b)*pv>vBP}6t!-=m}_=9)R%PglU`n5Fz|@PJ=rZt))^Lm^}hy?c}^
+zNdnuC7egs>u`T0&Dvke8;*b<W#LtXtCwY8(AQjzRbNDdrbK}}PTm-zYt99#$UI%;;
+z<I%P*4XxStB@(+!frKBVr<g!I!3=pYW*0!+<ah%;Pn?9rt(ULb4jZ2i3;3ckepH4U
+z=S8k(_m|{rS=n4=bN71<f&}Oe=WCVI#Ecy;!07OOE-M|5=6p6_(9MVpXUu^Dl_nrX
+zL8FMtkoawrl;h!o{W*0QM-@OxQc(&MYbV6Nc~{Dah~>eP@Fj}G2$7_jPuR~+7Ca2J
+z>uK*Oj@b<Qd-wLIveSSW>PlsIpic|8c#6fU&Y}rJoCb4%$$1jB7b2~(WG3Ya=V{f7
+zTBCy=^>r8~0yh6LdiKCt-#;=Vw5n-EZ}iJ-lIZd?M9u^FbRv9M{Id-Rl`-A|mV#|U
+zQvhP0o16vo%-p0O08^H`03(Kc$~^&~V+k3pK_DQDAQZ`CqKF%4vJ+4R;CN<Vnqkc}
+z?+|1;NxZ1$`UOjGlY32o-?+@fIxZ0@+H2Et9?wwGJP8k@#pn&g-~+i>K4pRhIrJoS
+zYbyWiAbY2e=BN}RDcwh41x|FFOsVFOqK88&hVfiXOzOv4G8iVn%$wnLz{wy5EoE{D
+zhSD|oQ(m8>*7V&eT#)MXpA*1N#CD*Z0$?c_R??z5p(stM37$w~>bdzTx>(3Zn~QhK
+zaf2G`2q+*n$T2vkCwZ&f3641G|0Fi#5`~ryq{0qte1jc{9Loz35h1_EFwCJc5(al1
+zFqFl7h#v;gO#})LFak$M{Lh>AL>=f45e|q^g0N=Q$4>*`_g@5-8ah24ib6dh$wnV}
+zH~h5${xyaAcUM6U08cM{32=;_!;X_<ohPO!kThi~P&B4Ue#`JP)cj+W9w=G2?*}V|
+z>5OT}En_tib`(CaY=>tTdciRm2to!b5=lAE9!wOD#C9JNkOg@i21^2^*uXda#|Dsw
+z9Wh<@^V~_J!ON$joQAMv^?ep&g!F;{xn&l~62wqK1p{Vc3^vZu60%s>)T0l4*<8_S
+z{5u4xfOqB1mToA<7!=}<vI`;KuRTFEj!81^!?Q|_^k)i<8WZ*+MO*<xjw4L==INyV
+zw^n91$<&6vOfj>>bgf&2>AOFn9+`6uG}Ky*cu<D|j=<uf8ITAm<QV`>N(3bgUmeVO
+zn^99L0f<o8`vi^<EDREEZ?7lo7}N+#jn**_GTb=ei^t{(7`8}B5=~O8mf23N&jlhl
+zq2&%|sppF}oD%Hg^s=cpC#{4Y)pQd=D;XCqJc|LEGz4yWk0}h0eFzjIE(^ra$TvJF
+z<ILDnJOTZJ=71G2H+WBkaRpzhqSEaQ^y^1-2nOo~k5elkS*OoC@)Wd+uD1@?rHd|+
+z^mNADQgqt_I&;-UukdZ7(K}AVbAL>glJste4f6{sRV=O9!;0%`Qejc;eaH!ON>y2@
+zzxDZAMDsh9@+Lbjly?OjP_`FU>)JtXu~#4((rUCwhq>CRk6zSOyv20LrhSkyh<O=d
+z{>Vk7A_@VUnCpih{h+rAGD*OBB1`652`HWV5m^Ge`~@<LNvy$ufQhA<ydft*PF;EX
+z#&niN=Db*y>e}p=FMxH=hkwR(?GZ^C(Ns*nq-{^7x7zbvZ^~-41^c4~&7q+t;60<p
+zx8cy~8n=~=(lfO5FR<Qe?dV)~yGssi?o$qNjKFTZ*9M>DIf1HCvW_zZdE1H>(ly5<
+z=}pBJh=`yl(ZB@N)2^v#D)@VeRcWWxnEzUsSLGe0F$@O!F6n4*Zf@@OBR;+S6$96a
+z5X64f$I<Qm=dc%KUx;b=rR#M}{6_r@_W@0aEH{KNx^-qv*@VGdE7G+MdOeT^Cub@d
+zwV=1BqZ^#C?%bku0wz5>P6tCq_Y0nu96zqkPIgLo6?hOM5KL6M8(3vasJtg+eBj4T
+z<f-6few^g(UP9n98reLTGGBIpmGOQ3?1o8co%{lkq2fDt^mdj>S$@R73wKe#j$(Mt
+zE<@nYxr)Mgtm6p~bMUmUs&(B{93Tf4x;P>DZ&Z)9m+T+xaYXPs4nc8ZmdG)l2Zrw<
+zaHORbJQa$B8p;$;;W<T!z>ZHGG@8AOAPAw4IsPla2RgOYdvH3Jt!E{%b@^W~YL1qE
+z%{Fj*iK-D8^<$@(AuX!1%K0bWNSeJa&_i8TUMdZC8?~#oOA~6s0PU%r>Uuymb$8gn
+z-W-pj?%zXo5MR4nhZ?(sWj@GYch$u;#i~wl*6_$WiB3=*rkbK&>@877(zH&ss%p>Y
+zeglWIc3(j7k@YLs;_&>xBmyKR{0U^rCriKvdLvMZjNk08(#B<Fx2tz3C9-R%B)4vP
+zw_lZw+hq%9mLd?LB-R0+WLYH?I_waQ0D=qaYA7<$_$PBWQD<!X(%l4)M^KL{rrLdd
+z*+Z6H=Y`kfDQ`6Ycoq`7-eh|$U%(uL(fowG^OwioFQ8VHGKi2R^;jt*m7Vn>6Bt%^
+zYzk!ltha-FdGR?W*2Y<P#$df+^v3M8WX2i`D^gM(DbVvzsKWHjGm({vdR!>~)T$+|
+zt^22^q+La6>W!59j+arDT_ZDGNovrHJ5X#R2uypGlCtk7<&jy^)Bc1^G}eF^nrOPh
+znsTPq`=^%LAD=tRH;SbXY(PvbH*A~7RS63TBi!TbVw5=e#dE9ih`s2R4x9pmRR>Z4
+z!&n^WP}+WZ9o7^{gc_fq#EZD{VM*>3aZj@3==vgbx^1xsiakki+%{Jsk@(4laxj<R
+zA<qC^RD1p$y@lddS@OWZbeKK|Rvz=I>`<ET8g|FJ(L711XEueV1*TLKZ3j;q0_&Vm
+zbA}gg6*`l|bu!|sXh}7Hb*D)mcZceVPp$@SRf4!gVSQ#uwuyo^-P6+$*KH7s9@tdz
+zl`QiNiQ2!gnp)D-Aoeq^0-Jne1;4n_w%G%pAucVZ_o+y9)6@0+(a<Xm?(oK$4e;xx
+zgtSrGth23vGpap;xi+9;RX*~$Hp882AG<jD@Q*6fUxU7c0znX#Z%{-(Qjka10QxZ>
+z&VMIa^cckgs`t`tlC+U#c6>~js^gne$OUrC`J$pmvzgYNh{@7k9c+r#*7HBMf2$&e
+z=nVGez0dcYWO{ijP*AK3j()C>CT3=KEM<{)jtDJn&hkKfuN@vzjBJEWCiUEpgOiY3
+ztYl64T&SxsqI3Jll^Ns}6-F(lTaD=EEDY{|66ZH5cjq_^ouR!CUaCj?gW<qz@IVWd
+z;XUQyU!n;<=}j^4J`OirFd4^C9)OYTM=hEy>X7t#F{$}zJ~F$xcz8HutXz|Irs{jV
+zAr^s^rEGG~XxJ}F>f!!GPCaH6iy20PM?Kc^ku2FIL5H3_zq@D9-&dA+xz?`^J}_^7
+zdUC2c%XR89gZd1V>ABK4;YQaSN!J}ouQE=#PP65J{i#V-;;&Met(;g+COTbJeq|#M
+zb){B0os$3VuGGe?R5}~&EQp|cwIda$A)hUzBsL>!Agw~S%zplU95Q%Wb{R6*_!MVI
+zM$ejAg)p>IL&21q`GFPWNRMa>-+8FE!vRfi0hYcUSj`brO|?835I<1eMk(8&XRO_o
+z<-6*JC_PQxS~JgkH?7QEDh@Hv`>J0)elZ+I0i753cxd#K&S=tsDo*E<N^G!x4iQa{
+zJ~=vQ4I<4}gwp0|jhr}L@G@*)em~4dVw=$SPxV086v@h5lNWdy4zNgve*+Ded6oCQ
+ztwZAR*Ho4tOWiX17N>T{Yc>3qZi%MSN}Iiqp2*pOL!a#Nx-m0pi&s=XnVV{?rJI<@
+z;@yi81NlteM9<+xW)(hqFXA~?R<5u<NTUChR5jMp_EhnQ@u{Y7$-Zz_7R=eMt@d&-
+z*eRIn_LxTDK}f!ftu61ruy*j7W-M%A9v#YBQLn$+4YY=UsT|+!`H{ra0G&)ZklfvJ
+zL@JIxK-2vzeB9G^L9@;2CJ+NSPhn5*H2BVfB8fh{!yw;bPeB~*-D?Kzh{gOt2*1Ms
+z3w_g?y>9-=v+&KbPJX7%7O)~Uy7Awjc<0dK=SfaC==GW6TKd~?;%wpLWs<SXZS#I9
+zq4_y^^k!NubMw~KFvpa%IPm-b30LF#uGCr~0f1BL|2~5K|0PQc)BnNG{})&a+uPdO
+z+x<tA7B^bj&WG*DerM_xX8HyM!`o&|saX&NYnurr1nHgyQA##IyNqnqTY($OXMOo;
+z$I&Fl<Yw!f2wlplk+hY6^{cx`&)zWM@)r6BPG8NhwIYyhzB#hC<OC>~dR8W#7m_%v
+zg|btRjF;PJxa;+yv=Gx3{vg5_Vy`>ffXlMn3t1s!GNjiJheHGjt?3xK3)YyOuzTNX
+znZ$v!e;?d6o&DTw*!=rqz}bxzb8l;kwpUNxGuU*K{DEGs0^qE<2t^kl7&B=aMYEi3
+zoj_Q=g<>&p1+X@GUuF(NQ@WY?j!|lGJgHfS+nB3wFS|JAEwZ1rC2u?ry;~%eyL1Bk
+zwr9_kkM@{%30hm}crO1;IfGmmc-t(!EPD{`3o-lhH{B09AGt5j#lV)0CV2JkWn=Go
+zEj+f-D;w|Ic76HZZ-;d-GJ>Q;*^CG`$glynfy}O?AC@osskU@oM*gDQUq!#I0K<)~
+zHwL1o$*!`Y$*1QTBem@q6$$^#Tmf0dc!4>$&1!vc0<Hl-9%{Yt%ncR)9KRYNlv5KS
+zyyn9F9LUFNKS-S~w?nC8<{EzRdi_!GZh$RHPqYnu;0RcUw28Q<&QJ!o>xMHxLw<_6
+zkm7;kokNmOPeH`^gTPn14v}YWf=i?Li?#*t=P1GBAk7e)Pro?kY@JAhmCO%7IM7OA
+zLiH0hCjq4Wk$noOjMYt6+(fmoK}RY;fS)FfA|{Cf9~M8F01DxFI|<{wXBtM8>1%5n
+zj?~Y%hj)e#f<tj|rQ?x8PXWq|leICw2ql4xU_oc_ULYw+02$w^*L%hfQy*!Uk|r`p
+z{+He+)D2ZOI<)9U3L&$a@lh~|t81{vws6dS&}*P4zD5@^1j3k37wuP%vNSv)=~EPV
+z6WG-ahRiTNM}eG$sg=o%2cM84^Y#)>Q2mezU!pixEWZvVS^JO=9ps-PkkcVCrIHY8
+zKv<q4AxHf?lgM~~Iso~(7y9REGL1dK11c@$O?o{^{-FW^mG1sqck+#T4kpb{U{y60
+z6Soj;R}F0woGA<ZbFGS%MYG~(^g(^5CeCgxWB+;cov>^EtTgnKyumbbZP+OKFp;%F
+z@Vr_BT^j>u_WXVJcXDM5ES;o;%+e?80f;7jS^EHL7(S)<?>Gij@Obk%aaGx5p|PX~
+ztr2<`PnjE}t~ATcjoX%j2<u`?RcZ^7c;mylt=+XJ;>{YcJ6C;GUl1I=1U$Ia`o0Q&
+zR6(qGy5mPgNkyG|KLHY^zPlar##K3!i4J<SJ%J4?9OO{<o4g2%N~x+V+HK^lDcJew
+zg8=8mfNES+r_F-6Y+!uSZ!{t<ayaQD@E?5xuZsQ(yJ7aW$z6{F&Vx|0UBgPEo3cW>
+zP?Dz8Pl#RKtWJ!tg!;;X*@H-u1Mgu4tNLFRJ08ad(td?&l7YU!<9-RoMCSr%9YG=`
+zom?hq6X8*XT&(~iYf5l~_o%-#0A~=G;L=vwWIR&nbm4-vgCZj#)=bCrDAg5AK%h_w
+zGLBu#yF$8cc(R?WQ=*M<Z`aZX#<PKlf{G?2NvC8);~%I=tQk4_)HE*AKC6e;=x5-;
+zGB#*^97ru^lZMDdbJA>+KwI_76r*(#x<7FuuP>~|Aoyo0s-ql+RUtHYB6|aZ`CdL*
+z0v7RDtY>rr>$D(Bv0ZHu%mj1^1!o;pe)rXl`f(&E)(IbtkC9$2*!>xuT=*R5eOz{;
+z0+ifV;V5JmG#OR5;B~%?gf3-#P(}|DsjcgT3dmMe!e+O6Uojp{XdOSbxp}m<K9W|Z
+zwBVNVa*>`bIvmWJ|3-sX%Mip_y9st^Do|%L3g_l1d&8*du0%pN=sff$op`*Wi#ssp
+zt5&oiZ$|DdFvch%sxTG&1MyM(YOv+YZ+5u}xha9Lj11}Ls_KG-D`w(cHj+w1AW=$G
+zYk7$RIp5C~_6AB>4rS7bbEPd);!)`s8zbfUi|CqL>pPkh+DvL(*ZB9JNvG(Ikh8B>
+z5k^y1m3ZGS&L*xU8w>9#r{Ra6-??^?r<qqa13eGY&v&%zQFs${y3jYG26n8fwb`*B
+zfp__G62VA^{f`RhsK*)-S|%(8wJ>#2+z`{+AGQYX-#3o_9emunv3Z{B>*Wo33oEOs
+zHx+0>qj^StKmROoQITRb7kV^ot&WxB7UETYzdiZ8Sp&T(J)+_ixk-dF;+is7KJLXz
+z9;-c=OBj%A8WjC{^oWBp_d;VhaK)(pAKKnAJQ8i&8jkIbZQJSCwr$(#*h!~j+qP}n
+z=-4(o##j5?`#$%c{qwu~{HUiYRrMpQ=2&A*j5*iKrk?6PfjKg`7e8b%pMEc%eiECy
+zhuQ84D7yS{!|vwgfujpwHoX07fme~Usvug42(27QnG&3J6?&>!EA{pTbh~-~HUEof
+zucc`ECgy5A>hZA5gC)g+?D<FIE7p$%Uw&KhlFQDV=8^@sZF#T!g-5Ap>Vk(7l<9Gg
+zS7&H@S1zWKWTWEjOTGt`!V*$pYKu>8E^w)<VNPEEMK#T`Dq#uRl%zGj;6*vjvMgbV
+z%jBdr-rz+&&9W|Gi4PUEvl76Qj@p^Iq*Y>t;6<owbFAq(t?shsRz(Atnt593G_zEe
+z@)ZxKGz6}Amq@>M`-fivKv>Cj4gERol)a$vp<Lbp^jUJX@kw|8b;Hb%Pr;#CL{XGO
+zb?@|WisokzKCa@e8?a1-N~!$r3cePmkSjxwOEb$A3}UJUq8o4p_+SC=1m*!DPasW9
+zP<?0NuQymuU~nsaVr3}Lu(y_2YcuXy_Q0O6ZE+)d;=*f~-@Hls=4FSYE3`kVg~M2k
+zm44EsHU6A<F(J}SdKwc_%kgV8u(+eSUsM%M;lg1513EUY54?xVJq>HYRNsOfDOWyP
+z(@z}V=_bU_08zj4gre^Yxk>Z-3v;Ygj9UD)nf9%qRJjK>$Q3h^H%!8hp(#)tobXh6
+zc)I4cnL8}kLAHLsfYG>lzk_>QMCcW$vaZ!blQALngFMIiezdg4m~1d*Sj0|PJ;saV
+z6{qR%J`y+xgR~|X5Kufa5Rm3S<|B!ExB#;CrY8FT<1BTluiLG2BKfSSBTfCv)QY|w
+z{6&xMb3?XC&(5(Zo5c|nM=4Dy3WJ)&*>Te2E}@BDCgEmO$QG+X9%ep`ix5_j@Qqb7
+z7kcRP3ET{r*jiFU0E83@A-j{YI3DWYo^%&ZG`LvgArtT|gg}j9M6fC-5)f&PfRISx
+ziwXSnd!1)6h<7L%W)DJ2bKl_A2r%AbN`yYqaB__O)1HZ;XDhcBo}M>PUpDR>x{{TY
+zloj;}dH0+w62=IuRr4?i1OeupBVfVn<~-VxbQcC4@oQX)LR@JmS8kt{cib9c7{5Cd
+z^X<)k|0C$nP)oV?Qq0&mLd`)-gD5ke#7L7g{0q)6ZYaLMQ60uavdjs}1X9<_p;2LI
+zy^iHI`m?9kGnNw<>+ab%-Xrbmte#AQDCB7p+?$aWc>CFNVM6X;R`10*+YR<*jExbO
+z@ibJ<1n^s;aRMnP5J<=D%|UCS1}B>kW3#xWfs!2svb{uQ`dM+88gE(xRl5zSD~98x
+z$_#!W0%I~?|4KbJx-8mmbkvcMv9yZTva0&DKVAch=Ac@|5TOj5H1ypw8{bJskFdSD
+zbDa`?N>(lij)+|(<(4$(EB7_n2szhjPo;bC89F>7A~O{Ic>I;fB8eAtSc-UDc&856
+zL{k?I${a?UxldYjz%dqpm;_8*7kA}O;$tBKq8QrctDd#-DQ$`uEudCOFtfPd<;%mC
+zgts<6EkRw-lcev@91@i#5|G|`0Q}>FNKESTcu#<_m^CB}7G*rNYi^OXUOT7#gFQ^B
+zYT5D>EOCi$<@i}&C60SAK<^m^vE`KLrsY(+*8DvVFR*&KY0n;|?6>`j!dOLfq4o3A
+zIA_)TQo3sS0UOy8!#MGpL$}JDE#KveVJfm__KO`=AjJdQX5BPBitNzM((kC*7j42P
+z)t@&a@ZUWE1h6WHH9I7Xssz@3mt0ticAF7-0Nk@j-1m^MBgreMma(lSKhXH11Jkd@
+zT+YTeWb(d!B*y8=3tP|vp~ntnVVc3imRkB?)$=O?$n1bmA1&TC5+-qYxt?|<RMPQK
+z@Mq{(6<reF{;yO)juULOKD$>^)|+LhPN)leSZU=}J{UfNDTG##kjtv3`r(bYR~^wA
+zDe?Mf)6*gg5qN#F&ExE5mbZ_^Bz6$)>Wym)##)KW&4(pK>0xokxH-;Ut^`{g9e`{#
+zF}zV`vhRqTA>JCaEELk*(}GnAZEpZe#<q_(j2p#ioNIGn6EdO26u~4c;w~rsYX>o*
+zb=Ma1vW)@C@Ec5r4hqNX$yGBfEQm9ZAx&fyvU%ZTjo6wRN3!LJ$kOQLcf_{ghNT&T
+zb>(&U0Qj2bWf^M=aFtiK#Qqu8dQt2WDxdjl^Kt^|ojl4_)3|CoKq>Yi&`$$uF-^Zl
+zs_AX_dx|A}kAqYr_d?R0VZeHA6*mtF%7_A0*<g*;s^7@DzVpoHJBsn_EiK0PI}(W<
+zP8VO0f3GG=bnp-{0OZ(a;DGMB|0AEtN@^%8=?f}I>dV;MJ185Pnf?{^B_+zntT7^m
+zUcaD`I6|wU2q~49FX5}HDgrd}0c%de2x&+aebE=Gh^imgcnP#P^`e`H0=Vn@Pid3q
+zr?)bNseLZ>TJ+0L_hYZSw~pO<TQNP=BNg^?G3af*+UJZenSDUXT*|3JM5d?K$%d|h
+zxW7=6LS?9bJHmtl)5fwFL+z^?6dZ{qDeY4{hiLSRT}kQX-Z_`iU;|;G*~R6XTETEh
+zykuL`gEPhj9%=957&hf5LaIFSSW?Gg9n^zNxtaD2C5xbOzi=0`zhKD^5Q&QlM%Yq!
+z8;b65Y7%KKnQ%7mm&uslQ7HFUrKCdsAw1>o!OPXZPw&OM_&sO((=DMJa)40eOZe;l
+zM@;`XWk2|~owvDhp%WGn8MN)o0+hJzVJQioZeu~T$AeN=w!3vW?Bu$|9=q&D-cJTr
+z$1w74!Ef#sTXLfG7O~{{s+ioejE{3vFveg?_m6b)C&1Q=-&ILaYr33I<}_Cf)Jm@F
+z>GeT1zNMQFUaLnI2e5wSnbZ`peD$)_>{zdRNn)7MBeGDLwVI-B8ynvSTfX<f1j(z7
+z7*l~qobkL2ZjH`IInyc8P{Ik7zqrmytJ4*qL$(JiSO3A#M6xtCZMgREs_>B7?(?K7
+z$T&;qCBx{VKptm>6H^DLvk7W%n9di~H9SR;<+&@phFZx+#qGNP*;jV|QM#EJ)nq&A
+z;38M}Lu9w%*8pKT1%LLJc%zZ(IjR?>QZ}$_uD0$2!@t9mEJ9Zo3INaFfH_k-|3`TK
+zPx<?=W7fgO)I(pw)W*ToNncR#FQ85-PdF_wqHey?uucu<k?+To4fOvIKp%^>%yT(b
+zthClv)?}^+GsOJF<MLIhUufhWB_Esf$#lMM`<CtmLiL?7lV_NpiQ@L|-mXWNe=y^Z
+zTTgdX0p;g&?JYTZgp&u?Y=%NMqb!iFW*v?J*(j%xO)~yH&5U$f?|2z`M10?^O6a(h
+zPv2p>$xaT)Hqp3rRreO;QJB@IO@O+)&;%H^LccqF5{MCVijebCFQ?)IB<2N9Qlhyo
+z?HmM#H$}Ll{iuXYY4zg+ROJ~{o&#P>pbW?ZBc@pn<Dv3(OW0(IU>f}mOltoLD7N*r
+z%FsIfWQzzqSQau13NzB~JONTpH~(#7ZsS2|{}C+BO%7&{AUNOaE-hU4U|J!63Wut_
+zMOej%nKWe+x_eC8m3V~{v?@KO<1A|JxL|gzT|C}^5L8kIaH6mLG95GgEDOU)`vOWR
+zN5J~fG<IDR_>BI|Q6MnIR|yv)TT^Li2j^#I0az<Y8>)=NO1_sQtd{amd*FnSK8)|O
+z>$B6vRbgvdXw~LU#mlo-a#4O3uCYb-@PxH!8r8KWPuRjDrenTK==Hcv_A1RqZ!Y%;
+zgAnp1YTGf+=&3Z=Oc52_WC7;X1Y4mbV^;^wC;OT7NAn}_dL%C3kXdXKodUkzD)cYK
+zA%5BGhv$v>_GUz$=O`9rGLv8yXCHr)TWpQ{wt)i>sQRBpp!~n6GC{Uso)I<l=>sio
+zg4{J$P?wpWI+s=ev&P}N`dj)!d>c`jr00<1`*krDo$QMed(rX!)LUl4qXso)p~Zyc
+z9m*GJ;PC#T5nB%5NW-Z&+XuS%#Pj_<?a3-N`HrvQtTFK}IQYYCc^2@D;1Ke0&_k^k
+zRA8dC5f5A23>R)DobsAC#S55I!$9>NuMsiBq~}75pUfX-$UFkmJe1Nv7+=&}c!l-v
+z$svrYsidJ@fl<6nLn3M`^Zmm`8WL9PG#n8MYA0yiKr6B`*h<T?gvvneXT?Qz^(=6{
+zkfWc`_-s^I%Qz3nSq&>Hx1K@TjCirINajFz_uZG#yAB6%)Qll0w(2xPkCmv=o2eYZ
+z82;A&zOas{?`>W5EBwHA5=}IT{*1Xgt@y@d7a<l4k0FeT@^=<0-`)rz7+0+}=7sIo
+zm54lp9uNG(f(&~q0E!fKLaVgj9p#s;pWCk#V(Hq%)@j<5D_j>DF^X1U_*s7aKCN}A
+z!+Mz%2CLIMSA(0)*7sKk^x?j@`PH1BWRVGUkSXmD%X4%-99;Sv(z@Sw2mkECXe1uL
+zWAG(&{;4}q%ChYbvdoVW3mCnavh-^$acN}W=X!f#C->pC{?f5>aipZMZieo`fxC?7
+zJ`Vo!=MJ!q<HGWWz4>e|SH3~3t@ZO_sB(cU8doRfMM^B{)Bkq@gv^2_a0L*b05A}c
+z?thK|ZEXI+U(|RVLLeg&&}^5!;K?*UtJXpu1PFpnicrn&-VdaLxS5sUq1&x@TC_2Z
+z@}CRdVe;{CC68;O{6aT%_q?r`yUY;Aeo<g(3mWlh+gKH^{53IAj$!_tyWe!y6Mf2D
+zS5B`PA6~tO)rptC)~P*gj1`&D?*F#k&f8%*DgbK@2gFzg|FQLon7SBR{%greO0x3%
+zjHsQ*>KYI6^+iGsB3`+&3UPs@l&~AL-+BtstMM+(0sY3;tuK_4>zj0Kr1(=fGm{en
+zCK1A7*<{lCC)~=Ja`yH|lJ6qsj?6LF7O30$dK3?5mgsOi%9NauxNyNzMf(EL-`}xD
+zLEyR)oidXq3J6CF%{;ae7Au5=BuNCwNxM*n_jqZD<4g?%ijdS;%tcE3cXPtxzItC{
+z{p(>bWnkDWc9sG}cYJ-zv-+{ks3JISeitwb9nz(6$5^`-v=P)?5r#VMUg#teUP3I4
+zE_XsXff|JMi3_|hfJq7xrIsbH#cpqEIFqOu`7m^W4pZRgw7TX;V6$t6V(8LMEX!WZ
+zS!vl+<ncz$*<pBj{ysIJ@#BASJ6bCSb`kqSoZ}*^50(Q->rrP?41~r$IPT5HXXUkn
+z#su=SQa7+F4E^LQ95>|>1zSA%1w$CBXK1vh8jg#cMlG~te_<|q@kU_%`@m0^BZ6*j
+z)yD3ekHIe)X-3iCN$00F7QAJ`x+6ScA_vm%6}BMRcfEx{^fv|h94BJqPn*hEDW;m-
+z`2Ksuu-$(f4S|9&jNJ<0<rhG~;y<@Bl$DkK+89|X6L#y2NS)_2;m^cH5xb<e0mUao
+z;hRUXxuHv7ZCH(s^*`qe1?HkQ^S`#xM0qJ!<&^Nie(Fq5UramoD#Zy%p=S>BAJ3?e
+z-e+7tEp&`6yt_GZWKA9^vS#@CwEuy?90uzop2uNCzLy0#C`9vy<pE{uIr2`mQ>VyI
+zagzKK5=60r6;=g|EnKX=jVg-?b-AuVULWP_0e35$P#E5t0v$YPlTZ{DZ8T1F^XUOb
+z;KgjLy%QH2=}p8EuErWrQBkI8(i4yw&$bEZep37`__E<2i>WS%WfVTY$E#{H#rg(L
+zb}l~7v9qFMosE!cG?C;>g8sw&@VO~-mz}g=my$D)JZ@&Mry(-JleNsvtDbTehpZfw
+zPSO0*DTEGx8Y2JQXAGJ}f@{!o616)GH3=)eSvWFq9E$4DJ3wQ_Xq8E5bMq%q(}tlU
+zO4)~x#7C2xE`wEWI=T^b*>Yk*&LiP>Rl4l^dPjPzq0T6)m?7pTT|=U=w3Es<TT3WM
+zg|uy9#4$~I$b6#)nq+X<7Bj({&|;#k0b_g5%bqjVW~-e14yFk<G^SMOsS0#0RWBc0
+z#f<`NM&12=JBZBtpaJ{IE%{9pF9~Z@8X!j!(Q%aCgzk!&#aw5+AzaF8BX{SCb@zNc
+zWzt?Ywmz3QZpR_UBni9iTjGH#?6nrC0lMYF*DY|$_m7hWan{`l?5RdKvUU=?4E6b-
+zK~1*%8{vG|U-RuGmXE{WG!?ZzGuf^{PiH#PW$MFC&2h`ES(QXw%~4CO7W7I3C8{YC
+z!XZ@MrqhjdW2UEfIAcZidki?xm!>EyOD^;^#XWIqgvq6=O@5ndEDM(|n>?;26lhYL
+z31l8o8%(t9(xBG_%5wx)(c#R${K5^99w7?EgfMdUmR^9nBCiYLxGCxvIe_A77vCWN
+z{VaJBor4zvaBB#l^;Yjc#;q#$cK?d|isA(2`vs6fuHR_LALgmqG53CYFcyY_N{|dX
+ztXE#Du-mw2T&iVYesxGw6``u2JUt&BcG;WZWshQh^FX6rn?)oy{+>P4Z&{n4V1NxV
+z<HF?!bFyzGgnPb^!cd12HX(t^Bvf;loja<q07>*-sPhCR8Ej<cfm%8*V<4F#MVy6B
+z1>3}oiPh5Vl!j(j89eV(N;>KmiZ#K(AcNYv;#{EEo#smBd63}m(-BwOmIU{7d8Kfl
+zi1QiUNd3FHBaF}9MFR6mo2lB2T|9SsgI!m7FU52<EHh1rCFqJtJ*#|9?y%1#-fd$g
+z;=KCWmZayC=TbwmK=X4#w_vTV^v4s$MLxoN$7QGkJe@&nfY#Fv%!am~!7&w0mDenP
+zRCnZ$x{3p-Pnj%^Z2G6Kp3e&k*X}mi#S1Tp@~z*3Sogu+p#N^a<)$+Sf55p2517=c
+z@z2>$#MHsXLSN9t(80yj>0g16hBQF-i`4z5?vU{-alG32VIG33wJ8YGp+4Y(Rg?jQ
+zB-+T%L^Ah8+->fw8}$#d=~yy5T`h=_z`-QPHG^@EA_L)09tA-M!!!cqV4BQz3dghu
+zbGN>n?eXiI?6r)<EKoG;A3kpZV<E~CZ2|rM8}JbPbY(=Ofbbe5a?ZV8h?BToO0ioQ
+z7Q$8C!4oa&VGHpg?hBHf_QV1xmQIK~bVN^cR)-IG;0HU|9tIl<Q3ulg-u0TTKfw~h
+ztSx?W#nawy9C+&u1PhYRB4~oF7g>S=rS2eW`25+us3<4-Y^f|AZ|qGe6uhdUbChA%
+zKYYX6isMPg>TaiF)kzvx)4TjUC3xVTL&3ubd|7XWjegf^7=q;ROJ_0Q%z&B^l|9ad
+z*C7q#!sXfL?HW+>%Q*Mad-3C3PKyGiCKc0(fMzFuvXka^P6yI4W_Kj_Gj%2~o|N+u
+z?~WG{(>rz>`hg1N-Ecr6=PM<9j#A<ZsH@Z6SxXHqHXM|3xG-Vn^C?Y|<@3{sEildz
+zs9SiTvVqgYur^jYgd8eO@~B1LqAL^dzsz>yYrY_x{|*WH<wGf_2Dhhr@~z5*1oblH
+zsinb027|-c>$~ICDgHb72M%177O|o}5fbQDeY?<>9lGc>3uL4P|8MgyO~srR#cPgp
+z{>HhK1R_Q~#6^m#rMI?jke!8GF5T5svOg+TWz$PV2&x%lAVu_PwsF=8Izb!P2)Y?x
+z*eCU1fWM^|f;afVt5STBcLjQDZnq>pZ<K8ks~BGT(GA!}oRu><N_iG5WMmq!wW40?
+zlV0mFm@CKY%(|VP6l#>%VsvkFvhG$UeUsrT9L{y{^+_e^pvA%*d^)53X`P$Laz%&+
+zoeim23$f(VqF>8yJ@7)k(VW90sk2=zc5!`Vc*e6<{9AsP3=a1-n0$gU{vmZNDh;6`
+zJkWKFe|VvIF|kmESi$8}pTs45p!)Girc<q@&YYkZ$XM@9v)Tb@8?W!dAe3Bb%U}0J
+z{-H{{;o3MGI_UDPMmNYp&<qV0@FZ*%=A}081yd7#rXdN!GL7V@^^>M}mGOXDZ{Dzl
+z(|3+S^_*MUe!yD{R{pGbJFLB!CMEZ%yP*-QEGs&ci(ZI}p^Ni-Kl?j4{nvOu=jUa@
+zBx7ENhMdKFF&lkFnGG(Q3c-&t@2EGgmR<9QA4BrSA5TNzopLw2Eh(~#;9dJ5!u`6l
+zSf2;z%6q@G<a>`>>%~gJuV~Q5-9SIuC2HGMPlz?6t(JZv(cnNN>??cgE1d+TY|d0P
+z#z8*#8Aj1YG-o<SY4$UP_7A^sdZp5F(qjpA>VqE9)Fqzizb45feYeIg6v-m^nN8JP
+z1uHH3O?AG<H(gw}JIE|2;WHCL#HZ@%C3iT)Y}dn0=~g@B;^bL~HjJ;3_5(^X1_$yX
+z*$ZD<^D<nWixYttUjX-<-$g?F4vYK37hK~yHz+c(qpllQdwiJ(w~XYr+ht7Y-69V4
+z7TWn8=ED7;=sU43OhMXmB=r%Dux0S-wb|F-GL&K7$4BJ=N3Rz!rdaKtV?A+07gK#@
+zQzy6o;=DsOX=gx|62N&D{X;Gm5NlgX2r|eqa)fZjvR-#kox^sxeZQroOA@~H#)N*F
+zXg71?c8qK;JzXj*Q6N|X5v`G%JneiDv)+^xz(4YKenzZ(9;{EEI(W(CO%I(8x}@-c
+z`&YBpFyU$*#DF-N#Oj5WoJeu1-P2ts{~jleEWLK|hj6qA!Q5XmJF2-gf44Lana`Td
+z#XI25mN&=Yu>(@IJJJ1iVbb_`o!qir<v$MGWgn<zbam#VS+)H8{sMflYc|ZylHn+u
+zLtk!Pb<xFcoz~TgtsJ`h;&qLaLIxoiOB@Q6>&Gw738VI$SkhIe1{~#3kf~Zuuvynn
+z&Twg5;uZ_x0mEM!?Jqxm5|e^ICMvPEUTq(=n~%&b`sDdGhg`;qx03Y`WyP^N6wM$|
+zZfEo4;m4Op^5B1CRH1tJ$6FVnGMOWSR?(VIrC<*YMrIW;$!NnS_pBIjwZ~<FG&FN?
+zAs8Dwtb@gRkh0;8%3mkvzecK;zGGPei4saKtDM<Qu_I;}@qymM-}4#NApr_%7tzYC
+z7-JQW^?p7WN8aCWIc8_l;;rKT-c!6xLiOnMkT3|nN)92%v=%QpRHZEx?-^NGnVSJ*
+zh+Np73?j({A3;6PU^$@js+vJ|^_<+Hq6!@ojGL?;m9s-zZFyM5yt2Xb<QRUpi?0D<
+z;o6mmQWMU#fPo8-L+`(w@S~X8A>4Px@j%*R>;Z?Qfp9fwj2!SE%977b{I(o01B#fd
+zC!)`TQJN~@OY&SlH<SND)e!4F$(&nt+c|Td1!EY0lfOBuFaTD|`r!;5a_d!l(|T8@
+z;B&r=a^|&p1oMGNukf~R>LnkXdWfV%9U7}d6|90LB&MJksve{n%!5$?W*(&oL?req
+zrFds`-<EiN^#b~g@$WuCE9@j;Js@|FPWF%b1QLJE)%f2&!BE<!^BN~o@AeA~>nUuT
+zBy?>2?CC=vJH!S#X^`Z)*BxbZpsTA%44s50$5T%ZUu4~_I<vA%=U}wkQ%k%W&5u6_
+z{3wXLfnh-H{8{D_Jm%F^k!=OCjU7pCF2(#uS?)3*-xg^Xx%g8+{9%Dkex&Zvf$$Yp
+z&*&M7C~km$Go%LQd*l)6#qBbvhd5#Y+qj_$MCIQBTF}3UB1J_>&jdbW={v?0gFg8)
+z?UT2gt55m#+spgbD-BT84Qoo}I?5?FwxBULI(uSqh<CoiHR$goV*LF=)b*f<l$Xl(
+z^foycHuYLKeH3Lzw`Ji3WJgHeE0)Mylc2Tm*mbpGNyA=kPX^bASEy4s*IZ3U{+K~`
+zE>pXDj5GE5>ej)*__Au_ZdA>B{yG&(5iW$A>GGX6lG4poAYg<rm{neLmjaA0$hYPT
+zx)w@q>T*i@SBJ$rn1lqd=g)qyA2KksahJk~0Td$akd$U5h$y!Y@CD{_Z=01$Enrgz
+z?HQ?0_KWAgw&S?Dju#xhdE#<)ax%;O$_MJG<R#^az`Q#<*{A+)v49!J_D6IBZg>Q9
+z1=|5kH=CY6=r-=CA-&_S?k&OeQslvdQ$?IzNXU3Joj*v>o>K{Axs#5R{%+pHs)KRo
+zmZ$rI2G1p`610%%W~dI`9#q|Y<LL|Xx4}-#IK(ULkuq(db#7=W@;j+gG9FQJ6=RUh
+zt*}Jy`5sziqywOH-2OIe_es`ih+HqwX<;*!_s1ssww!#%f?sii$ks4ghyR8LDngN%
+z4*$U|3vLvDDa=|VAAG+#atF!K4m2?|e_?~~)2mgy6Q9rprC4lDR!qv-u=g(;m=y^`
+zq}y&|hRqL##hpv25ysS^-G&_ml|#5O-Q6bng-gF&t9~-Am{qll<Ao)r2GyUMSykma
+zG^Q2l2y}5BKfj^Nu2}pE6mdJ-d(Qg4!|qynv1iRq5hg;5T=%_tu`>F6>YL6Blhixo
+z4XdP@vlv~htKes@nJM~cC{K!?f)INb+xY0+!VgY0;OyM+SG0$KKt%1n=27&a2TY1c
+z>NPg)5yoLZ;UaOI0KK7E(T?lvIfGKG6f_50SVtgJtQ&*kw|Cf^XD{B!5E7f7l!i?l
+zs_%IvJ5+&-7&&A%iZr+{WUsJoF3`N4k}BCW&Nl-^Rit&J_zb3|A@FVKt6R#y4wJgm
+ztE893i@v!(hvYy%C+e4{JIUqT26BFdKievPB7EccUAvO7ci0PUU*2}snk9E$!>M7M
+zr%<<I5Qh7%Vee{W*{~ksc4_fv_=(w6Oz*3S@&k>s3%IByKk~53c12ml87tPR>9^ig
+zmFST)Zvmm28J>ov;hOu}Jo~v}eV5GYX;W&C?sQ{_Dd(elLKnM;reHPk4#GvF!PMBK
+zOXbjt=Z;){<l1?&Y>MS%ntYUU)3>tJ;x0E>^K!Zc?p)7Vy<(a1^Oii?EYT=KjcB_~
+z_SrilwBGzA^rJtQk)jDrHrOLwGHJ;xer)Bocmz`HhQBI0NR)lHh-)stAE86wNGPTd
+zxPEN1&82N%g&H)-5(JDOf_9|%`y5_mlMs-fG~UZY*6K%|kdqSzTp+f1YDmjjKj{)p
+z`gxf=G7L{<ld*ZBZCq3xVHfKWuFsx}x?$iXp{Q~o{V6^W6_oDSnzy@H9}-ZHm~i@G
+zx*#ao2*``kXOPXq7&j=W!PuaEQ%yH36GCefYg7TPOq{?t#|En}*9wxU9$qALRj9RW
+zqIj=Kq*hZ}6D=<&*T~@H{aAcyVP}wG)M<c*YP6&Jrb7436Jkp5d%b>$&1RkNcFIn>
+zn)rrY@`r@8ieSQ$1R>$T6~Wx{4|KN+PI07m+^e~4P~y)3{@yp=>v*3fT^(=Sm>RK?
+zslGh2ZDf72dF!-+o;n|s7JGlvuAepc`~r@Pcn`1U;G30P%JQ4PFAe{$TiI|B+i?eY
+zPcMLn>Obd2{l5a*f8~!urt1*;2~ov%vq~(+uedp9U3wQ)AX{*Pzr>WB$iVYsYJ!54
+zxpV9}zt@8~xXVv7JUF3Pus+(Deb<s6uvK}@C@>JF#2YF>pZ)U%MP*!6wzP2;upQ&O
+z0Pjfm=j^UKGY6VNJ-J?<qOXV;$Lx7KXg(H6)8}uAK{ONriDE#O!xRz-Nb4V8shFjc
+zvx|zM!@uI>_zAfIMkLXv7nq9GLM4GjdKz?}@}vlrKj0msg9%2voPBk9D0|zEdaP`U
+zS_aAt;wvo9Gk6&gnF9XVn2-9M?vp<`@MbXfi#XEg)UE9|^*s_s%1o`14;_@u0q~GP
+z7O0AFA+nGl^8u}y`R!WkXQzpNcvp&3iy6$3M;vF3>*d40gh(<}lpsYFlavW6uNH^G
+z*GfqT<DnWWLHH_8J~hGlR$+~(qR?%vO@KZx@2?VAu+}v{{c)$wwUnyCGL^a5z$gDb
+z!*a*#*kYzKqs~mCZNX77{AoJMT4E0EtnuCu_*ZSGZF<Y<_Yg|w#?_<PPvFKyl%jLw
+zo|y2@>?r||Z{_jeo1oI&)^USnc3|AVv59<sC<5-s`h)uQR3%cl=0vPB6VA-cXIZY2
+zG`PcXtj{ox#=B0CELtlEo-&IjKUxFq5>gBYi5=6-6=;)CN7Gp>MLb_2eBqx|eoOb7
+z<er0~fe|{51J=kcn|wq)NMeAZ@4%yb0Gblgw;!CYiK+(^FIt1EAY1cV(N){)%FSt_
+zw!5bmb-26U3k_fSw}LYFT$14;03G50bm;%%=#aNFRdz9T5dBwo^<NOVjOPc;u|pbi
+z_kkhO!xcE0jTQ|1oxBU=Mlxu(7G*G$;L0dl{+@tM`MN2s93ix-v`;1wY85XRbM4XN
+zMM4V}MEu!j*-g?@YG4va-|!Hy;U_ufnP5hmHM4LUI@!aJAD58t54$u6B|1$P^i0he
+zOSMtZM?u(<=|_ohsM=!(+zBFjRNA;YTdpPsp0em2G2{9KvJ6p<g&E;ZT*Pi%^MP4V
+zTKV#t+KQp<M=N;J)JPrHUb<5PZtLI1r)(KgHo?lTx3JWmCsgON%zS>PR7vVQ;uE8x
+z7^-IO0aU%7&iYWA(WeI7XljcZUPVPf)#8Bn5pDFus(eTYS6X(UG?cTiXND-SI=Dp9
+zOo@Hkigoi!{y>dw$7@GnA~{0FCB7JR3^xUxOdtCVbxITsvtn>IbsC{KdjuwAsYO2b
+z1brAdzmVJ5De#f}_1;qldmRmb%UtWx<C!3FB?zVRRv*~XQZF$IobAUC3b%o=n}|s4
+z6@_4ELxnWv4Uf|hvL##aA-m1NKT~e&8g!T02wX1>;)0`9BgSr-7Ndh-4+i@6bHpd9
+zKM?e|4qR89;Njl5II;p^$@>N+fj$Cpc^NuFSE1)7iV~*Ryu-x^G12G#R-jX%bag-Z
+zi*5jQh<`9C_us@S@9N^<>hc$oid1#&0~t{P6R%lcL13{l9?c$i*s~C|S?@`_NK_-(
+zmxXdUr|Q4>@))&fp{6k|4j(g}XS(QYFO(qL3`BQ4&HV(=e(&$DyF44pqu-wz*~RdU
+zXuV|yP?gKguccN?9uUr=+!X_F8HXZ{;v>zw#;hk7w+#l#fCvwY2XqY*=^?WcXJef3
+zoDv4ZU220K>-%e<Dj@aWgEALNbNO6Skkz8Xfo@Y!#F<_3dXXA802TWV#)m_XgWqu2
+z;c5w?5Z!oGr3Q+qqIr2NGMv!ynllBw_83Bmu2lSJ4h1tqrzqr6Qf-vF-WKX*oD?$)
+z-y=Zfra+$H8B0Gn%)<`ks^2m|C-sJ21$)}mqw9+w$VM7Rz5h)!`0!d-WX}nhH8t)<
+z>lDO|<X*LMnFi9MNLgRwAg^Q)cxGxFa}!E@42}$;T+q)GAM-=F!J9$mD&xXL3N#~8
+z&xA?JTQX~>7S+~(&E{BaBOE;T{S99d2kl-GAr&Qvh+#@3M`caachipiSk$5zeA&??
+zcGJZB#YI?}ZfCF-I^cvyC*=DvP!{S(#9^8G65u*0H%G?mjvIu5%>#cB5c$LH#1AgX
+zZ2NBGVGt1x8|{HO7xAN?cR@53yGcK#z~I3j$@P9RtJpOmyVh2G{4M!m_qA&n2S67y
+zAjJFsJ?!DXTXO!F{^h^XrDShoDr@L$?fe(Os+0xo`T;erV>I+OFz7!D(WQ`-gyn$(
+zg~40IK^z8#7mIb;h2?%V2?i)axk@4S+}M|s7uCAhjv&ZdOr2XH`l$&Hte7(p_YQn`
+zi2af)et!mb-$otbe>pv8oU|s^q>=k$lU>Qo^Qu04>!&wHoHJZ6J&y7pA{-z}`sq2~
+zIPF4AUMrN+h=Fg-);Bgifwj2YJ?jKdm)IA>)eRNx%3YHK{;mGhn|qW8T1q<F3NJ?m
+zWRle*k*0=t(FP5rXbbQ7xZR!L+89DQH^X+>l5%KkSdL9WiAZN6(W$`*j;F2=HSs2o
+zNKrs$#5}KU+^|zl8OuhJ>=0*yY;7k{9;^;q!br%Kxd75&4Eh^PNhhBTsesY3J8P1c
+z9@t44d7Uf<J;=4Uj_EO5H3P2tM)q6f_X|{rb@8B8&uL!t^K4LZ-k>KJ)PTv->?v0p
+zw{xv>uc?@$HD=p=wbj+jfix>qv1Q|4$<v1+F3%N21x4C!!KxEKK4AhiPh}}#8=n<i
+ziX>t|(UWBNmBPZfd)R*u^y$eTa~S~1|0lrERP}%E;F2-5bN=6Pep8CBeTD?;UuwOA
+zqtFY0?%0k@eN)FEQdb2|ueYp;!vZ8INQ!VmJbhF3>kYwxk>Fmiz{ZaFE%To5xN`t5
+zyP`LS=OE|}seL>1n(+=-c8*S5OWI4DDQoJs!6D>ZAQY2xa0U+H54~9M8K}y=XPj`K
+zTyQ=Rq6j4*-si+T6PRxD8!GUHQ`vCmz>|Yaq156{dF8J|U~k0wFwU7?;|uW5ZBB?Q
+z!w7#IFAHiN@Hm_!e2{C1kZUkpvKbQ__C-wxIE&C*(WRDYwFKG<)j;A65LH+E(stew
+z7<I#VH{H?XFPqe}oKQRIH9e&%@T7$a5@1Lro4YKdwerb*w|a@iY`BazwW6xLoCGrJ
+z#tgCi#}HqT4(u>p$2uB(HFo%kSAii_LzH5AlL>;;dGY*<I2z5s7=l$g0)8bgda2dm
+zB**tCYJD)tHC1Hw)Gc@9La3Ni4?*|#NTosyogP`yW`=b)xsiu&l7o4e1bWwc2(R&C
+zpe-S-8II;B)~`lO(24LK^!VUuJ;#bi*I23fnfpZah5R$7i6<JW!z+5sO)0FGhnTjn
+zFo}xk>??1?mU4atDu(H=nQsV8WS!r!jZM$Ni1Vq;ge$wOn2B6Lpq&7(n?sw`9>70F
+zM6(0}bs~O@tO)AUoFi6}Tx1IJ4W~P?n-^5yWGE)9LX;&58@ZB-%_l#Uv?dJ{(zVGy
+z$bJ9b+}KiD`aN%?ZShua?~h=!s<1n)_L?2qdzvFIqLY_O{@MvdB0oZe-M%byaS(ah
+zmXLJJW>7Hf73v5xLUH9R1KA}lBMuccPP^;x-Hymg$qrum&J6f;I`U^jxCYS@xNYA|
+zpPN7-nrFzLEB!qny?)T+ccf=&^HOi5??}OKoCuIwR_)MN`%vw6gb<2qdNpp(N`oqP
+zXlTSn$|_DUX?$X#in!qPaJJ8+BR>-B4D6r?at7(0e$^K@Qf2tB2DfvZOlde~w@Ntu
+znjovofu`gmJE_4f!n!-lbhLeRVMrJ5Qh#I^QB3F0Klt+vRj{RpbjNM5zA3pK^)7%D
+z_4NaNvf4VsEGM)W9y`PT#pE~gW?&9M*DLn2t9}sJ_B{^&4Q3ZoYZqRNevNd9R0-S3
+zsHib7ev%_USSa<aqM7xbTWJJhGe%&6p|@2(FN-z=#puNCisK-!$c@@56GJC`#mp)5
+z_)kg-Q&2{4e$m3?!OKR*_T7dp(Tb7*E2)amg60Q)OkRtpDmeCixV@2cI`cIDc<^{3
+zY(K!PD6qUn{M!u)9h7T>RFeL-rKaa5V`aRmVsvd@8Hmez9qx^v#}c33kEc^QL3*(z
+zhZX!juoNAz@6;5MTaA^nM4#%v)A)n*xi{bYUk`%{Vs1n;Wp8O3c^_OSUIcyELN$wj
+z4ZL`*m!87K_>AMPo%<9o@-Ke=tw3p1gsqwlaI9AWqlx}Oj{56}`rjP2l%WgAMFKeL
+zo`&ZXep8l;NH#&P1Oo)l!<x}Jqp-^ewGzx0H=|Bg$lUzv?QCF}K!bU#aNMREgwHdl
+zV84K54E_4Xb|+8!ayV?_ZRi_Z=MWg@HiiL^S+yNQDF3kdbvQ6W?BdbMzPPV$!3x{S
+z56-?A2`~R!-WRYH=!ms7f9Rn#7%zO7#_L(}-?00ptzv7;-Wmg7+Xe&_J)<Rrat5)3
+z6k7Gf#q!8HBU&9Fx81YF4|zTvx=rrgzL3RsaI_`%QxBp9t-k`cGGZF{0qntsi&O)0
+zV*bf!u0E<?5Uz9S65hj+(P3P70*1M8Y?*B(*ZMPAB4hSCE4VT7g!_Ig-##t*gGVBz
+z0+H#Cw~7El67`j-Z5Hu^(W)2zA&uJ?Zv&_*K^1g54R{6U=o|<yU0~K;AUa^(uLwWd
+zu-@iucd}Wh>l%BRg++8QQ`9gp85$u7@Y67hp>!S;guo>08k~BC%q2X^o_jBiBFQRp
+zrSI3zJ*vX?iwLi~Vv@vYSh72*&5{gYf@i>7E+ZP^$(K}dAQMk6xP^Umv3u4OAb4xM
+zg%4Y!ct&n~Tuu^^M}Qx!+EY9ZgyF=SQC%kl;z)HIlOn@h#V^@+=CGNV|CErwO*XT8
+zTNnz#E^qtc4~iMbH$b_2;w*|cJu3`07L394d|D*r!O-tsL3;giT<zphcAbN^NAdfd
+zgnDN7xICUmRNpuTo?+fHiHYLCsF%Auekx#$JkSLMCn4h#Lb&RpHv_J91DwTsT-c%b
+z>@(%L2+CXOpwA-+=0}ayAhH$Jv1$>nc26ItqdIbgI+5la)B9?h);m;u@phx#TSB@k
+z);h3>G&373iHC>{YuEQ0w?64`JFt{d&G;%x-6YqgsyIwM9-#~2ZtH3j^%Ae@=@_cO
+zID7{u^`(t2k`$@ba^mq5Va&rnZ#qlwae3P&cSa7I9l}Z8+^S<ObK52uHo}PZM$K%B
+zfIAF#Du7#6SiSC#aXar>Iz@da%iG&GvD^(fvRqUH0CNOj#4sVG6Z_>E(9m^oZz&jN
+zA^Y$up0YUdN__aezIl+HCaGp^1aYi3*P8ouSY|K2G8|khq5am~J@oP4OO>xJFXr4j
+zy<uO?;~r;+LY)f5$}RJ)reAS(iizc?6n`?<0Y<-oEqY3G^75vsc2Q8Y%Q<c;KVWwB
+z7sJ8)Vb2<L{TxzKk@Z+qeo3j#viR^Nq?&z<a3D|Y0a1!5c#7_=$Uc9&IbMRuyYR#n
+z0$DQ-p+6MDu_|*hloyXUPHixR_*mT-MwIhsI*~VH@RNEYmsD_-B_j*5Mh$Ok*WlEC
+zbY%bR?cUh4?o+^@4HpIxB-T3VNvs2%^5&*W0X21Hr-X#hpqG9{!u;~!O!-5qC1mfy
+zD#~q5ir#jb!hi|r(LL{dIv+yO!Uw3>9H*d;2GS7+nOd0>h@A<-355yCP(zz*0QhPH
+z;=%OUNX8o_pW2OWkhdtPuh`WGDkXKSPDWe~Z|2VsTP=l<o|%I1_&PhwYqF^n)}lb~
+zj%@}OiS|l~5>x|{!u+z6%yxP^yTf2xHsHg%W+w>l?Rp^fUPi&0#gNhnU3f?NQ=}Ue
+z$i4W)3@FFW528Xt5(~;*IK-ioAVp=QvY$wU>jXmee|jFeIXNQ4gtUr@j#r0W7BeHs
+zDzJ@2i}LuU;BZn0rBezMT6xf_&dQZFMWZh?`O(#T*?Suqx`RXuunjZ|cImO%`60mv
+z@o0Z9ZVu!N2@mCmbxMFT#@~&bxi(egFDUfdOgMVrIKofZo{eiL?#9wT_PP-238L8q
+zXGx=BqeBiSqTX`Vl1&6<Np6DV&FaaeWAVE*0ISxP8784(8%ZQ1kn7@_jyw#;Rcb8{
+zIqS<t6KFN_)mOc^%#LnzR5|9#)#P1a9{o-~udd+mthLut53qW`=5aW^XmdDvM3R6}
+zT&;}OncH0?=^mjj?|aV9^0TayHrJX&IH>>FdMogYX1&88s)vSujG1hVXx5MUL>oJg
+znceOMYdYaR3wwy%f!@A$ZJIKEt%=0D_hGb3${Y=*DoTP?9?DOgY<WO6yvDE{Hx@8h
+zeHmM1xn$?w^yuGeV7M;`OUrpyv!?q+fzqQojjNG>kN1$!c8bk%fBe>!eW-F7gDc_f
+zm)yy;sqWh=Sg}}=_3XUV7lZBE>VxOXh$&HUcl@h>nK4v&b9t<?6Vac;5&3TS@RQqs
+znM8Oxef;{0MKuf}%@RC+$pbf2seiY3=2zjqe{?AgbAPM_V|Ft)sX<$s3a6mrq`oHF
+zfgpSTNmzFH0IeiOYg{lhq8@pVZPD_EoYrKswBNVm)Q3~WI<4HxD;nhb*@y=kc$2!U
+zN$}4MXy5UUKbh3jw3G4s`)`Mhb1ZJ??;M<J-;F;(dgisR@s6}y>1Vsg><7EK+s5rK
+zphZ0<0T+o1Qp@W$kv)rem~?Y#t%UP^@v>?yf!Vi$E=9)+67pDWUz`Dr+|Uc10E3Tx
+zJsjb45|{>Xev3Wn88zm|@Q@?Sp7)}=9HJ*8?c+2?OZ1U-@kXus^-IJl<&?Wh={x~N
+z2Pv_9Rx-M*(Bo11C#%M4`xF1ahb`_yljPBWaODvY#QuZn5d|kpTT2&9H&cDV|CTP#
+zPQic>p@!~usWU~sT@k(F^aZ5mul+n_LNvyXR!h;($W_hy0A<)7nG=Pr=7O{p`!hRN
+zeo5$AhY^;PE?u@<5`Ej!3)O?Xk11P<p8mLQ+G*6sU7F>_=q$he8B%5@T<{B3iF}M~
+zBZ5K_+L5?VPo4zYtsPU#s{q#a8Tn=p_9ueD`LWzEk(SHF-!#oVI!yWQfb~BB!nc1g
+zBmF<Wfv~-e{lAo3T?xAK{eT97>n9qyjj3Yi0OW%}52E{DU_rn^TXg2yBiJ3$k#dre
+zUz=AX3P`x*!(>yQYc1E=&g}&Y;bEj8Ifgf9T_lKIBV#v)&#al79#<Z$*&ZznPwDh*
+zi3#Ls#me}#Jfsf!)GX-=g4^L7L*c*YsQKm^!;2^lYQ|+X)1&UdqLdba$1&O{)nzY*
+zL0?Qn4zR))(S}hDQNfu|lfaiG3rx9fkNX3YH?7^X_BPMBqAeerX3W4irsu&*U=P9s
+z&!YU14-O%8`uXxd#o(c<H!!&<WFkxrP>uHu%#-)bXQrxVx0~~I>hd=zhwZD*jH>I<
+zx}6VUN6;>@8bk*DRBLrv+1Q{<$U)8T+&V@Cw@ia?fQJtG9j1Q~f4cN_zrc4b%wq2A
+zNccl|7$|WGCx837HER)uQoe3+Y0}qy8h5Y~{1fjXSEHw103Om6%DJ%fZu{!hHEB*C
+zJ4yJKA<<lxldggeXHyA|S}5x#R&4EWC3#25985ugU<D445&Vys`(J{+f2C|x|7xxK
+zmw0`G%(4MFHyhm%2)R+h^cU2`BRbamhK4onL28I?(^uE<ORs`Ot`$P~@9U{a9Qk;N
+zf<Pcq*yxm+TXa|y`Qn0G3-<J|Tf)pq{Qcc0@sd32RR4D7lD@%sd#GIQ4yAfD<qP;d
+zC}pS<`nGlTWt5m6_<oNyueQ*xN>SMo;6O%CSV11o^sog@&eo7JE1|0R`8=K>m@GUW
+zAnPQV+hsO3+rdH4g6!k$`w79<_*`}+z*zf7|B}Hhp+o}^M8x8no;=jT7@2E~r@$6$
+zU>c9?4zlK$bisvp4?RNeY4NUpt|J`Ixs!8#n7EHePBI0l={(Y{bg{*%v<}oIM;VTS
+z(JDg47O#ZE?0`{IjVsd-a61}{{5Pre;tdQR&gnL-iZd8LPy1BI&K)*<H1QA>Vj^iJ
+zxyYK4X*xm5*gr>y;!3x;(|OK7)&*?qz%i(mY-(uPKQ&GGfqjH7b1m6UUev7-y3W()
+zjswT5N&|KAt6}qDqCa~aQg`sfw-}r#f2J4+u)^z^RNJ2Wa21!tG1xxBb~0n8&*<)M
+z>IHUdeV!7%q942F{Q#jI;q;nfNkBAOn@EMyMS?NfMgXn=I~aQ-LUe1EQcn6U^noH&
+z!L2)Au<rj!^a@F|<r)NMeUz&q1|w~{nUgb+o~xwHz78|d<iq$m1BI;Dr~Zy`2mU)o
+zq|J}#*QcUKOmcLP0$Q;O^k_ZcqAB2N2VKrfca<q7eVBvo<|fw>7$0f1E6v-N*S}o`
+z@2caTzzX0gHh@0(|JvLBzmkpr!&850uKvPpRNRzRkO1IzpL<jk4hSWt^XlOA#Sn%3
+z;4728jh_p0Vpuio3a?kHL0_?hQ;cEGoyQ%<Fx8k2`=pk4cwY)bdoe)-&vAYadtEp`
+zZm;gMQkz66J$8tT6@JoUVOGRB$|LU~xqz=7t+<FnrC<$>^)$9Zp`s1i#~QDZMyn(n
+zK!-q_7ZMuRGTH5dp$6J*W~t0d(;E^uDYoPb%_m$mV0RPtQ7$PIrkN;nO>$CGM#vqi
+zgh{YPUvcNA2410pt9V63)pQkH6NKj@oox_SjxjKu$%7_qEj67N6gM2vSWEV!k9TM_
+z(8)Yg95^3=Uj{l8;<8<rk@LVN|Dk#5c*~VF<&ZqXWjsIPcAw$i1{1R5YToBupQ=sn
+z`&g_LmVR<rUUrL2p}<CbachN+fR_9G+o&e6cq|MhfT@lFruvU?%)bOcf7vQYY0mDi
+zy2G_P>s{b4reWT6UZi6XMCnNvJNv?ZQEVxqCRgd?kGFQU-0#IW471KNyib|hJn6Tn
+z%$=sBRC^r#3mz}1ykh4T4dDX@yomc@D@Z@mg}HPJh+^)7%TRB64MRo9f8Z7tCKC>?
+zdhwkc(}B~K6+(s|qg6!9B-TYpY)Jp|s47(4Mk?+t(J@*xk|zGc(_Nk@VGtZOy||pi
+zF~TC3m)zVTm`Xhct#E9D2!WN482pDsfV%HC`vfCy=WDc`)8f_rP@SU+e#M_<4eNVm
+z-pns+##aUb_qIl_+Ko<KnS|gwnH-P18P>k7h&Q^T1pMgsVU`~&&zIoG$PAM{Z{o$8
+zQG(dpK9UhhsJ-sY_C}2%xs{2Z$X5<Ay57$7-_Lb{Ko#Gre_d%m$qz4#m1f+pBtF%u
+za#NIiJG&sRTx>Gc7p-DI^pIkC_?vS;7iNyO1F)nXAaC*?*>rzpc>glwr7A#=&xqO$
+zFr)((G;yrQoCjfPoJb;L>PB*Vx8?qcgSG42^R{gZLQ8!B2Jfo!LU;GI&-UBnaxpLo
+zQf?U1+sqb@*<i*L#lo1;o}MR1N=vkRQ+x9ob1*X}l4%pwy|5rqlT-jlFN(d$O{nk&
+z?0kuu&u`jd>+w?>4+I24#Ku6ze(!Lr0hKK*S)xwZK(JO>Eb&BJFm(($QX_(P3$NDR
+zjGv_GYB9rc2AwXfki_0{B<xY)-dTO;I5MT9xAAA9gLR&cz%fh$^L2c*q$yHq62#z8
+z-^G2yS8&$-@m(e^n5jw%l3FmQGN;qhsElh9B=67MEBwVRa#<|U3S>%(XuhRhYPP%e
+zxX(+o{D6a=_^ldlS7pKGv;;#2JIQoUY`jBkwk?WZz$SOe#VMcKduo|Ho_8&(9$LTC
+zt)<j!v=ZmdkC-tWw--W4b>3UqUZh>$*AoN>d3wa^U44h(OlA>PCAIe%SL5`JaykkD
+z^TkTLmrXtzQxA+3SE6aI)x%fbcpU#%sAZg!r8`6}v}Ny-KpJD1maaxmnmZqrGyGc+
+zf!rjouZn)Dq)VjcU}?+%d3D6dbtF4R7>HHzdUN4rj!_I?XUI3UxmzR`HA>&C`Pv!;
+zLoENz326cv$n*oiDj85X`j5csucX{xuxg6e{|i<_+iz6ZkIZl=iQ@a9)Wbta;olx?
+zsn+pW6YWmFCt~(=Z0fhyNecDrC2x9pPJe7p=kh)Ej!27bMBR(F9#3vn{`_M{H#}`(
+z((`>LhhbC!Wqdan1}m|H_7TXPbvIZ9$NV5pA@JmF`&_QUhWsR1svUHMoX<q)put~a
+zqqN=wb7Ig-Py>$q5M?3X1hUQ{FKl7IMboEyv?px!$+#C}PLv<2Lfk(Rd<0pMfw-?S
+zhJULpw$Kq((bKwkll$TA`htBm6pqiodYLV_bh#|f#1@{6CUayy*%fMTQ(j2cxQzX#
+z*WXLEICrge<FFAd%T-jqHd0*`p@vd7dWUkaa`jt~B4&NpkPjP=d*9>|>G(A_0lGbG
+zf4;yk63ZsET-JW|)BvcdjL%&6layxNDvgF^uFy-u1w1IRN2>N8jk{{mgxqG*z}{pl
+z;1YJRqYL-Xd<<z(4T#h#5y<)k`6&LyhlOvm;<O8_HLu<;>~Mdsl?Xomb}XD~m7mf9
+ztZo4~7XHC<;s2cAN~R{R#{V_e0buu_|FV1fEy(v2GQL+<EHM;GxU)T+wjfw*T2m_1
+zc!1pxV=65|6EK`6+QPQE%7&EU45V6c_gYTyL{NA`eRufZa2Q~^{`@)@b+36EoF^u~
+zk;kh`4gZlun1wZult4Xv0(}U4NL=O4BBZ3}-;R$ZmCQ1P@cUdB6~?qzM78<>-^Aic
+z+VO3O&V%T<kv~Yz2!CEl5;bkj)?fW37E$OAiK42~EXo5c>RKpPS7E`e)xp^;Y`U;5
+z1IEM)qV;j8clNik8RXj69z`cL`QjbQr^iv73uY)tl5d_7FL~pJQ96C7PS7vePi$F)
+z!M2uP-QS`*#x76h<x40100ENp))n0IR4w-C`t4)K5nO8OMVsUtm&L4|y9+}!1YTYU
+zu_4vV--^17DauGy04p^ETFU<;d-MN|-pEqb2G|JmFU`Pi5h>VevHUP(0d0J#_8{`M
+z1eU2Kt?4c^+wd3ttkWqw{Tjx6%`x}(>8YfG<R}O(NKXD`$5VjDPL=)z#oLk_-AtRV
+z*4Evnpdu`kp$Aw|sj$iNS{;G<%zzFEn9Km}ii{!?tVAg#QIsP2A5v0cEG~l?LCx%3
+zIBxC#kG5}Y%(TmzO~<xvCmq}D*tTukw$-t1+qP}nNk=Eo%$fJh`+Pk!U+y1pU$txR
+zRjXDlAvr+y_!_UQ+wdY!svK1aT3hG>K-l(Ji$l?gR5-ZR7TKP%rzp-5ZS3X=uK|Lt
+zVd`jbK{d^BxV7*I)99EYp%WxR-XJnMubCw?{SiN4)e~K}z=U9Ju!MzCsU7{bL786~
+zwGrOI?Ws#eG%pE?Nxdq&q4YmB;}NsRO2x~g4unI=A0wPc!Mz&_(doC~tkq#~;spi}
+zJSk4vVD3WCuLjAbpJdG!+6|myja}hF7;*y`er4iHVYz6#&Kq>q7|*&Aafh{7s@0)O
+zJL?Q8jdLxhS-V9F?VoWJW;(0iGp{BNwT$721=5cG)|D15Hk>$gGf;L@o{tHRzwdEa
+zUFe;lE0#W&IN|LlFHh)O=za~@;3&E2z$v27&^hJ%WO~?hx%peWx5;1a6XY8sh2Mqb
+zf8``A*f`n$^CS<(N?ClPWcd0OIaiwy*{-SGvG_5{4V{X^h&5~y31(bBY*ZQj?aE;-
+zFEQz92^-P%&gb=(&7TSs`#9cuyZ&dHYExL>@eQ-2irRa;P=r#Gw}*f<5h5h*SuD|l
+zvO1_MQ=<7TLF7vybrCjK*H2M!J2g4R-mfvj9LueV<79`K2yx}~hCcvMjrF8rS`SgS
+z4ov9fC@eK_$#wd~{w)R2#`Rk~LzPbAQ}E0`7Wm@h4Ia?nvbMFW&QA$__;|rKP8VBZ
+z>{aHl=$|`GmfCZjti-ie^RO?R=j@sikQV;P{sIk;pph7{sx6W~nlxE<KwNJPyWRwO
+z_PO|&FZ_Pf@0|SY_N<{3LYMgd_v!yzJgQ>!*P@NT?$023Zkuo0#pVYUbzLB3rTB80
+zU=X<>pRg71W?nx#64WsN(2s($ug+j%c&r8YFwbWm+G}j^Dux3`3ct#E?h@)uuYq~C
+zu;YA3`tacdVz0OK*dG7DJ|8<``0!Cm!L@TfG;-xuF<!ZAS>7ALEuz42#K`<&VS>mN
+zz4V?U;|YFcbV#ETGl_YI{?M!unM6OzBwhS%_U*hdQ=q6zUYs+mn*0JK?BpZ{m;?qz
+zP^Ze3CAME`_B>S2C2t2AvL4Zp8app%B{OL1Jp|Z7S?*t}1SFIAs8htq88-~8296R>
+zS+JN8QAKlO`WIl(!OLpV&MX-Q;}S=d@mIvnnnb*j*3izsvw2mRsUr%#&<r?7k(<sT
+z(36+N^(NI<r_7?PCW3;Tn%0x=q2^1mj%gY^ZtvOKA5J$5&(zqtx2MhAi;Cd^71MSO
+z{`L)_XL)SezLiIV|8zBLWAJ?m+Ur^VOL|P2{zqy8=uT!ae%%`^FftfCApd51eW$pf
+zm6#b(%ugb$VaIWoFP{{0GvKk8O23#3Fp-*~%6f^dX0y?`I>Y5<8gb=3=&KTPx!`kr
+zIv%UsdTe3a95paRs+)c_+I};YXSnopOIvI+mijdg%uWqvBn7M++|1lvY%*SC4)}Tr
+zCPpn4x)?_<plP_@^1h;N-g$qZv#!>i?tos?KBO^I44|BOW@7g_Jx@Ady&*F~@`0md
+z8UFmOdwcq+v9Iz?H)at3VaoZRKkR>W%EF}o$%I<67h7Wz7f@>}bI+N%#N|`0`DhVF
+z+T&}8j*1i{`p$%E6l5V*^H&RpM|g7GGP!X1t&KPjK1@zr;|}Q!6y<Ld@%l1;@TSiM
+zGjxCIiLmkIPUp@*o~w#w@_^Vzs1`UY#hqA>63qZhtSS&`g3luT+r}E2h!h&wJP6c4
+z1U=iBB6ZLcuX3RW4j-dw25+EtgiRO$>Bz26Bt&)I$#c59G433?)2}+~YUY{doaj$^
+zLc3EZ70UHh;>=FJEH~G6r?Pd&E_Ki$>WSLmlX_#0j={_*HGk2MI696sYxZ#+GSX@D
+z_=^Paj5bX3SIb0!PyJr#J8wqutcX9ZYn6W>xITXOTv5MW$&y!@v0-<XgK!eKmrwoj
+zV2F$>Kj<sM?v}iw8cx+NY)*DJFF#Lr&etuEn&F+i8EMP7^p&0|X4G1{F%Z*y0<Dev
+zV~!x6zb7}wK&hRVI2oLi`h{0xP6ctKQ6FT+N-RN7^PVc#t4Br~VpFfkI-1iW8jk1W
+z-UxYMmK|9)lW{!2F(rpglfXPU3k>z^7nv!ZurMExHyK-zMQv+OI$}pM-yQSv868<F
+zIC_whC|?i?Pk#kLZYDl{ivLEHtkop_oj+O+#$kHw*!CrRO`_wmV@dNoQ1G0P>9%Em
+zr=y3`QCI(Rp~O?2>$aWM0ecm({LEqOJK1o-@?`(Q7DwdysBw*lyX2G_R}w;Xz0_<l
+z*;ZMj<W+5?x#FG*MLOmmhARkzj`m<xsb;rDDUZH0r^q!9vgv!k{u4b+lG<Ci|J`~x
+z@dWS1{l+uiw+^fKpL0yf+W#A#{}Cf4YU%WkCvjyWzs(-q_r&`vid?H<p%UEYewMtz
+zsUIyk<k@8U5R(34Bhk8Psq)+QvNYg;*e{ATD8z)@x2=0g2K}_0)SznYIo3NYV3LSK
+zPcE^gaaWO{`{F^%JAtD5$3U(QE>NQNabWE=+{n~luhIIh^KA6V*C4~(ZbI5Qg!ISF
+zt32JOHrnKAgqsvQPuMAC<}eJjy@8cHh|_q9o-#FbZvGp5ij9Tj&}DV++!f-Ozrm`7
+zHnTlI|H#IcHs+@xE9mZNypSoHI*SK#%k8nh2IU-uAjO3|=)y$8y<mJ+>VKS!qM(6%
+zg`N$Uwui#p;5b*fD_J3jSB{SF75|_VQfRL{JIDEOz8peo8#G5QrZAK=yN3?)I9g?D
+z708s3?lce9wO34WjrmTF0sKIH<m0%L+Rc@S>69?ZTS>DAu?V>WUP}pKi6B^#uEG`4
+zgy{omarq;Mbb+K%!MNXgPOMRxEHS}WM5;$wmNC}(n=)sjs)`q4=Y5fKK!2Rq&L(M8
+zZ0)nnC0Av2zGI|3N!<q4dR#)y#yrAhDISj7Rplm*&Wf*~Mc3otkNy|R)yOGe+Z@oi
+zVGxd>xv{NozPY$Xu{;HX$gF?WCS}U`fQ|q90POjMvJ(-hsqd{4Y#ASYY+SO}Vajee
+zF-j0Nos^f%i~jnw{EjMQK3_(CRrlTuM0~!!!kI*tvhEMrF21ixB|(Q36}q}@jAW3n
+zzfCFV7J{26f4?wPzU%Y<9yo0rjQ$1AzamWjVeh1(ZUGjTql#97OBD40@C!Bdh=}YY
+zKpl$4ZvT$pdrt32htHAwDb|p+nu)P)R?jC3J`-$EcfVbm^J(9RE;V$%XnPccdVkoL
+z@e))2IFQ}N!)_H}1eo5J$$}J!1zDnGOfKe&8Ps~c3vi?w^07l?`4NUIMymwr1V~#e
+zBFYxABFYd92I~*|JO_Sx#HVrF09d=I2UjR;=4j{$n6>Ykk|J0k#%2U~kEXjW>oS8T
+zpA&^hKJ*mC+>+#762Vq7(s{Z4a3%#cH7j0h;MS<-a>Dt@!e(;S1Crig$7o0$MHoAf
+zkcN&A4v62TX@T5FQ6JVi7AbyTpSu9fYRg)XX!Zn}QlTeK)n!{ZU!0h-a#FUVW(GpI
+z&oa7cJ4yKICbr7c&y=VF*F@dou~9|Z=4T#54qzwd@Ed=Me2PxKhw%t>#!Fdj+WoVJ
+zgK|<CUgHo|^QJ0J;}7j9o2LKRTs7u;BfoB;-<O0bG*<m1;nbZE2<?@`C%?3nHfo@-
+z2DTU(yOqb1+RppmK#^fr+2i~T3bXG<;eT*A;olfb$VlJG<X@18O6axr=lf1(<Qgo}
+zG}Vs^>wGN8bFHbZoqZAk{Z`wZQ>Y`>n7p28p_Fpex#FO|Jnv!JSD20vhKP0Huik-f
+zMtsz0$P`>UF=;$qIJ7;wnpI^!R^K-2oZ{^}Xe?I~L#Sh7Hx}>Z1JMr=Q@baW(y3w&
+zS7Kt;+o#@z=m^G3P#Axh|5E4Q9>kZ?7SzS(hRBW%i{n1Qcs_{urPz8v4D<mIB>kG_
+z!-bnY@(eS<?%&pD>4Kq_@G~J3$h42X4e%#cX0l5R^q+t&w~Uaw4fZpPx=nGqi88aq
+za|815PWxC=?*i!USkiS7tyCZ^#sfLIt_NYNdCa??6;Y?iPfV@AEvaQzg_$R3MJq2V
+z*SdsJ@`?wd9y!o}&bN??eaxyr^MH<Jw6P|%3?L|}fg>p54p@|>1ah%UQ0_=$tj!x_
+zg5N&P`J5~}lbO-`+q&Y<XX#*JoBi@jGm*z8M$*7{Q8C5|&0=ZO2UOJL%IUPBrN3QL
+zkO@!JA>W^T?wbexTc7+p-s4}NJV`<7dx`+P>z)d;b*FEFCz=x@$Zclwq|5qXu`6jv
+zU6P{BXw?T#z*it|C#=DX=M6Q3Q7kSl$@lw&`4{wh-g4XxT}SLPp?lmni`{T}Jp+DO
+z=&w@5OI(09S<)^O=KgXg)xO19e)sJ~f9Alhxvp`6#i)!Ug%qj*4rU~uK}A9^o%20%
+zhhpPcy#*43^}3TlJ`)nN=jjcL6UZLfCfS68hfp4)-IYgj=SUMq=EOKeB(om0u*1Ri
+zg;EW>pQ0T-<xoTqiOWfoDCSCXrAb&{Fdu#K&r#nWMLrNSr}dHq3olbxNEn9Rt8~y~
+zd5mzPl9;b3jM&bF1ZrH!X{hZg3it6s>aTT3pofHUL#q=hl`~owK0$Z(@N2Auv0e4#
+zqA$RkIq9KvhQ_eBpnMpO>a~Vw3dE7#1zS|wJ(H;e7Lk;Q+`qEva{LnNf@oB5sD5R^
+zIoCEC9d=mm7H7%-B_u4R9^DKMH+a1)nSIVdnjh^n`msZc!yhzqr^+HemiG8J3|Po*
+z8(Ms0!1eps{|9q<{_WWR)p+|C1Ty0#6uyPKpyzkUBFmZ67Q55%+6LOS*;BzyBkNHZ
+zq4^nzT&JPi?r}kUzolhJdxtCTV~IUGQVIqaDtvbm(bz;T>T8?+QDcmWQEJr?LzeA8
+z!#|$Ku0gR9?@3FyEs;Xfvp8w?gD#r)K=Bx+9r`w-C%@^UVvit!)qeDYoD?W?N*3g7
+zW+h76RwvjOO&2=v@0rBOW4AYQ2$aexr57dkTK}A(oV7>5_JvvrZ&KNX5^>KYpNLnK
+zZSN3IOHMVCO7c@TlU-AlsU3+fEBytGB5qErA&k)pS-Yb)WTZ)`*>W9}GL_^glVt$)
+z2~H^5P1Kx9v&M7mYumFVhhe6H7@-&YHT1#eU}AKJA07_cjXD4`Br~H$Cf|MjXUkko
+z?qj&@>OEi)>5dIUmD$C+!ujnA13CNd2i7cYd)ewjx=yxZ_6|$TbXxy%t(x$gFnX>z
+z+Lut19oi(Onf1evaw`rT$>GE+@c({~`qmDy=6`=?nQz(ezjM_8(X{*5cWzYtx1+xI
+z*HLG8>K`y1nzUk--vz<6&?|JJ9shi*@kNad3)vKZdw6wy>q;Fk!F@3mt8KUEp}+sV
+z`fkRCOLG)ZY5=Dl+;q>T6`2|0vQDQ!tTzK|nHt!t=<dtGk(I!VU<ec)6@>NlVYOl=
+zAVTXJZ*VqI1K*>@c|(_nFr5=DLqshLaxAGz9TeZpz}KR|D;nQEBWQjOIx5vAggZd!
+zIjD#l5<13AYc)V1&3EZI%ese8Y;t0H7SQCc5eOlXaQ&26Lt7eV#^7>NOpr<F1B4hT
+z5TkM@k(%vI-<)X@MbB7?q+IgUWgUZ+QInLE-QFHTxmt!L1q_CI&}e$dh$4%ld-}j(
+zmv)!9jX-TATW&x_c4mGg-0rrw3me6CAQ!LNX#K$Md2#l!IO97Q4Ib96A4}|mDQ$GW
+zJ9dyLEzEyhRnr8^NXQn7Ui1}f64k6MSR~+NYh9(SkOVpO=71r?vc`mS&lr;bgk_$N
+z3duz~*{>HxE9<WSkE*NnTs>1*l#q2vG8cbgXM~Y7LFeZ-!0P=s@jin0=flG{KAOJk
+z@Ba=B{M8El7d$4FrDEpk;5)yA57#A>Ax)t~2Xf8ZeG`pTXf_W~-4euVZ7=p><RNai
+z)7Y$7VC)h=h}|bnqPFin7_CLA(J&4U;^rSL?lQxvTQxSMkLwrp5y@`f_Zi&Ks*gq=
+zkDq(N{Um$vE$Q?L4_SchX9KB}>H3>u2k;-pJ)aNzz!E78mF2Ri3zaCK`=v=z%KSkk
+z(dPu%m&DW|Q^lzyRrT4HD5FCYw;{XKW<cv?9QS3F(%M)mxakH5{=~oY71WBuUw@E>
+zB!^dsE%48gx(a%`U)xS5vas4muvvn~Jhbj(-a(S~`Cs)J0J!lFA+)wdj;zohYRcc2
+zB|vK^Kkwq|HYed&Ekkd5_VBMQ>cE^M7X=*1Z;U|iUJ>V+4pnp+aPG8Ki3v(<Krcb^
+z!QHxwMZkb9s6bkTyCXgj7m*yO3S@LRA2v>-uv#4(LW`G|P#JyFeYL82S-1M(94yy7
+zzIl9&eI|BXdJ$%IHqshT_f~dFAzY2#nhtnJP!XPHOV{hDSVD0CS)a5DHDni8C8ir#
+zH@miTD`zuwtxtT)W?MCqDGckhbGa=L6s^3?u$@-zTRt7jYAcXlea~6$@!RK}Lp>j$
+ze>~sh4HZgXLo-ls$f@j4eIbOfI*nAXSY=tzJ=$r>)GHuG@)=UY{T*)^2dVtM-*|KX
+z?mYi@@b*`a@LzbVO#Hw7qF3ao4qg37A6&0=4kx?uNVdl)<Q7XOEj4jY=Amoraa~6z
+z=wDAFKfkR)?F|bg5D^6Y1cS3&F9X!DSy{uZAM2wIHt3P=p9Z$PzaIkHpTUNe1p0E4
+zmh2!RN+N%J-#pT&La`{oM879x5~^3_GU=l5ld<P}h9M$rQX3Vv3z!ZqN)u*~p$t#`
+ze`tv3?sq<V$X9(R-hoTYYIpJ3D{*P({mSUlr`$#Vz=svE4|a}jq@P~I)$6N&kCCxA
+z>A!>gSjze1T3c`fYRJJD##rtNZp&G=x1G6U6j_UWhNP*WTT3t8ro}w~uPn>lKUG0X
+zwDFyD2I{F<1?SgEU+qitMO)Hl(St~$kAU1lFcpqNeKV66Nd;A4X%<u==sr&JQ58P{
+z-M@LaIlXCM#~&$CRRc@%l>~AFO=#zQRT^B=>ow7yDuXVj#<~Bg;!T#+ZPI1braff)
+zA{*OQM^;TI7gppqyVh_>wbNJc>~cLk4?|gnXoE=WBGPe^@OtgIoK+%etE)h70XSNH
+z5!G#GscN0U>>Iski0tE{E47T{9XEIMf=0mZh0|zN-io8LDL`!Z`L|MK%4Rk8>Ki<H
+z|JlLBe|xh?+n720(=DW^VUzLQ#hR{uDd^xkR$ocvW4hF{NFbeCl0G%^5QJrkP=bu}
+zqh4(I;=vm6iskX0aN!(2Mt?T?ZI95;r8g__l2OR@&ePtFyU8`l;{$VjRScJJ`|dDz
+zeomMcUhmY&HmYhTTU1B>yT+40REbQ5nj#3shc7HokzycRSeaI#T)YPa{>(uCd@$+U
+z<Hu7K*Y`rkPjDa3p?PC2tL*9eydgf>6m=9tz!dn4b!RZ*4_;F4h*f~h01;btelWoc
+z0(`#+t@eaXh*lHE6WWAUHlr0!i5J7<v@*HJ8d8Lez+4}Au%dpNwsEW3j(l()%jRet
+zU|8o1E1icbp5ceM51vo&jt?Hl!qo!Q1+L@>oEG4+ZH^oZOgN<6WaUSF@FQ^XjwK!?
+zzh7^S5Q#69{b6S6;7Q<3i0{huw8H9&U6z(=V~xM68e!gF9$b;(fH;VIXJ!}>I=}p6
+zLib@D4VOcg-OD+SUH#6HuIZkQU1G7Qo+u-=u~-hv*u6k+l(_IR&rnOplk`+AJ`T;e
+za3}ll<}-#N{EsXc(zm2>FEfeSPfhVk1I$U*0^XA#x9p=DHrS<Bg%7U_*+EVCx@zAK
+z6=S&cN0aSPC{V=@BB*zVDG!5G)kD-4UPF}sTmqP5xO>IfV?6)e=VT~txuX0HGt6(8
+z>Hb$Vynjwu{|`&WOG)(qRT96VM6?#jiWfrqlbwceE6SS_ZS@hSHAoa^)U7Urzidmf
+zQds9LdTXH?-(4|I8!sQ#hSC}T;BUFv<`epK-E)59wz;Fb)3V`sD*D_XIe!aS&NVug
+zqrK^AFmgbUM<r-yV1bTPCih}hD3@&9n|wce-cTha5J>~RYlk4I3st8l$+1?YX&F3C
+z%<pzlZK2WjWw2z})VIjG^R?v@BgDE05K~M;w#-)JXQW5z;eLA;JY)y<p9?B%D`}bV
+zjc_;+_YSh8i=jVc^qZYhL`z{_9KnqTEcWM>Y6eJhfi6@C0ZEx#Y}SSzJ?$+`mx-m_
+zU>5g({(!Sj3!#is6hmfY<~;^DGIS`QuV6U}HGn}-d{tZmV?)I^fxs$;o&QqXXDX>}
+z7aJB*+B7eEO+HtC!`uA<58}4`YPM+IXp=#$^JxDpRd0!m5L5ZL2!=Bbu}q0?UG@;_
+zKbqY8Z`2{H=lC6E`H!80-_M-Ca@{)bshD>4o1=&6<`s&-07nmI;6MQrGE59AYe5O*
+z)L@A-Kc7b+!)kL=o2*Zzw6BLfY#Qs$>s4hVN4Y~xajW=dY}x*-bz@43bjs}3xOjLl
+z|3TE=-fUPKih|(kt6wxG+`|yIZ@R273}jO1=^tH)SsqoZ+(y@bhvsm*wI0;;Cq-Gd
+z1y|2UG^kub#5tcQSq%_n5gkJoNf)CB$=V%~)DPNbK%O-iZIi?wj29-OPKT0Iuy7iE
+zj>1`@Cc%S9S{t>1C`IjAMdCQLukxscQ0)au2WXMWROLTd0lubW8+oGvr)4Me`|4%Z
+z*5Yl!hjc0eK7H|fjiW7C5G%7gO(bwf86h>=0mGRFq%-x#PQDePd?F44?IJqFGi~zo
+zZgCQx#tv8+4{O_!p1rhB5@<XqDq)I{mZ(fnfWj<h(WOfObiF><NVi$1Y93E;;Izro
+z)EQ;^fEqxpaXvHIK;_DcQsGqVPOZ_-Zucpdq8F7CQ`p!VYCI)FpOm|#EWjA<nh5mP
+zP}M>tI5z%~_Olckxn9X0<D!vvW3!prAVm>(zj_j~He}dch=|l!isfQZ8s^Hpchs>*
+z9)_^bf&|SAxu_%eao$VftKWzdaLhL*#lGv!mcY!qN$WLgc~raCU4MxF1X~`Wsan{t
+zhr3f*fd$D_+9Pl-$59Lwxq;(OqelD7y>P_fT7`Q~qV%LISChUh!9KqY_>|hF$3Lty
+zVgcN|T`8H(M9%Qu(lKj9$Acv|O%bYokwsH&!yWX0S97L?vGi%*%yj-=W2S$4ZT`hf
+znF;^UZ~qFLiLe9&30yEzNfd1dXaw|YiwHIZRJJ0s$Hpu@>;CSg5Q77rj)i$0Pu;o>
+z75UxJ<8y*;6~BS>xooT0B&<5tWB%Mo(k5ekHmXf)y^m2DUy`T1k#00n*sUE9oht?X
+zHCCD@>Zo!;h6@|;Fw;s3!(AEIvmrJjkS0;-8<c}PnpRVjkq0>TTVOv|mb`w4hvI1`
+z6!A%QlejjX{OPO)Bw07b6Df=`&Y#IvhT)t9MT~0-CsV!2J>A`(>~7vOqR&ojzKM00
+z$;vKFJPXuy->jut_a`E(f+1vjiNOxSc;$5fSL@P684oK|`k=`gA`J9QRmCQ5iK$#i
+zcrnX7ZShM6SDQ_8Y!wka30!fW_ICi|rP0sX!5lQ%lO9^<F#rZSW39P%Atw-XsCfSw
+zEd*f(YK|D&K&}l()saWW-w7uNQ>JWZDluPtW2P|rT{bBuUH}-mspGNL^(I~Qxz>~Q
+zr7D9VT(N7{Ia|4%P4#aRh_5y`Q2Q3C7-J`A;14n!`?Hg}G+040K<9t!IvcTD9dmt?
+zoA`gNi2KXjBc<nP`j>eiGfB(ldjR0C>ngbgLSrmvvC26}oszUs9mH`Bhv6WwMdD(_
+z&ev?sCtC_}-*bguNIdZ3nakU2sum+Y78E|uD$=E!Ra7!ya{X?2|NYd9-D9=Fc=~>M
+z)xFm3vk@J-Fj}@ngah0lSXgRw)w;fq@L1JXMH0{UcR%=tF!lkPuo|<Lq^IB)<Wwh$
+z<8_k1g&dsnLVyZnm2l&)dMo2q^kl|P5yO^6L9iT@uW*@rCL;QLR5S=4H?-Io()}>^
+zBG@CykQ*Ub;u3L@dtgHb^siEU9!e3Q9BKl^7_5jTpc%B3OVlB2O9%*QG6jd?q_k8V
+zizC9inDi<~sR+XyP8?=?jRiW!fux>5dITE!&HhR4=}<|&Gpz&lll-o(7iqX2VQv*r
+zZ;q^yPR-2&2DBwwC77bE`<K*|rJ*;uM~ibnBy%vNv(jhM8_Gdv`{O6^S*_;bF6dIm
+z`=Mx#U5(%Tl_R#|7$B7CLDH+U^G-8z_A!*ji+Yb(yR<}xG6brO7N_UJqS*&gHz;1p
+zI$%yXb|ZwSU{DhQRavM>Ig2A@LFe@!o8>7QwXzRCRic7@g@G&AN7y7D+0-l<2W)hW
+zl+Wfnn_r=B6kTv=t;E!f;K`_q`)W|f0c0Qx1(pkuTcxFNq2h;p9HYt$XPU}qT#3s)
+zPwBy4G7&{K6&I61S6O?f-hKg0>yo*j+;wd8WoJ9v;rbezP#?GddELJuP-*@oK}Vp}
+z(BAiF%Ae)|70meo0rvNNu=F*`Ny~3Kv-+m9|KOsXf4h|bpW&!eLF(HwivE`q`GNsC
+zC1@8!28j;)mq=5MtH#(LRLpbnHW;+1uT3uq5JH6j?WO*#>1Qh^5d%PE8usX{J~ZqE
+z+pE_6(eIU_^)oJLTc(IST++;)e6{Fne(6(tp(enxqJ!cHKSqg<b_wasx~@zy4*`o=
+zI0S;aMht<8dV`oKf8iOe)4B^H&PfiD2X*is`J>~$SV-!!b^HXrVif0pk{v`xhoG%t
+z1If>MiZxPSEM8|mG<OTxvbgSLw+XRXdb#`Id}I<ay>W}@@-?<q$mI86`X|Z}&q@`x
+zBbdB&%IfB2o6r_KErlUW4zfJ_vR`fvC-UU^heX=A@o&gcZQ<YgJj0S48nLb*WO5d>
+zLJ($Y%_oqVf$Uo2T~&4p<xEf_%iF4DeLVQhXi$7b)PG{s7c;HeK01^KKZ%={@92Yk
+zNi0V*I9S5PM*;4k6A7o;ws~nlW?$9{tBq9VH*gv|iv%Un7kU0xwOL8VSS5Y4lR4yn
+zcpC42TH;E|fALbK(yaA2FL@nPQQsoAF+nMA#?IiX`pT7R$ce9P#b&TAsN2TkD7Ssv
+zDbI=F+r?lqcL>OrS)Z}-vOPA7=p%kb;v!;yYVzoz(wKZ^vf_e#-Z*1WCnw;|D`PQ`
+z6CD*O|1MxVHxuK6(OZ?caW_aBU)RBT0JDp?ViyGL$D0ZTnf>wS%{>fbGwvYklQj9x
+zDbC6ZmNcQZ`=N97?rqYPr!fvOE!w6_@|X;{JHmj!j(c1RMIIoDyp67&2@p1)Tm~hH
+zoP~jqN+8!ov?)iK?*0aR9NdNrqo;KP>VjjL#XqD~wMU>*^HwBJH#f1;zb1+`2`?N5
+zg7N1e_Gcuz(W?36YOmR)RlEl9);Vr%lKs>@g{AH|2cBji*2;wn6D>%MH0d#zCM+Jd
+z-d-`rOCMF*au7vS5MkY3U?_-mlh7PhUTP&`{O}CffSnLMQgSi}IU@)$_*lhRM87<^
+zgdXJs$-Z8oF0GO!IE0jU8gUQd&-gxth7x8at7{V0fRLE8cXLL5v{jCrwEN$rFp-R*
+z?x)G6jQB@vi61_GORgqPILpd&6Zkq5$EOh@KXvrkI_m5%7wn;39d}x8fF!AUuGp=a
+zF<>E3Jc0g%hC>I`A!Sv;5RnmBCULWnmp6BbxiQA%J`}H8CGxwkD7xij0tSEhmS&pJ
+zRo0*9Jf8&2pX)fiEvsA&TjNDi3DbKhv1l;l*~>5)eTkJlupWrXBtiz`u*+z@o+}Rs
+z>SAC}cuBlslHDcR7g8Gu@#UHu1E^yF^O|B+H+KGp>><U&7Ugo!j*F5}iBapsy2Fw}
+z=WK41FK=&Xfe@x0g4k&$<{^4IT<-~(e9h5XO(OY(n8|+#%f!$ev~GlmFx~j`w`B-)
+zf;iKG--P#9ul2uES^m@G_pkR`RJ@GMce8cy+A};#+tk3_G=`hmd{L<UR^~D)l8y>1
+zMGGh*mF43~ODh(o;1VLWBkkFPu>k|+hkV`c&UFX0(9Y!1ymfbTdUs@}lMfR*ZD+6R
+z;<Gkyu(Zba1~H$q@9sN~3=lC*JApBR!iDb^<|>OK+yi=3dcoW<ew3dFR1Vt@6wF4!
+zR$yUDc^e21#(5)wxQlm=xF60VYG1!R;pOS@UJ~bkl|p_yLOv072IRj2ehn0nIT=wZ
+zZi#s!LmDu4l*sL9%5x-O47nUc43x~N#%9R<G`#LnaI|W`R2Wq-DwSRNoIYsRqtL>z
+zdYF_{*~6SgMb457r$Zp-jHn?G$$7sK(b776rSgiVn<+xNWTXyhL;VGlYpq>t1^Yp|
+z56<>BVQ^ep?+&k^ULdCc%6;*0{kY->GPrvOVPwM?dV9S~x=H&GMPMzm3W&7mM4E%=
+zF5E=l+FXEkT)bV;9zWjqTGv0Pvg=gXF+hWCaIEfd0ik@2F=dtyj_&0BH!@szNMLUK
+zMgY}!KjuF;n*7ga`@cntS0<{-{59>i{ffeRDj{dtwqk1FiJxemARyWN5Vg@~C0G!k
+zS1Pja<Fc|=`a>Pb4I}vV=r`kd;jVS6AeO3!X}9|I2)0ET99p{d<in|awtD_z{lZS*
+zcnNMiW|BOm$pTrY2pL%p4Ra{_Rgs9~{3Lrb)6kK=v!6W%Z00>na9dsQAH%98Q#|w&
+zZG1MCd5C(n#fo`kx|7Tlt+M%Ab8{yRS$tcK5izXk;S*pIvZm4W0Zz-J0PgQSCUD6o
+zgTxX#h&N<8<gn;$-V0o?l(Dyy&gGow<TKWf*Vpky^Q}pTV5gie=SeGO1B8&!DTBFf
+z#Q@EYbTXn11BG+|6Y#f0ma|6PdqE>uktGzSJ<PuyZKMYbTgC#<=3z%8=rV7zDeQ1Q
+zY19X63r{~eRR>`Z4vcVH{5jNyjiA)@cL?jvkY70ax9u|MG!R`iXYmb%?;5fZyYH@V
+z0(1tO2;sT(=`)MTwWl{HiJRWU7_qn~WU!w|4sBOzI$)pFltL$0ImkOUXo!j@sNNoq
+zLT+4{CPKk}=r*AEVa1h%es7KWHN|1@3VJJWMHQxq%lT#YcVh;;3y%E!H&o>Rvrzdb
+zL;O2b{vmZDdmpP{GykNU4L3ZeY>X-*4?v}WK+4tFjs<hpUt~l`C6#admO6jYmy53k
+z4ewu@<1pq07N_>O1jmQC#<*hoIDBNRlWVu{s<1|OzG)Z`BP8y7$I|C<=^2IZ3iZ>_
+z{oGRvcLqE*IjG^5YgwkgR_;Oz9LMbj{Si&y$5mJ$YI#*fh+&1}Di@Oz?0;)JOAf8f
+z3S>xyExCmXdxgyN;Gv`e-{GUd@Z0OjBw{6l2G#HQam3m0W|!OwKAB*aK(}o*e8o$s
+zLI^M;5o$%H-Y8igi?R<Gaez@8X#h|FlG;+1E!k>eB*hHw5tziEXYbnxq&6zt9}Mi!
+zN@Wpe(1ozRpNK!iAkby#@mpgk;m2J*@Wc{M(fl&n(D!~%hGRM&hpNbMt@9)DLZcrF
+z<gr{TnW~2tpG&=URZPm6c46UQqfC#+w%j1Y{xW0Ww7qi9G&15-PGx|Z=H^lj1cMEO
+zjg<0UWM>v-pL}2ne>kUBK!fiy)!Lb(wnr`TrZ3T!H-p)gKVOe?%Np@8EmAHgkJo+T
+zZud6ou%?8DE-(BZv-g{?Eli&{5_zr~N<AKsV?{GFUm|8UmpSoYcsE>FGd~LsN?tAA
+z|2Fzjn#?P=iwFQPYV=(q{(tJ3rbe!2)+RbeZvRlpFS#uo)<xpCKd59geijJH0h5Qz
+zcWhDJ5QJHDMi=Z`YH8KtBO=%O0nh@7-(4Mb>pXYRF{1k>(vVG6e)Q6Vaet(HOHBj3
+z5~zwm`Iu=z``~J2PY3&8O-*@sx!wasg2d^d!{)iQsJ$#@SBdb-3^6`CGqp$VKMrX8
+znLNBdld%B^B)stY{rEHF>d}&}BXffEYSosdEo+K4IHkG&R*0YuXQ6HzSgz<tbe<(V
+zm-aATCvn;CzUa@57Z|9oR&d+^Ch0Sq&&MHu-f_Ao1}YF*um``#DfgQ!i!Cj6qG@wa
+zflj^EN#&19rc1mGHYiWNKd@kXfs^<PXG^(}$&(WAmI*>5zoKM<$-2{xTEfvX=vX3d
+zeWzK><RYp5<luv5-=yi&H3-uquK)!FaZAMAg7K;YkF(mq!c~eL2}Avi)C*J5X3<eA
+z&F1<O_K0jqH6GD%qkuYrwbV~K;UB<sf5mT}s+S4kVs|ik+}leCf%_3Usr|aUCNoEx
+zhfB|i{g#l_jNfFk`8v*aTWN_>u*3lFrMr<nEZ61+kWS&hYd9K=2iTzJ8vhcpihU%H
+zMEgVa<=j#UqV~X3MWC{i`aU7FU1D~YcEjvT-`T<0xN!^*PUPx!veARxp_jEu@R7P0
+zyNtIhO|rt7z2`ySk;Ya{^w2j!!-We&JrlBa==kcfgg2uDuTSQ@1>2sDZJ6z5>r9!B
+z<w6I5Mfa=#`(y$qpk8Wow$Mo(7DQ94b$+*}j;g_%@k$4pY`&JW6GOu}Xm47C7se!^
+z6pB!?YGYhtylSQ!*pnIi1_I@rK<dSe?Gr0ou9j{ta_jKM-Pc~ZA|BYA+mU}E+$mmn
+z+Ik3YlRl?Pl>wrIw<8Pohuh+sm}mRPbFx;gKLb%uy+UoYNj`3>eK&9VqX=uVLTzmG
+ze#WQmjb0>AV2+Zt(10HZ@(N9{KEh9%sa_os-&K1`Wm+%;?=#0px&5)sj-POt2d9T2
+zRA>vX+^MMspg#nf8Ns0L(Cd~G{}i$7!sDOW0hmUkAm-iPRQG=_VAFxGtl&iQNE#cU
+zGl4+?I(a*=qib`rJUirnAp9y*EDJ=+C)9g1R(N)HW^cokszl1~C4jDY2>En$bda*V
+z!dBU;@PKiB*~aUU6{)#+%3vj~=3scRy158R*va;eGVw|dHXCGawVfRxCYNkOj)^qB
+z;D({oTSO0<G(h3_0i$c|nS!5~(g9G&rFXv)YZu4=hwG&{1;h@xF;E8>Ls*u^kOUe5
+z{CO5i;F=aZ;9}m|5~UbH_8mww+{fm)2|3YT>(evc)xn41xepSXAz)r<ueh8|Gm(5R
+zc?l_@5lty05?ZBhBm*p_tk!Ch3JvYYF^Q@zBVATC1!1{8GaGq52eliC(DBC)icoHK
+z=xrrE0af32MnVp#yur$BE=z_w?*wWHR33ir7*^S4<sD`jl6lNRxqj-X?6AJ3YhgQN
+zUzkYU>IX?Sh<y)wzQe~O48?8*o6X_{TWH9U$=~a`g*;=W5akNL!sVhWMnzEc9KeHG
+z=fa9)TQbL#lcL$}%$!`7bZZ*S$AHc^+cO1Ty1yzBYCq*uQ^)yCKP2YR)L1jFn)tZP
+zY|9^$jVpl0y>mY@-ONNP^K?V?7YtEAoG^nangym$>~o)Mp3s1KFN8;@)6G9BL06ah
+ze3%aNEb)J<GJ-5;Z>!Pt`}fpn<-I27y>2gp<NBA_i(!Rtol)+W+~BvNm5Zm5AOHB)
+zK;F-a0?UjwfmR+Ys5a<qWt*SkU~SDx9Oxc&hDQU?1W@*G4n9hnI0RPS=TSw=SN(Ze
+zQh_5k1*L9PRoanbmI!#p6ygP}umkR2{KW%ypYz^k@Lrz7u8Wf%5i&nlWKB}<w}Vou
+zurub>9Xc#5JNT}uEBQSh^d_CxCZFW`InJ<IaWW(tnx3}RBG}3+v0iLk*DN{98j$7g
+zF=Q(<vd>85vjrD-L<8_|N5vOizfSaU{wze7F@&<HWho2D45VZnG6dNs48Zjfnln)s
+z*u9KUQ|JV~irXw2ZDB?MDJox~`0xw9|BQGnLS8V<F+ve@I;dE##G|2ODRnqfg{lHx
+zEOvyE<Jaw##HQ$M8PEXM4xOXmL$_5YN1_9;Ecp7xAj?S&gNdgQX8go%;epB)<^_15
+zF^L4mod~~b_dP0IPyph9LRhV)B(kWYp`hjFmdBXOm=o`zk<LUVDaR;i>`M~f7I{r}
+zj(;mK8G{YYN+CSGSO<M&I6pM`OR&-O2gZ<0_^5&-pP*7Ay=0#Nrxo4uZ@(k5k#wnc
+zsPdmMJoz;G1v{R8O0j(Ime~uf1aWg5{5Uraez!|<Wg2C^+OUPHjG5f(2bqU}Qur(8
+z%`!65ZJ8W!KFncdXSgofXYHc_5w)n9!2bJU>pZ6o8d`L=bdLPDGl7uzu)))lM1ARz
+z`T!jMl_*?I{CG}XnkRfc6lHU#dEu(1y{O>HJ_!Z7k&a2a#`mvkb{4QVvv5}`7(u-a
+zNfznq_k~|4AsrrYtvK~xas2xR(XrC-&>z#J;(K)OI^tORu$uz-@Q7aHpRXq8CzXxe
+zGTtXnVD|=nuoGg8*~6lcQ;zZq=*EvJ;Q>9_vx8{!dJw6D=R410?}?QFzm2fyZq{E;
+zIijmRJmAb0L*>(H5+Je?Mjt_m)OScoWH)S)IoFyMf7Yxs$@9i#M<?XR$MKOG-(8}#
+zrtMLRdWVPLJJ-)!ImyJVPuV>;_|qtJ=8TarcqkXIJ4$nIUYQMBudjKAw5~Lr$Wpti
+zN}8dwk<${B5L%|Jg0{d@gSujBv6&_B!R3_v9_0o}(E}wSBpvnbrj$mryG8B8pmfTi
+zb1G4wo<ze;o{?E<y@TfR6>-z24NKro?ZTH^(j+!^m{US@($AN*y3wr7nGOHatnR6J
+zh4Zny))~61j>xIo2PAe_<5SEdJ)widX6;wsLhrbn)46-fC~dI@7ri;Ek%1SpLz(d5
+z2a`9PzuOaNb}vj7-5>CclGCJ`av0ANRPK8isO$UD;}UwJo?G%TGQmu|8R>|ri5zbQ
+zzRu8#%pz>Tq-f6+aT;4ATU>y$rL5iZj!ymS*F*$&RVqiAG|r&qEDl`713`2>O4vF8
+z01%*DK)9$Ixkgj!#ateB?__tEvlUeo>*&Vyu%31r7M33*=I@^}ObNLD>=-m6xs(}>
+zTYyR~Aq;klLQS_MqeQ22xr?%5{T$f2g%m>N?(>EE>B5v&%1~TBsUl9WRpRE#OBkFa
+zBThzf`OXLo3_nMqEVsv%yPDL9cM^7Z2sJ2o1<zl?+$_rZ_0CQ($THnaf6%F`M#t3%
+zcnA1IzydFr{|<5&B-J#6F!;KL*Pm?i&1jGkk9L^jqP#N4LOkNlaU!pan6-@Pj2x|?
+z58R@RLS=|dR;<D5XY`Zr1KQ%}>w^fkUb0j-*eMD<Ul*Xa(PnTM#V`dwAc>##_BVig
+zhkj7DqH1GX`&8$^Gt30wkrRvX20oRJ`0d(|@H#z(ABo27+<i2R=dtykvSr-*;HJwn
+z#)*_6x~EDFvz#&dkr}@`Hwm-}dAkW^iMYJBMUwND4Ddu99hH&X)1epFCaXV;fK0jC
+z(T$kuLCGF3IBph}As;VdP#08X{W9YEB&LsMg=RUyeQwzseS(q*Q$X%uq(01Ba_?o{
+zZ<z!a+p)%W^dokENGwD-r6m8tv*uVBib64jPBB!&TCbowsLp>|cVsdb3$cphv3M?I
+zgkLEx3OZq^XPoUSX}l)`d6w|dIjY}LH~X@X0wZi5$Jf0b;BgULNDr=(rA|-2Pl`e3
+zRTj!!?KgZ7GEhXk&2dMQT!Gget`}N8RRz)tz8Oug4^Qr3Hg>+vr2^B<`fN4s-a!__
+zE1%?*J{YL?{iw4_#>Cb5Xj&#i{qRjZVA|`pM!wcETQtyB0h7SKoj<&aE*&aG&0)q4
+z%%B!is1;Z`26NJ!H%04dsB)>+`2dCrR;0Rf{ieL4?>f{1k9pG#0CR+T0-ozMzqp+q
+zV+#>Z8pIhoIuw`zBvPd^t_(2LlbHe@DYWB(UQh>3^y-bxFMjVhgyQ(PsxX9NE8~NP
+z#5khI4jFmQbCft?p!1ypCoEbAfN&xgfU*54T3HDUtsyHddoar7<`ejeq%|o0GbDTV
+zJ`33(y;4==Q`<UePa6U_+5pZJT-uTV6TNq0xLf0(x^WY0(zZ&qN4LgZRrj+>1v^Tb
+zqWxEk!AW2-du5d?3IQ}t=Q_yb145Rhh>Fxp@*whqz3iK|#@~7aNUh!PP2^bI@ie@4
+zv)AIk>d>ZDoGDhv91W-sW?t>$g&Jvbk976*67O@gV&X<JgLCwfB9>+zNt9&f{L{~R
+z#`;M<-o?=yAbhqGyi<U}k%Ul^(z@g8N5>rURe2f1b!@c@?qnv?7^<I_NF>Ni63C1%
+zo=PzoJ0HHPWT$6`3Ux7K59|ucGFHu<ao*n^REfyAU?6D)8gAIGmDla<UmH`UaB~=j
+zdM4yBH9`Rm)Er4wc{rK2NpG>Kv9M<Oxn7ZtWIsVppYg3OaSOVKkFIN9znm;T;UGut
+z?5}$TGC{msVl9re3>?*Bm2Z@RE$qKnn>te$7gx2@$YT-RE&Z~9-spCCsf3W*8LoAv
+zec~Qb-wwFI;}{9&{MF>(@1@==*z6!QWg6pC&*mYye=*yv{AcVK{?i|)t>mz}|MUzY
+zHT(K@^&QnWSDUsyh~Vn!L$BPx$R4ryRO#m3Lvdm|zwt2}zOv9`_5Ff|_tpJ2%EIBn
+zqcd{nEJXm4)y=@$OGR^IFw5IpC57V>m7!CMVVZvm<p}3=*+E#}ZZb`HHN!dayb8*$
+z@$p2cbFGc$JQS59zeC5lm_Ga40r$3=Hnymcq)|&2Oa3%Qfvc!+0TC|bQVdJ9K@>Qu
+zc4k)0K$ei<r)ZsS{?bih;&iH?6FR)DzT|ZnoWO=nq=Kt+9(YmQ;}gF<jTG>(Gv<1%
+z!(Je`7Fj0rvv?o|18O8wh0i*Lz@{6}z8Ly-cKM*=UYsMP0?meKGkm||r;d0s-`>Hf
+z1ZuV43d=%iwcoPb&6eA}j&}C?;rXdD?Xm5V)$g%NWcOC-IB=pL-HT&Yf=-x+`~kjY
+zU`5NiSP$swp0=TJeII_hyS|oFH~YdaB)_IgC@y@5PZf7h?=$4rXB;V4dn33x@lTcS
+z?3)6#FKFD;VyV>TB9dT=Zay?k-UKeZhF*CHw3CGlO}3Cum`pYjZp%L#$Yv9`^<`vr
+zD1l>9;1P^U+rIjZ4}P*GB$i)hK78Ohft&ei_Qh@bY8j?H`|mNlC6oScc74ceopzF6
+zQH-~^_@*!w^iwJg#k%Db&`(_aKhvwJeKR>NtU<G-ZJWYYb8=P@kOBL3T4!}9FJ=1o
+z&z|A?dr=v`mCL#_ig@R=^C$_Eww7g=6*OTPqn;x3y;=<sl8ZXUXuEEdp0wTTUyT2t
+zYR-j}ipMHzLnOraaCNVL5~4oHXj_@&b0J`G55!*chOpm;RaTGYe1Je7Wk38$$L7%K
+zA$SX1fm%s$2JN0@*moK4;t0^Go47DA)5#qEsb=~|tiF0m|4qVj_Okoy3>w#Kl;aE3
+zdBu(0XAbPfSx=_>GGrpHRelV(^Z-66SX28K!$^=&uCHsU=b6b{6O^ix$q^P><I8F<
+zT17FNHE9&47B=H~d~7wD@Ml{8<%UHuOZV-c8H1u})EMu<+jX?Lr65IV|AR?GWU$g|
+z7sFRF+r7Z2Le3^2@YhPdM_UNz0E<tC7=`?k6{@xay5#S0)Xk#Js$(nhwr)ML2A1|5
+z;jYX8@T4MPbfGS9^qy@EZPu4yDj!ZY_n&E5*YP4ADyxD-Q(LINx&0IxGC<55f53FZ
+z`UcW$6524YgZO{Y0KZZ8CPYiai`vJj7ejXDOMhHep=SE{whSasUhBmtjlh{TGOnS$
+zDt_ASqdClY;J_wc6LyD&Z9>Os;mj@9<W~^944nTG<lTC29AKjion4fy6@qqGxJ>Pu
+znYp^TmcyPw>(-_&{PV;7ULyFy9PK<7A;HMG-?QXpGtLchV>8G*%|rhj+F$;Dp0RVb
+zXA=c(we3L4KuqZ}uMAsF$x0(n$Licwb+90J4273%_<%&f)-&PGEY!U<`n9=1qKh2~
+z1g_^aPe6ql<=2uP)wb&jW_gVBBD{$)8rt6EAJbj+MVr^d*iOU|?H_eIfU7DAzRzKs
+ziMi}nF?WLecOe7Tr_~$w5WJ6-IbNV^+uRt6i%cZRViaA{-z*=#odmR+uS0=!12>x?
+z#dClBj(<QxP!Io-<hxpV{BsiR^FlLe1zz2WLlmcw(#+|sy$uOc9Z?KFp;NQ^wfSu_
+zTxqIhU~Vo|Ei<b@yi`H9ueR*+X^LaSZEdirYeWJ7?CZ<w9q)hJZx}B9x^un_WS9Z~
+z0FwWoLYjr1rIDGTje~)W?LVZnLk$gwwO^>;Dy*ZFcF)kj4spf+V<Sl{-I}eP7~9jr
+z5-LglkSQUtG9t@X>H9NxrL|b4h6KEaiODh?Xu<Wy^r=U8t#Wjj%1H#1vZ7lNobmFQ
+zzALMFhhK4W!2M55n{7gFI_&uxE!S@P_wS_REuyEH1eA)|A!e7R-P}Tpc5SRQSFDQl
+zk!?&rqZKRQKvOH=@yE0<?sJ3;0<dnum9nY1tu%BqRUItStBR*{c$+;E+ldo<|8J|Z
+zeP>k66}_jvVbDSHy{~`cVSbX)zI6WWkiMqRnyO1%)6H_vm?pKKKln>2G(07(P(_8u
+zGJUdyL?~cC&;>iP!o^Zpfsfimu%IKY>(3~gLLH|C6uzP{6=6Z{ANrn*aj10#Ui@fE
+zC0#|@QAa0QDAsvnC!GKV68BhA>E-pO`oP$;A?_=;7pNb?063fE5gK9{IWZ_Xy_PH@
+z*_3=L>3NcJDhFS^mK@8(UeRrN@FQc7o(-{G;%BO7F(?Zt!U6up;RU%><haPJ#B_3O
+z<dSjKd==z`-}A&i3ZS}C<hbb^oqNz|gM!`4%x2IX$GRM6;dyh}n>1bG>6B7nIi=)G
+zb!C3hv9NRKk3zi|V)wn^J98+5;Q~xE#%<CRvNFiHV+}v0jBp+UAM>OMf~<+9M7ZUA
+zs}?zpuzv_65C$=j9yYfu89N{rWsytvrxj_M)n}Cc-U+IeAI@KmV#ua~&_<^7lD2ot
+z-8L135LkLsoQsArPT;W{JTT@`sUGf5ZZx5n&iw0FsEx{EhA@<P+^A9wIBs!Qb{09_
+zhU7LZwvDM3RKY}Hri)kr!LdZ3Ozt2=#K5RsWJZFhx{|xe>0GB})%<;n@8)<{_n6%@
+zFCJC^Pb{7AzGQsJWr$+(7pt<WhIPinVt%Lwuotxv%a#@N*eM{5aD~8*d=7FfU-cD7
+zV~gF5eO5kB)nMe#SgYw!f~5O3Db$$sNiBLO(hGE5&kd~Z7}5pqx|#Lvewf8x-f<a_
+zU}=tG0z45nX0p|WMiUCx@;sRgs=z2-37XGOIfa|7GAe-yZiBGLLOrP0o3_bi+^6L#
+ztK{K+5O1Jm2(ErOM7Rb73Eb^XHwi9$L0P>-c}s9^8FEVe)tfFU-JLP<xnNNY{>>?N
+z4#CeMr+`Mh9jp44mrxAoQa4s>>S74&H9$I!pxpZ|w=H&F-s@z5kQMNy6^lm1soXNc
+z`9E2YHLwFiiwqGAWmf25)eKPrG4$5@X(Y+BWJQNyCuoKnZ&G)NgsKDjzBuUf0Xgco
+zsOf+k)-;T&4k80DSpaafl<sJ+#JeKYWwXICJ^8;)-d_fD<7Db9P(A<=<v<H|LDYIE
+zbgW)hyvht*Chetfxo2KN^Rg~|d8QmsIGsA6HDee(I{Pawg~sWc^L1p1m-FzbNPlY4
+zufRepGf<hHW%NLC39tH69A`e$yh!mxm!y#KTXEHLs2)0GohY99mh{S8RG)FCnxNyL
+zQ=LTKb&e1$BGrbq_r&ush6s}7+O%bEy*blAjMZRIiPkcc0k+s8GXx>PrU>r(kJ>3A
+z)hl4vmub6Jl*sFA@+ZkE1r5PaS(Tfh+>|at7xW}K!^AL4(Bs*1TvLfg(T`^94UiM!
+z2P?wS2$lr<1d!hGiP{PIIIGAhF!eV$dox$9m8KtZA+t1(<TI>P>srxtv#&hQ(^P{U
+zFt9T8PYJSB>wiFc%CewvPq3GAbk!i*U8;hb2pV(vfS~G&HgVChXFUqUw6CtII!Sh*
+z8U0F5B|~z%9GNN$X?nBd9i(A0#PZ6dou2m%Vf%`|el<18x_ln_!`D@AV7+Pu02ke5
+z87T8*-G23ihrHunV#fZX4tx)h$6EyN=j>_eBINcLE*Z9w5gQx}=t+q5^}g`){u|Ux
+zR$HD~<BY~bt;3X%!%=&AQjA#N%=TpAIjf)uyg8n_?w?FH{q|}2{GJumHOw6^nI^6J
+zQ5JF@pDV0!n~zO%6u8ta=2dX$ga<AobKeQN=N+B$#arAfcCWB}X)|p`)@%e2^gR!v
+z#Y3TvjKDJ*cd&PH0g8*R$Ny8?S%+n{v~B;Uq`Rd-LAnJ2r9nVC1*E$>Bn6RFKsuyD
+zO1is|4(XCcx;wtbeqT4+`|)}I__hoOt^+t+*YBP+*UYT7X3jHj3BN1|$_VGG9W%#;
+ztb^_gT<VKA;hh;!#%f3eAj$8DL29e{LeI{EE<9dCXnsZeXdxZ_zUiLNO3S@os?dY$
+zE}qTm^Za*)_`Mj{$;MTU?=T+{9e<nlq`2rbbG_H{@)+Zp#}$md7}qnyp->8m&@KEQ
+z&nTzMbrb}yXs8?SOQ~X?;|Q`RzD%X=#NNX_L&CVn)>)%vk-F`vjIjGjIy0nwQnNp^
+zV;7zNI*2}?m<MA0CF<;l0mJYCv6Il45Mj#p1FCfDM+xY{ie`i}DY21JTc4X^9WM-G
+zp#2>*N~m(+mkDG)qimRC#uz5?uT)B6{n%h_AYq_jc)r-t;C&zmFFr-tDI{fZt*@6b
+z9A0^#KI_5E-K;W<b*A$U!N*{_t8Iy{#;|+Ec@ytL<w{Uid{g5Kopr8fSqo{n$pU!K
+zqU_bb6k{wQ*4RWQ$l$(sFHX4*!`Ae~#fvezOq4Pze=KyLMNc#fpI)dkAtsJR7}eDg
+zdq@6r%6NyTRX<eU#60Cf+phl;IP8z~3uLoXM8hRM7flZ07-c5Z>Rh#c=%iomyqz@g
+z$_yW<Jx4p|&_i^x&gtBjB`DOS@G&b|iDNGF6<>&XC5;#XmpPSZmmSd(bjoq<kl<9q
+z$ES#NFAYb)ND-8FEd(tfcIo}#&{TZQP-hc!Hq8AhqPg?PkMvz-29Li5!`uUM4uxG&
+zorK6l(_xssb4E&DZXt4a#M*%j@zRz}!C9*pK<DisjdoEH`^@u=_Lv5y7dbn;ZkGKc
+z;cKk`{t49Z9r`NLiAWO6iV1w;^7cn#(r_Gjs4-{H_>v14zOfxAZ!zKV>Z2x%dlzlx
+zs|=;}(K7qYYFCgxB^w}DR%0gQim<Z((k(pq8CY-#Js#U?OC{a;d28XRCCk>M-Ipm`
+zD<xJ|4P~F?RlgZTer~UTC`^LHRGbWrR%hc}rXyTRN0>5e+MTfV{uX=eA)x>*)lDPq
+zs49NX+~@no<JUM?+nKm+728!;{Aa_crN|4GIHpwwL~g+?Wi;K0)8pkx^))fXRmAQ)
+zQ=fE~z4{mjaLwJ}9iXUrIG*<r@nH~_57N7AZdsveh3c@EnS70ue!MG3yVhD=8b2*e
+zI5?@3Or$@2f8Qw6z7s`K$D3laCDePWw!E-zU#YE8LbrbxeZJpMpsT_yckHnUeojoz
+za+9C`aT5ja?pb^i<z$&ZexwV(GusA{6`X$P5{pfQXF^WS5{ju$EIRzlaY^Q2l%;ZV
+zw*^^ocKoL~v-6Kr*5uxao(z$j%C(7}7n=qOW5;ndQChSuz|25>OLBx=qiG`Iba7Us
+z%vM(pUNsvFqzSFOk`aya5`1a@x_1Gapw9wzh?a}>5Wz(Fm}~7(__MF!ZV`jz>h)(K
+zn=FnekqMTa&puRLHrrE;N^0;QqmCDQ<|n&2AueNw*H<{{FQwAb<O!IY+MNuOv*5Y}
+zJd8lHK?&uvfEtG9f88As7x>VyPtD#}$Cs0*E>uBnc#b5Sx)SRl+)H;l<tXM_;fGqU
+z*rKxy5~`dOyPrC8E{=6eO;6E8MsPD)<<ecPDHnd;h}<4Hj8!M1^_Mbe-csTJkz?3e
+zw70$ly9nv1nV04!kq=GM5L-P*DZ}%!BZr+Oo0%zay9--Fk};JC6KgBuRiR%u%Qx9K
+zeHw$b*4hJ*UCeuX<re`kIDKojQ6WX<mYd7uj?M*XJ)Bx1DuO0!2s-{PQ)w!k*F21x
+z?L-xEE>@^>bD1Ab2lP44^z;jLmNUbA%mQ*dXCllV4$VJDJ9t+Z)I}1KB&EBor%$IZ
+zX4V`G7qW!`(RQ^2^Sr3Ll1i2R`GwsXi_S;2ltQ+mqF#6|7kvJyheKWk*Pw+(ag%P2
+zFn(;YdrLd_xHC#k*sj1-tBGL8O+Eta8AYFhK$8FRPQc94()8w?x}ll2?f;18s;%2j
+zbYfp`)$6$I!<f7XDY!6V*wku3kw;?StWEobLXp}!g7rWY1NwO8V%t$UC*mkQBIMHx
+zZg~%}+@~uW&YMr_-A+DL?-5o&rhZ+_Z{F>hH~99c2WNCYSaiGJaMU{>G}RG)XqYi@
+z#;Bi&@yxq=TxX<~nC{)ed24&)ss+<hI#w9uLdPNb8>>}eH%E>mk3y*YcfO8CuMr7A
+z*Q3^s7OSv_shYu{vzK{p+>pt&UT!QPE-l?{(<4EZz;=`H<Qb4ivEp?@f!p|5C}L<o
+z%GGyRcu^iTq8h_iN>_-WvNyiiS+WLfdy?kOdD~{AbrV6z#FOue@XPi1SiD&j*eK9x
+z;~EDNtY|LKtsd8TCoFvV@L{GNwz%Vn&}B0fEk7C83+)~^o@c(r0d&GtI~88M&=G5e
+z1Bq*&2E(g@B95&IA2L2yBL~CkAoW@9!ukma=t;Qu$<9rbkxvgI*Yltnv3e8CU>_@=
+zQ|*A1pOFV8OrhmYu?xj|r*HdABFD0~=t1a+;K%M<l~}J7|A2g-REZ<e64-hXE?SWC
+z+9azWJyQ6&&B#~4YlEJ0bTlcQq9QIySSzV}wBI%Uh3|EA&~|ld^_G<hq`c_GapQse
+zSZbO%k+H{EZA=j6AOk18qzeokk+~&TOb?w^Mrw@O_ZpeD3k>yDzb};g@>VbTtl^Q&
+zq0#(}Ap{BD{77<46mH~OoWRqvxexn79m{9(Yen!kIs_0U>qJ98mq&m*FU-4<)97VL
+zya|xj{j{)=>*zM7H_6D2C4mYgWVMp!cm|Hm)MP^<^9C$ysBIY#FU+C8P$srr^3N7|
+zX4zjI?jY#f=X11#t6pb@<3=@<?BQIRJJwZf&-641CrD>_UuDi*TCr$!Z&h<}KpnVP
+z_-GlydYrT2%~FV_$XR2J8q1T`*&bUxwY`QiEeU-Pap~ZPIJ%*W>#v(-MWh@UdlpL6
+zsLE1i`k=P;h<LOBl>`dT#{fGxDH3z+gQ<)5`&7M2%q{)ob#zDzJ%5o%_m1}u?x8(3
+zsa_^7O@3(dqIwzeOmhshC=d4`Oj_c-EXUQv8;x0Httm^Bk{*kMQ7gZOZjF`4p)vY_
+znNz1<D5T(0$3p$CI#H(6oV`g;BP%i?F3iKD;fR^0)vpd>)<oc*+qOUB->ipFrM^en
+zGH!*4is^?ITuqDC49D-wbyDe_o<x#LjQMe##S(3I_5&L;uD%j#wb5b`L=z#DbjY<G
+z|MoN9d`&Fbjv_AGs=>KztOrP|^=zAP61LKqEM!jT@EU#@c>C~KgX`@{{gj?N{BZ$(
+zI0H`?zg9UsT|v1QN6-8k2j&Zu?hgr%!0&M)C9&)Vri)lyDXrey`7mDE(d2dLkP?NE
+zc<f|+@GwNHhW$TQxddZB)?X^M2voN~(7mAg++=SZgR6=+J=ynkLogk6=ObP8Tdfu@
+z`>5Syx>OLMJiLK1JYj5ZL!V&xC_+Uxsi)^a_yA20XMR(7!$|mk5gS!o5%uH`GBa#L
+zR@U?Gy?X)AIlDTW_4IZs0-yt8XjKyCSIuS|oO_rnzM!S!S!KH7!tN?Ee+2D!H|=%#
+zq#V-BB>Pk$Fy@WDl!|1ur5?+tt-ha8NH>*-^Hj)LQ<Y%|qexEXnOMwBh|kqW!Lq!I
+zi~(UjTiA#^Z_l?N_wgnsFO+mKZUl?NvK5!DL5(4P((I0-^b#s&CfP_&=9K$HI^1}!
+ze&g3kqEJ7Ao<OFLSHeFUxSzZey9oQ%iJ-`nr^3#Z*D(7um^pAZb*g21(KhJFf7_ga
+z6S=g@IQk<LL)H&gIo(;Eiblk?MC6N?_(6o98SVkECte3<iLnvwgr;=L8hPj!_&4B_
+zW>%R5$EJ?m+XRIVv2)^%KD=zk^Ao4eeV0>I=+8&@;|Zm2FBUp_pCdxA$tkDy>~|tV
+z9!0@9755cjCKEKLwuOT&l2!861Y2OZ%5l8b#Q7jPjJ8L~wmwQ}`%Q%$ef4ri)+<;K
+zF-Nl>k=Pg1hPY}P=)?)cDIztjZB<MrOw~)x-_T^fB*8w5mnz$DfN)B6o8jV6HC%y5
+zdE^k|tzeHQJh0un9$xd>_MtG5G!1o3l0E;E?hdK!=NbvQ-Z`lSj(y|_&DsHk0;=Lj
+z=1W)?NIZ>VOD_^7q^L0qIjq$`y6e|wq(`c^>G?Ok8n!iZf2ng!Y?;uaF8Hvlg0=!0
+zv1FG$X7`P*yDW3Da<sVAjFk;~c|Mh|Txk^77MIT3uIdLf>UA_8TxM6{;z-oNC{n5A
+zQb<KV+$3x03E7LqYlM4kb}iJ*yG+U%QA-sj(sR^wSzK72Lf|~_v7N%6UGT^rrqTAu
+z|HRD@bBdtw!)8&BwA{x|V^Tm>GRF>wVgi9)h_yMZ1THY60L9|1q3`3SeUdS_;{CX5
+z(UW@GCc<VPJ>dbYD3faYMy9k#h3*u%%7<-&n;z>s0(d02kzGSY$zcbKdpYE~^^@}t
+zR^q)HFYL89bB#4h-XrF`=OR=)wr;IAD%%V1WPm5=R@8Zj%-+L~7}kZ4k%)f5sf%Ph
+z>*86Dynnv_95ozuzcK(2Z}h@ds1Y!d<<%c`im|t$8GhwYn_nYgE5<I2bG5m;qfk6U
+zGfa~(T6b0OG8E~FZ12m+kCV~u_y_5rVz$;p!g@`W1y}@4ug`6D8x6kp(Ee?P>6`^Z
+z(P!Ny47duHh*<74Q(7`k{#?G6=BwC#_s#cl$#)l87d=A>Q>d!3^pcO(-i~E)1!nSp
+zt?qr^$F6IO-5$F~Rz0u9d(C&rZu}eu&UYKZVor{-n6EC#IW-5%4EF<?ozb%}&)qEn
+zYs_$5lwD01qUO&@0ayIWG`UQ&maT3=f__f!A0(-X_LqI6i^?m?ozrQNjg6Hnw48Ht
+z$Wu9^*CcQ@mqICpT=6T)nm<P_JKxXVK#W^_(p3^#e^pG@+Zxc<Lh~g$T-9z2d9C!A
+z0!LF_P339*0{wh&6`bB?C?jN!x*p3u&eVZ*-3yDew^*_or`Q^6OEXKg+C!-^s^6Sh
+zVNSkcV+PuDl#4vtqAxafLbgY>3p+0Ach>b7IPRK9RJ_7Y*@L&!ctq<`NM;=RB#nNR
+zDR5WY5f<tk{Uetcsjk)$|Ei_;!v_x_sEz%V%d6jIWOUwN%htOWTCROz$Fo?MLv%(|
+zpkVQy_vBTeI>CO33iPpo$0j%X%y7$*{M#9H?B3ALFT~r69S&b+kcdeZn_8pLBSy$y
+ze<hTIAZPxu^Fs4NBFx4EF~p{Xzhb)Om>+LoI|h9RyDC_EAPB{F2zrBJ-MKSSdjDk-
+zwG$8H(>P#Hhx_#l!K=Q~ZQkp^M{}^GU#J-pPNB|LR^ml_NE&tvb9f3s9$Rp8pS^uS
+z6W0bD#n_!T@7}JW*4xOBU*yv~67sP5E)%&ps1x-LL*>CnwB+}8VVNTF-LZr)wOV7i
+zv)#}>lJgfF-%6a4HHVf+Rfg}K<YRHe=Dz-R<WFG}$$Ql(@uR|9*l@N;@vTUZfrL*Z
+zGl}g+ND<Stz&M@A<onC|QKpX|y7ZuV?j$tyw8#B+@87{ea;9UMM_bn~h@Rw2`Dv6Y
+z4Y75z63*H-vn+5X#u*g#BzwT0bN~7ne3`XI&j#4ga|~#B$o|X8ueq^`yqu=3k+zM#
+zo~Ev)&0o*LYr{1G@dZHM{}e0oOy{ux{8v@#S8VjxB59I2NkeBiPugVIbjWqlHotAx
+z1xhNAN>=+?@H~j@n{(_dec$)d&zDYMcBK4GJ$y~yl}%xc$8l8LaGqiOn{X=!0rnI&
+ziown7QL)xRQfI9(Hg^Iz;zm6(&Orm7^Fmen%lEwXGZ*TN7CeZh1~p4(fsVQw_`%3E
+z?UZsXjowe^+|C&0VC`_v5m-pk_kR$ZW^Ks&mU;IMd{7uGByxI(qau}Dhr^xnghI$A
+zi76~v^)<2x$kunu$A|FT=A<$2`jf;cyCxhw8hKa{$!;kDMx;@;mz<hP4`~@%X*qk@
+z(u)e4CL80-`*xos4RSw|WPbiJEtI%M7E79&{w5{nwU1POpmM=Ah8nkEq<BiQ?_1?}
+zgJE#md1bHV0(!rh5GnMyvZ=0CdnNw}Q`)zKmG>h%d$johI=SKl!ppVX0u`?2CshSR
+z`!eZQ`o_Jl`%j#Wkf&&poFMB&89?mi!B54|12D>|7bwJ6Xuq7lIaaHlt_EGaz!=}C
+z2<%+$r)XLTr&poF>#EM=qYe=bVIt#cCo*&~wPji=*zN3>ee{T}i(CA7f_f977HSq0
+zar89E=H%nB0t)>)_3N{)-bZ39_)%Vqd;Kr1jm+Qf<)Vf66tiJYk33qi(&n#N2u!(@
+z%E89n%&DulPcMs;^6m3_m@_3D>oaE9NCZEw$3k&1n(IeS8QY>8zfRyYm-6;1j(tMe
+zA)SF@NWr6L3}?4YZOm<<$-Djw&+CQGY#fDpkG!1|O)TOXmC7d#dT|TOgveTbl3I3|
+zQwv!GyWdn2w^-YnAFzPyjG$IsBgq2_&gN*q>ia+0!1eS2S-hLQYCXz-?V$zaMRqzR
+znjj%NiAMr_E$r6Q9I^$t50NW(C3kTk#gQa94(t0I>NZ^a`-_Z21Kw`BY*p4B6Aq#r
+zLP8Q(o!M~ME*A%~uDEg~CTPy8ck@oa!Xv5^g)*9W%*AGPi40*^k~S|?(m)ncS&fjq
+z-5N;IymNtV@Vds^LrS{`Cu52rxo3pMoxqQmtUwZv^xm$~TE5?p2D3Nt@$nt|B##qd
+zli%x&jRi6B2H{8Z%!qhj@wuxg@$#@Im|$w|$yup%np50o5^9+r4)EMNlqm2C(VxPo
+zVOsh?iOg=zlG*7De}H^W@E!fhLd}=H1`N3a+z@C!`mT8ujG)&Y-P9>xp^@n;6J#)@
+z-BN-qI)8|{dy(*CTYp2b9wSL2&i=ke7ZxXINoiDo$qqpq$yQ>Ax7XduoRih~acCSz
+zo@7=&v8esXT&f+R5UrZYwh;BSll-kw;hz6vc#4t_U4mAUx;ut75gCu6E{dKB0J2cr
+zY&;F));P72)Y0n|B$@J>0rh6sv!?ed%wb3s+xdxUcZZI4YmxZ)cZ_8`471+}D@T0D
+zPI)?9NHdz%{B7DuZM9R9ga7!b{R>+%eD$iJ+N!vRgTQe@^GF=8+Jff-qqSK8uPaH6
+z4_ulHCt<F^>EQf2GFkZ{nS2+`s8U#6bY?=lFIG-TZaU-U^oVcxkZ#lfy<-BK$7_5C
+zsT|rU-+4L2oB=X*62?(J3zk{2WG9Lf))H*NK@8e5DkPUm)k5JGE%V6T4U=~a_Yp<#
+zospda-NXqAc{*kxAflPj74|e#2nDv5Xmti>yQqX|&nrbLa?-}lw^tScKdyrXw2?1z
+zGGD01p%Ye@OJ}x;8|t6C_Q<wuRJtys=<B9qX&y@swDlek2D?NJG>wQ;A2Fo9uT`8~
+zZ9$_!Y39}o<bE;jt!#qG5IIchh>bevJi?xXoS4_AlQ9zim4U=*`SP<fw7Dc>srZ1;
+zC)~kdsco!csM$vSYoT5;N;^!k7?J$fr3;5yDzOu&hn)iN#t991**!#$QgPGAHP6}^
+zJB!ON+8L#bgJG=1q#F%Y>_Jz$&qZRcf={EYX%BrXL3<v)Sh!lPXsp7QsaM?GRJ$I2
+znpvqLS441dhe2Q#kX}TQ4KhFqzXG<zEB(n7HZaz)w9wYoHU4WWyrSC8R(SWm{DL-#
+zA~|ubT7MRQ8{+|0r3jNeHp$R1yn@&<Hfy}0iR(IDDl+D`7OENoy-VCH+#Du$ZLTbW
+z<qMfVYFTTyrcq&gja*Od2iK3=dslx<e14O_vX|g5o7#<tk(h)^7NN8YDca)5Lmb*>
+zR(k@vXB^)pn(4v1AsOGeW3l$aB{i8ffroRnIj(x{QX%lzQC^QA+@HRg85621c1M(u
+zSw35t^Z9e4uZhoI4MdAZ?oRUUbVGiC3D^xnl7m@GLCcriXv-Lksq|J9bx1X~7q?)9
+z#|;M=DI++AJAXF9;i73aa7RZMYtbV&*g}deH$f?%l7`ffqzJEiFq3W_N8@0$h;l7P
+z;XR$6JWgyv?J9J?{l50IPx$Z1b0h~9J(5o5!sFtK<yer6#qM(k=Fv^PSoM+-s~4Q_
+zBB7=>O7Tk7`nJ)q4mnOmWM{=kuOH$?n~Tr#5NGTqfp#*3Y(#6xdWdACkLyejBwW+i
+zv)WlfB<NS=Z<9JIEy!eAgw8%SDnHm!l5IxUzasK)64K&-0^Dt%2}Lw6z+)QgXOV`=
+z&Gv@`)O3rA8VQZIh{`mt=w%^1!hv><wibCxnB-UF9Dten;GV=Wu1Y^%E2K-`d%`6|
+zvMxL~?uhx*_=dCQs@4$yxQ?V%Ds03AI2d9GJY@I)#S~xW#?bN*d^&=-$6eZMU7yF<
+zpgbakj4|Yn1vD!N$+<~T#+NaaaL4I$c6c@w2ufogQdHNrubs$$&33D4U)#vlvv-}y
+zGBMAVp3EuBE-ih?vjb1i@8?t$Yf!g8$3m)Gk-J`#NNiZx;o$Nm{<Rr#M@OE>`NhRW
+z+O$d3F$thjfwf`rRbK6kjeTgL;G-No?86MY^IAjBd_O$dDAo<<l0@kU1U(Bb{GC$~
+zRmKsLiZ2~d8rgC<dp%}b*;*SIiezI?<@|K_J~mLNaP}_^b0_OS%b?9?!u-fc%!s5k
+z8Bsj`o=%mWk<a6Pe*|WV;NYxk6G}%dz_Eh5=V-HYV&K~cAEfl%sOC)8e7K9sY64s7
+z3N+Q)IFf=q)1{(=Ts`IQZ_QNeYriRaDoR|T;#zV@xmCALaMpVi9@c%$)nXmATf+{g
+zv-317g*;8123u~iw6*3g2<((qKnH>3|6~rE0g{C5>^BMgUip=&nkbsvXnw_a+${Uy
+zPkqzrX=sCK)NEq@uR7vn<7r<vMtJ9yyc@ipsdUL-97}k$#^G$|(AyjTgqsV$tXlfA
+z%w@mJxA+*>Fh8;0<8-JspK&(9U%lpR=e4y?qxPusLJwm+@Ac+<YxV4Gf+KlgYr!P%
+znNoc<_7jq`xc#0L+_=83T>_W$3e}6^)eXxrhpt`Q<BgZNO4E|{*EYrLi@sF+ocH#J
+zNQu4qq*LvJFr)_r?|1EQ>lD^j%_ul0zOwjob}h!8OHmfx%=MP?lsyf{O$GB=1t|AP
+zY5tDMiBs*Qx&{jGton8Bb*j1^)03%B4ogxa5$lZAmvb6JPbTMd4V_0dL+PWp+M5gz
+z0tq4oIV<Pv;JiJ!2!lnf>OHMaAPf6~gP{?d^S_i<PN8}nT0VBfxv;e@XA8)bH*(Hx
+zUgLLbzAt}l{=@WG(y_YG!{X@DhUfbHd_n1$o-ZGEyKHjO-9z&XwzX}m>h1fX184jZ
+zGy$w<r8Q&)A-Tk}wsOO|-yPq*6@sL|AQk9fEvm2DBx%~Eo+=_k?=m)o)$U-{#g-x_
+ze89REP3RpUhuy>A81&?wLeXR%#pv$5e*1G~=|z6_BBi;t3{)}bg^q+rfg{_*mz}0U
+zX&)10$i%S|d5*9s9?-pCNKz3s<lue?nee?cZ&1*RI|>;Y^Ryd&y$V9qk-|`+Q}?xj
+z)VJr`tGyrhJ}bq)70sp|MzxA)$H$buAk*?vX;&_Z^4EQYizjXJooMs@yewrj99-<l
+z+9i~zo34^6FZQmnkr;{Vp}*>N8t1(X()R~n&hS`zikrz~Klh=WoUyL((H#yoFh6!}
+zAJCM2)xd<=-%=?BdIdqV+>$lL`|y1-$}!BNN6~?na%m$wDci2`=2r-AMEP<YsCEa+
+zgua6Knqt)D-|H?E1Uk3~%Bc&jJ(S%$--vD#>_*nlk*uzx>UO9j@eRAygw77k`WceO
+z*JvVtu!rIk_0)xs3zy?#x%RieT3qj|A^2QV5i(4f^uck-@B<lh-(_$XbN%A88orO2
+z<y0mps>-}i_6WiRAQR3khj5`rQLPT6AfaOtHDD}GU{4{jM)>rv9vVs>UWMh<YXxt2
+z&vvU-Y}GHW=8w(t@CKj>LTz<1hSrYBU!nQS>F(|>MLk$EyY`&w=RH4zDvZeNmd3#T
+zd`@-lLPConJ?WdrAD-myN!yTCW)pc~bcMZkX{hNrFoPP81Db@fdF8QjPNI5Nd2Loa
+z^*OQnJT%&@S>c(IdBf#&pHgHl*EVk%=o@UvtIL;PH^!qcSiSOW>}weL%G|I6t{>Q@
+zC|zG3kE(aADZvFX$_jeUGkBJ*PZqyi9zAMryP~SQqI;S-2;xhYNhGmeGMo(S-j2eC
+zOb?xP^YAvOPwww~GD)f7d%mv8_O;#FbwfFfc(0Eaic07-!f|l>8S-SS$FKLsY7ZAc
+z?7*g7HQ@eO;ZOEiR=4tE_A*`KP|R4<E3^!sBt_a;u+{woQzFo_pJ!@03cj#-VHJxc
+zhJd|0+f!pg8#`P}MYR$tBtaq5w9uTPuBgwfNxzl7a{9Vf<*DLvoY#Y0C4!4YJ`8iG
+zT1>dGJc}n9%)Tk}BXbH{!*9`Es^LgscYc0Z&@jw`QbM6F5Z1^9zZn8+-s9=Xw_tyQ
+zH!8v$yx=vD9ChSGYbX8;zGX<)e)9Xhn#T%be5rknq&~&6guO1)2URX>OdIhK^`(y=
+zkrX7S%36ln7lmFN8aAt$etP6R)YFgZ6d1(pJ$NylbWHI*4{6gqcFGZwncL-1fve3p
+z^J5dt;!qBmv9w}tB%><y@MC>uZp7!PkInl|=F=w3VnsitdWE9B@s_z)?|CAqRu){s
+z(`Ps?y=c}k?jhnOVkA}v$lgLgVnJa6mjn*<=&{Kw>f!KlKVX8W2kfpU2Y&mrcmfv>
+zSluTkC@du}EYGMUEF~l@CoDuSFRdsiC`>OUtpNOq!CVjge0;skWM)W!kS-Mng#Ghm
+zz|j+;1BfESFDSt;Dy%8VFC``-EU&;|VryvuehQ?jHv3#)zUqPr0s)7=izkHP&5fuq
+zzmVkbBJX~6C`167+kGGo&fov(CNkH3VBq|VTT@0(8u%#uQULq!LJQg}26v%=KoESu
+zd44&E6Cnr$v^`xTeOpEYOGA1?du<y%dIuJUzkUh+5jL39qvw!8paG8mvGe(PDo+R(
+zS`f%aA9&ECr%(Uazc#jv@;5&LM+bciJxd!#OI=-iGdoQkODD!#CtpT=0|R|sJ6lEp
+zGi_Z{Wo-*RO=c!d5lh1tH)d9vqBl6eNDdD2p?+Pd4DeuC2ExkxqyUbd5W`RYKS7N2
+zZ)pF)A!uoCZuytsA9!>aNJfd5z|7?%Fmt&v+xuBOAx;JURCHk{JD}Qtr)K{h<9Rg?
+z86(g#3;=zlo97rmizmca(SL^_DR%SNj$cMh^M$3Q)r~sX&1?$18Xg9`dIbl>9|Lmi
+zM&IdY@q{n}_M!iOwTAz_2)FIy=HpwL={spY*Eh4$x6$P1{~gIpr+Xy~K%)2`Bx}Gz
+z-a8_Z{v8SICwLNjpd$Eye&*HB3IUFu5XRDXMq+06JCyY*M2;K)!|#99XnxXoLc9c0
+z=58uQNZ(G|__s6|xNY|<fJ<}=WbLmN;{~+cyP=Vnm-}7C919O13jr151N5jjBGo^O
+zCq${@U7;vgTKqPLMoQPLJb?>@3=Aqaf-ygfCxpH7A7c@^c`m8RucvJVNSOYvMtogY
+zma~D2(*TTcH;+?(7EcIMAhG|@#knzz_=heDcyCgH*iBjl^kg^>!E3@Fa5nfu41c*9
+z{9iROWhL_65%~D0z&Fqs{w|&nh5CPv;(z<H-{&nh2H*1xpn2*8?_X|w*nbvJh&Y2k
+zjUZxdV{50NZS}iG!95V6{SDv{1vqZJC4Lr9h)SbB%^_`}FK?%BCH&W9;CC<zkL(>+
+zZz=`oK7P#;1k*nbV{d0=|Cf;_cpJ62p3@EmC|H1YdgGw_vj8KW`Jbkcvor%VIc-h<
+zS~CU?!a#YH#0Yd7$H0sb=qLUzo)9*ce+=Zt+Ts7o6`l0^iU~mD7zbv9ze3>H{V|A}
+zD)_%399z37KLDTq2)Hc2HVkUlKL&AYR?YwWoUK=9PH_YX4uEU&YtGWU-2uhlrkCLD
+z!dfg5k00pBk$^P$m4ndZ4mkcASbmqT_UevdY(Ram14HbuGvwhncffHowEPYO`XfHB
+z9DuO`VEkGgp5AwW@z?0`I}UnZL+tMWhX#->zgCC1&mC~wB<}ApN<q!>9soup(0%=i
+zk?ea17&oc=I}C6~`JcU)Cq$J09bnx0%Y$bNxM}(=$kV_(0QqnCQQ*GZw;0;*?*ij*
+zmu~R-0Jo^V1(^l9*grG{yX{MF4XeRHz<ri)K~h8hAjsbev;U=62X`;N#rPI_7a0Gw
+zTL-tDy#+}NzZ;NWOlZL`54h3jEe?OwUE%!0b`%^3+~V>UM=9nmaDFko1cw1PU%Z78
+zi@O^b;NI@1AS^fxxC`JdjO3@gfcd8<AUF%SRoyKMTjE`?{9;@O4g>Csb_=7Bd>1hP
+zbV&ne0r$+hWob#h3znN<`M)(7a0{ke7Kn_yVENmS3A|FkO?qxYj6UB5$gh??;56X&
+zGPg85*>^$n53?C?6mXA_TNKE=yFmHXF$A0j+?wK+20#BUXl|xZKaDEDS-|ZEZdnEj
+z?}X*Q&ZEF3@o!1Wi|>Nue+2Tu>jPYk{Fb7r>@FyN)g}k00awPprD>`7V>JJvlMPM*
+zF1mb6v0e4YDE>o&8Jq%KvG<mOv-aOn{Hosz9v58T<Tmb`{(l!2T<!!sGWdqd+sJ`a
+z|1R=>Y_9|l4ZfWHHniW$zYG1_#qHqX!516fhBsdOgW>;PdJG;Pe5K@Ve7dba82^`b
+zli&>CE4^+Rc6R?D!|l2+Z~*XS8@B*yM}H9DAB#9-Bw&Ddk-&RE;46d_1d=$p`RV@w
+Dm`ajL
+
+literal 0
+HcmV?d00001
+
+diff --git a/downloads/Lazara-Fog-Guard-V2.zip.sha256 b/downloads/Lazara-Fog-Guard-V2.zip.sha256
+new file mode 100644
+index 0000000..1fd4bc4
+--- /dev/null
++++ b/downloads/Lazara-Fog-Guard-V2.zip.sha256
+@@ -0,0 +1 @@
++406dfa4b3a8698a3ddf24bcf2e688ed7cf9c92e5c794ca54f62408e24fbda983  Lazara-Fog-Guard-V2.zip
+-- 
+2.52.0
+
+
+From c92d8cd80f5b5425fa430c247d7374e46f30a72c Mon Sep 17 00:00:00 2001
+From: darkest eleven <darkest.eleven@gmail.com>
+Date: Tue, 10 Nov 2026 06:53:51 +0000
+Subject: [PATCH 3/3] Link the Fog Guard test build hosted in Lunar Flower
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 2f83070..003ca32 100644
+--- a/README.md
++++ b/README.md
+@@ -66,7 +66,7 @@ reproducible image path rather than a loose pile of effects.
+ 
+ ## Fog Guard V2 test build
+ 
+-[Download the Fog Guard V2 test package](https://raw.githubusercontent.com/dastardlyrat/Lazara-Reshade-Revival-Package/fix/fog-guard-depth-and-restoration/downloads/Lazara-Fog-Guard-V2.zip).
++[Download the Fog Guard V2 test package](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/fog-guard-v2-delivery/downloads/Lazara-Fog-Guard-V2.zip).
+ 
+ Fog Guard now captures protection before filtering and restores it at the end.
+ The default Outside Shade is zero, so it does not darken the unprotected frame.
+-- 
+2.52.0
+
