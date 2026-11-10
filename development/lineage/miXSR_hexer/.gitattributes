@@ -1,0 +1,2 @@
+# Preserve the exact apply-ready retirement patch.
+mark-defunct.patch -text

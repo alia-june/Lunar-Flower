@@ -1,0 +1,22 @@
+{
+  "schema": "research-retirement-publication-v1",
+  "date": "2026-11-10",
+  "project_status": "defunct",
+  "research_disposition": "failed research candidate",
+  "source_repository": "https://github.com/dastardlyrat/miXSR_hexer",
+  "reviewed_revision": "c7576321950b0a4609d2f9d0e2500528fdad3e80",
+  "prepared_retirement_commit": "9d1eb8dbb5a910d8b706107ef3d8733d63ad8038",
+  "upstream_notice_published": false,
+  "upstream_push_result": "GitHub 403: permission denied to alia-june",
+  "public_notice": "docs/MIXSR_HEXER_RETIREMENT.md in alia-june/Lunar-Flower",
+  "patch_sha256": "2fe797c188785030e1cfbc804d0197c676f6208fde571d5b3b2589bdd9114ccb",
+  "patch_validation": {
+    "commits_applied": 1,
+    "affected_paths_byte_matched": 4,
+    "result": "PASS"
+  },
+  "source_inspection_findings": 6,
+  "complete_workspace_transfer_history_reconstructed": false,
+  "shader_source_changes": false,
+  "license_changes": false
+}

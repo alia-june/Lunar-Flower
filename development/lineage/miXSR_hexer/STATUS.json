@@ -1,0 +1,35 @@
+{
+  "schema": "shader-research-lifecycle-v1",
+  "project": "miXSR_hexer",
+  "status": "defunct",
+  "disposition": "failed research candidate",
+  "effective_date": "2026-11-10",
+  "maintenance": "retired; historical audit reference only",
+  "recommended_for_new_installations": false,
+  "claim_policy": "Effect labels and approximations require per-effect source and runtime evidence; no automatic inheritance of claims into successor repositories.",
+  "provenance_log": "RESEARCH_PROVENANCE_LOG.md",
+  "machine_readable_log": "RESEARCH_PROVENANCE_LOG.json",
+  "successors": [
+    {
+      "name": "Lunar Flower / Twin Lanterns",
+      "url": "https://github.com/alia-june/Lunar-Flower",
+      "scope": "Twin Lanterns / Crystal Spider development, bounded indirect light, current Fog Guard V2 delivery and documented evidence"
+    },
+    {
+      "name": "Lazara ReShade Revival Package",
+      "url": "https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package",
+      "scope": "Curated preset integration and ordered color/luma/detail workflow; Fog Guard V2 is currently delivered through Lunar Flower"
+    },
+    {
+      "name": "Occult Box",
+      "url": "https://github.com/dastardlyrat/Occult-Box",
+      "scope": "Individual effects and primitive/helper collection; consult effect-specific status and validation"
+    },
+    {
+      "name": "OpenSurface Camera Obscura Guided Detail",
+      "url": "https://github.com/dastardlyrat/OpenSurface-CameraObscura-GuidedDetail",
+      "scope": "Surface-aware detail reclamation and ink-line work"
+    }
+  ],
+  "existing_license": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/LICENSE.md; unchanged"
+}

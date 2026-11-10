@@ -1,0 +1,125 @@
+{
+  "schema": "mixsr-defunct-research-log-v1",
+  "date": "2026-11-10",
+  "lifecycle_status": "defunct",
+  "research_disposition": "failed research candidate",
+  "status_authority": "Explicit project-owner direction in this session",
+  "reviewed_revision": "c7576321950b0a4609d2f9d0e2500528fdad3e80",
+  "owner_reported_provenance_issue": {
+    "summary": "Research concepts, approximations, labels and partially developed claims carried across AI workspaces and shader generations.",
+    "classification": "Owner-reported research bleed; complete workspace/file transfer history has not been independently reconstructed.",
+    "rule": "Do not treat repeated wording, copied labels or related repository membership as implementation or runtime evidence."
+  },
+  "findings": [
+    {
+      "id": "MX-001",
+      "classification": "source-confirmed approximation",
+      "path": "Includes/miXSR_FC_FogGate.fxh",
+      "functions": [
+        "FC_FOG_Core",
+        "FC_FOG_DepthMask"
+      ],
+      "finding": "Fog coverage is inferred from brightness, desaturation, local contrast and depth. This is an image-space estimate, not access to the engine fog volume or a participating-media simulation.",
+      "wording": "Heuristic image-space fog protection estimate.",
+      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/Includes/miXSR_FC_FogGate.fxh",
+      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
+      "reviewed_source_sha256": "a3a2e9d35205493882aed24e4838127f0496cde6cf860b344a6cbffbb81a88ad"
+    },
+    {
+      "id": "MX-002",
+      "classification": "source-confirmed approximation",
+      "path": "Includes/miXSR_FC_LightRespect.fxh",
+      "functions": [
+        "FC_LIGHT_EmissionMask"
+      ],
+      "finding": "Light/emission coverage is inferred from luminance, peak channel and saturation thresholds; it is not an engine material-emission classification.",
+      "wording": "Bright/color light protection estimate.",
+      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/Includes/miXSR_FC_LightRespect.fxh",
+      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
+      "reviewed_source_sha256": "3d05146ed2475c6c41aa5bf286dfe14a02e2450feaab6492bfc896fa0fdb6cc0"
+    },
+    {
+      "id": "MX-003",
+      "classification": "source-confirmed approximation",
+      "path": "AA/miXSR_FC_bio_fibonacci_fxaa_smaa.fx",
+      "functions": [
+        "FDOAA_MainPS"
+      ],
+      "finding": "The inspected path combines custom directional smoothing with horizontal, vertical and diagonal neighborhood blends. FXAA/SMAA-style labels do not establish canonical FXAA or full SMAA algorithm equivalence.",
+      "wording": "Custom directional and edge-aware neighborhood anti-aliasing approximation.",
+      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/AA/miXSR_FC_bio_fibonacci_fxaa_smaa.fx",
+      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
+      "reviewed_source_sha256": "d65dd119cad8ecab5d8fec5deef10b7a3fa6e1548e25fa6982eb10d1335982fa"
+    },
+    {
+      "id": "MX-004",
+      "classification": "source-confirmed bounded construction",
+      "path": "AA/miXSR_FC_bio_fibonacci_fxaa_smaa.fx",
+      "functions": [
+        "FDOAA_OrganicRecursiveOffset"
+      ],
+      "finding": "The inspected offset uses a finite, explicitly expanded chain of direction transforms and fixed weights. Its recursive/bio/Fibonacci naming does not establish adaptive recursive image processing or a biological model.",
+      "wording": "Finite golden-ratio-inspired direction and sampling construction.",
+      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/AA/miXSR_FC_bio_fibonacci_fxaa_smaa.fx",
+      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
+      "reviewed_source_sha256": "d65dd119cad8ecab5d8fec5deef10b7a3fa6e1548e25fa6982eb10d1335982fa"
+    },
+    {
+      "id": "MX-005",
+      "classification": "source-confirmed image-space heuristic",
+      "path": "GlossSSR/miXSR_FC_bio_raym_gloss_material_response.fx",
+      "functions": [
+        "FDRMGLOSS_AccumulateRayStep",
+        "FDRMGLOSS_RayMarchDirection"
+      ],
+      "finding": "The inspected path samples offset screen color/depth and aggregates bright depth-compatible samples. Ray-M/gloss naming alone does not establish physically correct reflection tracing or access to hidden/off-screen geometry.",
+      "wording": "Bounded screen-space sampled gloss heuristic.",
+      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/GlossSSR/miXSR_FC_bio_raym_gloss_material_response.fx",
+      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
+      "reviewed_source_sha256": "78653cd838415cdeb95e102c2d048a7f8638389863cf7c3897a29186e1f34f11"
+    },
+    {
+      "id": "MX-006",
+      "classification": "source-confirmed validity-policy concern; runtime consequence unverified",
+      "path": "Includes/miXSR_FC_ShaderSharedMaskControls.fxh",
+      "functions": [
+        "MIXSR_SHARED_HasSharedGateCache",
+        "MIXSR_SHARED_UseSharedGateCache"
+      ],
+      "finding": "The presence helper tests nonzero mask content, while the nonzero cache modes select shared-cache use without establishing freshness in these helpers. Valid zero coverage must be distinguished from missing data; capture order and lifetime need independent evidence.",
+      "wording": "Shared mask selection with a separately required availability/freshness contract.",
+      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/Includes/miXSR_FC_ShaderSharedMaskControls.fxh",
+      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
+      "reviewed_source_sha256": "1382eaf71044120b6e19ecd3b66c5e250fe89991d886f5d37642339a469d51a5"
+    }
+  ],
+  "scope_limits": [
+    "These are scoped examples, not an exhaustive per-effect audit.",
+    "Project retirement is not proof that every individual calculation fails or every effect is unusable.",
+    "The older roughly-one-hundred suspected-claims estimate is historical and has not been independently counted or verified here."
+  ],
+  "successors": [
+    {
+      "name": "Lunar Flower / Twin Lanterns",
+      "url": "https://github.com/alia-june/Lunar-Flower",
+      "scope": "Twin Lanterns / Crystal Spider development, bounded indirect light, current Fog Guard V2 delivery and documented evidence"
+    },
+    {
+      "name": "Lazara ReShade Revival Package",
+      "url": "https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package",
+      "scope": "Curated preset integration and ordered color/luma/detail workflow; Fog Guard V2 is currently delivered through Lunar Flower"
+    },
+    {
+      "name": "Occult Box",
+      "url": "https://github.com/dastardlyrat/Occult-Box",
+      "scope": "Individual effects and primitive/helper collection; consult effect-specific status and validation"
+    },
+    {
+      "name": "OpenSurface Camera Obscura Guided Detail",
+      "url": "https://github.com/dastardlyrat/OpenSurface-CameraObscura-GuidedDetail",
+      "scope": "Surface-aware detail reclamation and ink-line work"
+    }
+  ],
+  "shader_source_changes": false,
+  "license_changes": false
+}

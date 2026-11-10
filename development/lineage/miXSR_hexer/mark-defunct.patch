@@ -1,0 +1,297 @@
+From 9d1eb8dbb5a910d8b706107ef3d8733d63ad8038 Mon Sep 17 00:00:00 2001
+From: darkest eleven <darkest.eleven@gmail.com>
+Date: Tue, 10 Nov 2026 14:42:23 +0000
+Subject: [PATCH] Mark miXSR_hexer defunct and log research approximation
+ provenance
+
+---
+ README.md                    |  39 +++++++++--
+ RESEARCH_PROVENANCE_LOG.json | 125 +++++++++++++++++++++++++++++++++++
+ RESEARCH_PROVENANCE_LOG.md   |  39 +++++++++++
+ STATUS.json                  |  35 ++++++++++
+ 4 files changed, 234 insertions(+), 4 deletions(-)
+ create mode 100644 RESEARCH_PROVENANCE_LOG.json
+ create mode 100644 RESEARCH_PROVENANCE_LOG.md
+ create mode 100644 STATUS.json
+
+diff --git a/README.md b/README.md
+index 6f65823..f8dc634 100644
+--- a/README.md
++++ b/README.md
+@@ -1,13 +1,44 @@
+-<img width="2560" height="1440" alt="XCom2 2026-06-09 10-51-28_240" src="https://github.com/user-attachments/assets/b80b9892-3f78-4548-9fff-0fe1c54e338e" />
++# miXSR_hexer — DEFUNCT
++
++**Status: Defunct.** Retired on November 10, 2026, by project-owner direction.
++**Disposition: failed research candidate.** Retained for historical inspection
++and auditing, with no ongoing maintenance or recommendation for new installs.
++
++Many paths are approximations of the techniques suggested by their labels.
++The owner reports that research ideas, partial implementations and capability
++wording carried across AI workspaces and shader generations. Repeated labels and related code are not
++proof that the named algorithms were implemented or validated. The
++[research and approximation log](RESEARCH_PROVENANCE_LOG.md) distinguishes
++owner-reported provenance problems from scoped source-inspection findings.
++
++## Continue in the current repositories
++
++| Repository | Where to continue |
++|---|---|
++| [Lunar Flower / Twin Lanterns](https://github.com/alia-june/Lunar-Flower) | Twin Lanterns / Crystal Spider development, bounded indirect light, current Fog Guard V2 delivery and documented evidence |
++| [Lazara ReShade Revival Package](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package) | Curated preset integration and ordered color/luma/detail workflow; Fog Guard V2 is currently delivered through Lunar Flower |
++| [Occult Box](https://github.com/dastardlyrat/Occult-Box) | Individual effects and primitive/helper collection; consult effect-specific status and validation |
++| [OpenSurface Camera Obscura Guided Detail](https://github.com/dastardlyrat/OpenSurface-CameraObscura-GuidedDetail) | Surface-aware detail reclamation and ink-line work |
+ 
+-# miXSR_hexer
++Successor projects have their own scope and evidence. This redirect does not
++certify every effect in those repositories or transfer miXSR_hexer's claims
++or license into them.
++
++[Lifecycle record](STATUS.json) · [Research and approximation log](RESEARCH_PROVENANCE_LOG.md) · [Machine-readable log](RESEARCH_PROVENANCE_LOG.json) · [Existing license](LICENSE.md)
++
++## Historical RC3 material
++
++The material below is preserved as historical context. Setup instructions,
++capability labels and research terminology are not current release guidance.
++
++<img width="2560" height="1440" alt="XCom2 2026-06-09 10-51-28_240" src="https://github.com/user-attachments/assets/b80b9892-3f78-4548-9fff-0fe1c54e338e" />
+ 
+ An RC3-era ReShade shader cabinet for studying stylization, image shaping,
+ shared-mask orchestration, fog and light protection, and diagnostic views.
+ The project preserves both active effects and disabled historical variants
+ so their claims and processing paths can be inspected together.
+ 
+-**Status:** restricted preview and audit source. Read [LICENSE.md](LICENSE.md)
++**Historical access terms:** restricted preview and audit source. Read [LICENSE.md](LICENSE.md)
+ before use. Public source availability does not change the supplied restrictions
+ or promote a shader capability label to a verified result.
+ 
+@@ -45,7 +76,7 @@ If those three layers disagree, runtime and code win. The README does not promot
+ 
+ `miXSR_hexer` is an RC3-era ReShade shader snapshot built around stylization, image shaping, shared mask orchestration, fog and light protection, Ray-M style tracing, Fibonacci sampling, tonal response, and preview-stage diagnostics.
+ 
+-Current repository state from the walked tree:
++Historical snapshot inventory from the pre-retirement review:
+ 
+ | Item | Count |
+ |---|---:|
+diff --git a/RESEARCH_PROVENANCE_LOG.json b/RESEARCH_PROVENANCE_LOG.json
+new file mode 100644
+index 0000000..5f82d22
+--- /dev/null
++++ b/RESEARCH_PROVENANCE_LOG.json
+@@ -0,0 +1,125 @@
++{
++  "schema": "mixsr-defunct-research-log-v1",
++  "date": "2026-11-10",
++  "lifecycle_status": "defunct",
++  "research_disposition": "failed research candidate",
++  "status_authority": "Explicit project-owner direction in this session",
++  "reviewed_revision": "c7576321950b0a4609d2f9d0e2500528fdad3e80",
++  "owner_reported_provenance_issue": {
++    "summary": "Research concepts, approximations, labels and partially developed claims carried across AI workspaces and shader generations.",
++    "classification": "Owner-reported research bleed; complete workspace/file transfer history has not been independently reconstructed.",
++    "rule": "Do not treat repeated wording, copied labels or related repository membership as implementation or runtime evidence."
++  },
++  "findings": [
++    {
++      "id": "MX-001",
++      "classification": "source-confirmed approximation",
++      "path": "Includes/miXSR_FC_FogGate.fxh",
++      "functions": [
++        "FC_FOG_Core",
++        "FC_FOG_DepthMask"
++      ],
++      "finding": "Fog coverage is inferred from brightness, desaturation, local contrast and depth. This is an image-space estimate, not access to the engine fog volume or a participating-media simulation.",
++      "wording": "Heuristic image-space fog protection estimate.",
++      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/Includes/miXSR_FC_FogGate.fxh",
++      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
++      "reviewed_source_sha256": "a3a2e9d35205493882aed24e4838127f0496cde6cf860b344a6cbffbb81a88ad"
++    },
++    {
++      "id": "MX-002",
++      "classification": "source-confirmed approximation",
++      "path": "Includes/miXSR_FC_LightRespect.fxh",
++      "functions": [
++        "FC_LIGHT_EmissionMask"
++      ],
++      "finding": "Light/emission coverage is inferred from luminance, peak channel and saturation thresholds; it is not an engine material-emission classification.",
++      "wording": "Bright/color light protection estimate.",
++      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/Includes/miXSR_FC_LightRespect.fxh",
++      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
++      "reviewed_source_sha256": "3d05146ed2475c6c41aa5bf286dfe14a02e2450feaab6492bfc896fa0fdb6cc0"
++    },
++    {
++      "id": "MX-003",
++      "classification": "source-confirmed approximation",
++      "path": "AA/miXSR_FC_bio_fibonacci_fxaa_smaa.fx",
++      "functions": [
++        "FDOAA_MainPS"
++      ],
++      "finding": "The inspected path combines custom directional smoothing with horizontal, vertical and diagonal neighborhood blends. FXAA/SMAA-style labels do not establish canonical FXAA or full SMAA algorithm equivalence.",
++      "wording": "Custom directional and edge-aware neighborhood anti-aliasing approximation.",
++      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/AA/miXSR_FC_bio_fibonacci_fxaa_smaa.fx",
++      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
++      "reviewed_source_sha256": "d65dd119cad8ecab5d8fec5deef10b7a3fa6e1548e25fa6982eb10d1335982fa"
++    },
++    {
++      "id": "MX-004",
++      "classification": "source-confirmed bounded construction",
++      "path": "AA/miXSR_FC_bio_fibonacci_fxaa_smaa.fx",
++      "functions": [
++        "FDOAA_OrganicRecursiveOffset"
++      ],
++      "finding": "The inspected offset uses a finite, explicitly expanded chain of direction transforms and fixed weights. Its recursive/bio/Fibonacci naming does not establish adaptive recursive image processing or a biological model.",
++      "wording": "Finite golden-ratio-inspired direction and sampling construction.",
++      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/AA/miXSR_FC_bio_fibonacci_fxaa_smaa.fx",
++      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
++      "reviewed_source_sha256": "d65dd119cad8ecab5d8fec5deef10b7a3fa6e1548e25fa6982eb10d1335982fa"
++    },
++    {
++      "id": "MX-005",
++      "classification": "source-confirmed image-space heuristic",
++      "path": "GlossSSR/miXSR_FC_bio_raym_gloss_material_response.fx",
++      "functions": [
++        "FDRMGLOSS_AccumulateRayStep",
++        "FDRMGLOSS_RayMarchDirection"
++      ],
++      "finding": "The inspected path samples offset screen color/depth and aggregates bright depth-compatible samples. Ray-M/gloss naming alone does not establish physically correct reflection tracing or access to hidden/off-screen geometry.",
++      "wording": "Bounded screen-space sampled gloss heuristic.",
++      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/GlossSSR/miXSR_FC_bio_raym_gloss_material_response.fx",
++      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
++      "reviewed_source_sha256": "78653cd838415cdeb95e102c2d048a7f8638389863cf7c3897a29186e1f34f11"
++    },
++    {
++      "id": "MX-006",
++      "classification": "source-confirmed validity-policy concern; runtime consequence unverified",
++      "path": "Includes/miXSR_FC_ShaderSharedMaskControls.fxh",
++      "functions": [
++        "MIXSR_SHARED_HasSharedGateCache",
++        "MIXSR_SHARED_UseSharedGateCache"
++      ],
++      "finding": "The presence helper tests nonzero mask content, while the nonzero cache modes select shared-cache use without establishing freshness in these helpers. Valid zero coverage must be distinguished from missing data; capture order and lifetime need independent evidence.",
++      "wording": "Shared mask selection with a separately required availability/freshness contract.",
++      "source_url": "https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/Includes/miXSR_FC_ShaderSharedMaskControls.fxh",
++      "evidence": "Source inspection only; native compile, runtime equivalence and performance not established by this record.",
++      "reviewed_source_sha256": "1382eaf71044120b6e19ecd3b66c5e250fe89991d886f5d37642339a469d51a5"
++    }
++  ],
++  "scope_limits": [
++    "These are scoped examples, not an exhaustive per-effect audit.",
++    "Project retirement is not proof that every individual calculation fails or every effect is unusable.",
++    "The older roughly-one-hundred suspected-claims estimate is historical and has not been independently counted or verified here."
++  ],
++  "successors": [
++    {
++      "name": "Lunar Flower / Twin Lanterns",
++      "url": "https://github.com/alia-june/Lunar-Flower",
++      "scope": "Twin Lanterns / Crystal Spider development, bounded indirect light, current Fog Guard V2 delivery and documented evidence"
++    },
++    {
++      "name": "Lazara ReShade Revival Package",
++      "url": "https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package",
++      "scope": "Curated preset integration and ordered color/luma/detail workflow; Fog Guard V2 is currently delivered through Lunar Flower"
++    },
++    {
++      "name": "Occult Box",
++      "url": "https://github.com/dastardlyrat/Occult-Box",
++      "scope": "Individual effects and primitive/helper collection; consult effect-specific status and validation"
++    },
++    {
++      "name": "OpenSurface Camera Obscura Guided Detail",
++      "url": "https://github.com/dastardlyrat/OpenSurface-CameraObscura-GuidedDetail",
++      "scope": "Surface-aware detail reclamation and ink-line work"
++    }
++  ],
++  "shader_source_changes": false,
++  "license_changes": false
++}
+diff --git a/RESEARCH_PROVENANCE_LOG.md b/RESEARCH_PROVENANCE_LOG.md
+new file mode 100644
+index 0000000..a853180
+--- /dev/null
++++ b/RESEARCH_PROVENANCE_LOG.md
+@@ -0,0 +1,39 @@
++# Defunct research and approximation log
++
++miXSR_hexer is **defunct**, with the owner-directed disposition **failed research candidate**, effective November 10, 2026. This record preserves the distinction between a research idea, its approximation, an implemented path and demonstrated runtime behavior.
++
++## Research bleed across AI workspaces
++
++The owner reports that research concepts, approximations, partial implementations and capability wording bled across AI workspaces and shader generations. That history is recorded as an owner report. A complete per-file transfer history has not been reconstructed, so this log does not invent sessions, authors, dates or causal chains.
++
++Many effects in this lineage use approximations. Approximation is a valid research technique when described accurately; it must not silently become a claim of a complete named algorithm. An inherited label, repeated explanation or compilation success alone cannot establish algorithmic equivalence.
++
++The older README mentions roughly one hundred suspected claims. That is a historical estimate, not an independently verified defect count. The entries below are scoped examples from revision `c7576321950b0a4609d2f9d0e2500528fdad3e80`, not an exhaustive judgment of every shader.
++
++## Source-inspection findings
++
++| ID | Finding | Accurate description | Source |
++|---|---|---|---|
++| MX-001 | Fog coverage is inferred from brightness, desaturation, local contrast and depth. This is an image-space estimate, not access to the engine fog volume or a participating-media simulation. | Heuristic image-space fog protection estimate. | [`FC_FOG_Core`, `FC_FOG_DepthMask`](https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/Includes/miXSR_FC_FogGate.fxh) |
++| MX-002 | Light/emission coverage is inferred from luminance, peak channel and saturation thresholds; it is not an engine material-emission classification. | Bright/color light protection estimate. | [`FC_LIGHT_EmissionMask`](https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/Includes/miXSR_FC_LightRespect.fxh) |
++| MX-003 | The inspected path combines custom directional smoothing with horizontal, vertical and diagonal neighborhood blends. FXAA/SMAA-style labels do not establish canonical FXAA or full SMAA algorithm equivalence. | Custom directional and edge-aware neighborhood anti-aliasing approximation. | [`FDOAA_MainPS`](https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/AA/miXSR_FC_bio_fibonacci_fxaa_smaa.fx) |
++| MX-004 | The inspected offset uses a finite, explicitly expanded chain of direction transforms and fixed weights. Its recursive/bio/Fibonacci naming does not establish adaptive recursive image processing or a biological model. | Finite golden-ratio-inspired direction and sampling construction. | [`FDOAA_OrganicRecursiveOffset`](https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/AA/miXSR_FC_bio_fibonacci_fxaa_smaa.fx) |
++| MX-005 | The inspected path samples offset screen color/depth and aggregates bright depth-compatible samples. Ray-M/gloss naming alone does not establish physically correct reflection tracing or access to hidden/off-screen geometry. | Bounded screen-space sampled gloss heuristic. | [`FDRMGLOSS_AccumulateRayStep`, `FDRMGLOSS_RayMarchDirection`](https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/GlossSSR/miXSR_FC_bio_raym_gloss_material_response.fx) |
++| MX-006 | The presence helper tests nonzero mask content, while the nonzero cache modes select shared-cache use without establishing freshness in these helpers. Valid zero coverage must be distinguished from missing data; capture order and lifetime need independent evidence. | Shared mask selection with a separately required availability/freshness contract. | [`MIXSR_SHARED_HasSharedGateCache`, `MIXSR_SHARED_UseSharedGateCache`](https://github.com/dastardlyrat/miXSR_hexer/blob/c7576321950b0a4609d2f9d0e2500528fdad3e80/Includes/miXSR_FC_ShaderSharedMaskControls.fxh) |
++
++These findings describe the inspected code. No fresh native compilation, runtime equivalence test or performance benchmark is asserted. The overall failed-candidate disposition does not mean that every individual calculation fails.
++
++## Migration rule
++
++Carry forward a lesson only with the source revision, exact function/pass, calculation, required inputs, approximation boundary and evidence state. Give a new implementation its own tests and claims. Keep fog/light masks, valid zero coverage, missing data, temporal history, source preservation and final-composite behavior explicit.
++
++Each follow-up record should identify the donor and destination repositories, relevant revisions, what was reused conceptually or changed in code, which claims were rejected or narrowed, and the checks actually performed. An unknown provenance link stays unknown.
++
++## Current destinations
++
++- [Lunar Flower / Twin Lanterns](https://github.com/alia-june/Lunar-Flower): Twin Lanterns / Crystal Spider development, bounded indirect light, current Fog Guard V2 delivery and documented evidence.
++- [Lazara ReShade Revival Package](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package): Curated preset integration and ordered color/luma/detail workflow; Fog Guard V2 is currently delivered through Lunar Flower.
++- [Occult Box](https://github.com/dastardlyrat/Occult-Box): Individual effects and primitive/helper collection; consult effect-specific status and validation.
++- [OpenSurface Camera Obscura Guided Detail](https://github.com/dastardlyrat/OpenSurface-CameraObscura-GuidedDetail): Surface-aware detail reclamation and ink-line work.
++
++The existing [restricted-use notice](LICENSE.md) is unchanged. Retirement and this log do not grant redistribution rights or relicense historical shaders. See [the structured record](RESEARCH_PROVENANCE_LOG.json) and [lifecycle status](STATUS.json).
+diff --git a/STATUS.json b/STATUS.json
+new file mode 100644
+index 0000000..6beb46e
+--- /dev/null
++++ b/STATUS.json
+@@ -0,0 +1,35 @@
++{
++  "schema": "shader-research-lifecycle-v1",
++  "project": "miXSR_hexer",
++  "status": "defunct",
++  "disposition": "failed research candidate",
++  "effective_date": "2026-11-10",
++  "maintenance": "retired; historical audit reference only",
++  "recommended_for_new_installations": false,
++  "claim_policy": "Effect labels and approximations require per-effect source and runtime evidence; no automatic inheritance of claims into successor repositories.",
++  "provenance_log": "RESEARCH_PROVENANCE_LOG.md",
++  "machine_readable_log": "RESEARCH_PROVENANCE_LOG.json",
++  "successors": [
++    {
++      "name": "Lunar Flower / Twin Lanterns",
++      "url": "https://github.com/alia-june/Lunar-Flower",
++      "scope": "Twin Lanterns / Crystal Spider development, bounded indirect light, current Fog Guard V2 delivery and documented evidence"
++    },
++    {
++      "name": "Lazara ReShade Revival Package",
++      "url": "https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package",
++      "scope": "Curated preset integration and ordered color/luma/detail workflow; Fog Guard V2 is currently delivered through Lunar Flower"
++    },
++    {
++      "name": "Occult Box",
++      "url": "https://github.com/dastardlyrat/Occult-Box",
++      "scope": "Individual effects and primitive/helper collection; consult effect-specific status and validation"
++    },
++    {
++      "name": "OpenSurface Camera Obscura Guided Detail",
++      "url": "https://github.com/dastardlyrat/OpenSurface-CameraObscura-GuidedDetail",
++      "scope": "Surface-aware detail reclamation and ink-line work"
++    }
++  ],
++  "existing_license": "LICENSE.md; unchanged"
++}
+-- 
+2.52.0
+

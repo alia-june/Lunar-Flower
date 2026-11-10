@@ -5,11 +5,18 @@ material cues. Our shading should preserve those signals as it adds indirect
 light, detail, contrast or stylization.
 
 This is the beginning of a shared direction for our shaders, informed by lessons
-from [miXSR_hexer](https://github.com/dastardlyrat/miXSR_hexer). Fog Guard V2 is
+from [miXSR_hexer, now defunct](MIXSR_HEXER_RETIREMENT.md). Fog Guard V2 is
 our first user-confirmed step. Twin Lanterns supplies bounded light transport
 and fine-depth surface checks. Broader per-effect integration is still ahead.
 
 ## Lessons from miXSR_hexer
+
+**Lifecycle: Defunct. Disposition: failed research candidate.** It is a
+historical audit source. Many named paths are approximations, and the owner
+reports research and capability wording carried across AI workspaces. See the
+[retirement and provenance record](MIXSR_HEXER_RETIREMENT.md) for current
+destinations and the source-inspection log. Related lineage does not transfer
+algorithmic claims into the current projects.
 
 The reference review used revision
 [`c757632`](https://github.com/dastardlyrat/miXSR_hexer/tree/c7576321950b0a4609d2f9d0e2500528fdad3e80).

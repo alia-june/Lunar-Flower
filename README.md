@@ -30,8 +30,10 @@ history.
 
 We are beginning a broader approach to our shaders: preserve atmospheric depth,
 light color and surface detail while applying controlled shading. Lessons from
-[miXSR_hexer](https://github.com/dastardlyrat/miXSR_hexer)—fog gates, light
-respect, shared masks and visible diagnostics—help guide this work.
+[miXSR_hexer, now defunct](docs/MIXSR_HEXER_RETIREMENT.md)—fog gates, light
+respect, shared masks and visible diagnostics—help guide this work. It is a
+retired, failed research candidate whose approximations and inherited claims
+require audit. Current implementations need their own evidence.
 
 [Fog Guard V2](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Lazara-Fog-Guard-V2.zip)
 is the first user-confirmed step: capture fog/light evidence before processing,
