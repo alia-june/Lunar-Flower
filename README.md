@@ -26,6 +26,10 @@ opposing ray pairs and a camera-visible voxel-radiance proxy. Twin Lanterns is
 not an ambient-occlusion shader, and it does not contain a denoiser or temporal
 history.
 
+## AI theory — Lunar Flower Seed
+
+The [Lunar Flower AI Seed](theory/README.md) is a separate proposed architecture: AI under an expert-system contract for constrained orchestration, with tools and structure built from the ground up and generative synthetic decisions as a last resort. [Read the canonical theory](https://github.com/alia-june/ethical-and-intellectual-theory/blob/main/blue-prints/LUNAR_FLOWER_AI_SEED_EXPERT_SYSTEM_CONTRACT.md). This does **not** describe a capability implemented by the shaders in this repository.
+
 ## Beginning fog- and light-aware shading
 
 We are beginning a broader approach to our shaders: preserve atmospheric depth,
