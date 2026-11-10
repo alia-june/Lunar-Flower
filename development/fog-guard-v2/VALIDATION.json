@@ -1,0 +1,40 @@
+{
+  "schema": "lazara-fog-guard-validation-v1",
+  "date": "2026-11-10",
+  "baseline_revision": "49e64006431e5e86e8a447bef517cbd926968e18",
+  "modified_effect": "reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx",
+  "modified_effect_sha256": "2aa3441883b4b8a896f5e80fb3fdb9bf55760cfadb1749d2aff7f9cf87cb479a",
+  "checks": {
+    "cpu_test_methods_passed": 2,
+    "shader_extracted_assertions_passed": 22286,
+    "package_contract_checks_passed": 6,
+    "techniques": 19,
+    "effect_files": 15,
+    "shader_closure_files": 110,
+    "vendored_manifest_files": 104,
+    "local_patches_checked": 1,
+    "other_effect_bytes_changed": false,
+    "other_preset_sections_changed": false,
+    "original_technique_order_preserved": true
+  },
+  "default_changes": {
+    "BWBlackWandX_Guard_ShadeOutside": {
+      "before": 0.18,
+      "after": 0.0
+    },
+    "BWBlackWandX_Guard_DepthStart": {
+      "before": 0.25,
+      "after": 0.005
+    },
+    "BWBlackWandX_Guard_DepthEnd": {
+      "before": 1.0,
+      "after": 0.05
+    }
+  },
+  "preset_strength_preserved": 0.672,
+  "source_default_strength_preserved": 1.0,
+  "native_reshade_compile_performed": false,
+  "gpu_timing_performed": false,
+  "reported_game_scene_reproduced": false,
+  "status": "Source/CPU/package-contract checks passed; native compile and target-game test pending"
+}

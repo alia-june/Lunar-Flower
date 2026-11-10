@@ -1,0 +1,29 @@
+{
+  "source_repository": "https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package",
+  "source_baseline": "49e64006431e5e86e8a447bef517cbd926968e18",
+  "local_source_branch_head": "c92d8cd",
+  "frozen_shader_revision": "ba43d16508bfdd3b818683f4e53e517530961a65",
+  "delivery_repository": "https://github.com/alia-june/Lunar-Flower",
+  "upstream_push_status": "GitHub 403: alia-june lacks write access; no upstream changes pushed",
+  "archive_sha256": "406dfa4b3a8698a3ddf24bcf2e688ed7cf9c92e5c794ca54f62408e24fbda983",
+  "source_patch_sha256": "a0e13acbe7b912b6b67a924f3888ef68a2405c3f39517ebbc22cb838396d19ce",
+  "single_effect_package": {
+    "effect_files": 1,
+    "shader_and_include_files": 59,
+    "source_byte_matches": true
+  },
+  "full_lazara_package_validation": {
+    "shader_files": 110,
+    "effect_files": 15,
+    "source_hashes_verified": 122,
+    "checks_passed": 5
+  },
+  "native_reshade_compile_performed": false,
+  "live_visual_test_performed": false,
+  "patch_validation": {
+    "scope": "All affected baseline files; untouched screenshot blobs excluded from this isolated fixture",
+    "commits_applied": 3,
+    "paths_byte_matched": 18,
+    "result": "PASS"
+  }
+}
