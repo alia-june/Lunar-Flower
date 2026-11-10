@@ -6,6 +6,12 @@ Twin Lanterns is Lunar Flower's bounded screen-space indirect-light family for
 ReShade. The project favors visible evidence and controlled reconstruction over
 unbounded brightness or hidden temporal state.
 
+Twin Lanterns is part of our beginning work on
+[fog- and light-aware shading](../docs/FOG_AND_LIGHT_AWARE_SHADING.md), informed
+by lessons from miXSR_hexer. Fog Guard V2 provides a separate capture/restore
+pair around the effects you want to protect; native fog/light mask integration
+inside every shader remains future work.
+
 ## Visual Comparison
 
 ![No Effects, Twin Lanterns Full, and Twin Lanterns Full plus Lazara](assets/twin-lanterns-full-lazara-comparison.png)

@@ -26,6 +26,23 @@ opposing ray pairs and a camera-visible voxel-radiance proxy. Twin Lanterns is
 not an ambient-occlusion shader, and it does not contain a denoiser or temporal
 history.
 
+## Beginning fog- and light-aware shading
+
+We are beginning a broader approach to our shaders: preserve atmospheric depth,
+light color and surface detail while applying controlled shading. Lessons from
+[miXSR_hexer](https://github.com/dastardlyrat/miXSR_hexer)—fog gates, light
+respect, shared masks and visible diagnostics—help guide this work.
+
+[Fog Guard V2](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Lazara-Fog-Guard-V2.zip)
+is the first user-confirmed step: capture fog/light evidence before processing,
+then restore protected regions afterward. Twin Lanterns contributes bounded
+light and fine-depth surface checks. Integration across the shader family is
+beginning; each effect will need its own validation.
+
+[Read the approach and lessons learned](docs/FOG_AND_LIGHT_AWARE_SHADING.md)
+· [Fog Guard setup](development/fog-guard-v2/README.md)
+· [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package)
+
 ## Visual Comparison
 
 ![No Effects, Twin Lanterns Full, and Twin Lanterns Full plus Lazara](Twin-Lanterns/assets/twin-lanterns-full-lazara-comparison.png)
