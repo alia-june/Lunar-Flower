@@ -87,12 +87,14 @@ The adjacent `.zip.sha256` files identify the archives. These packages are
 on the review branch. CPU/source validation does not establish a fresh native
 ReShade compile or visual acceptance of either backport.
 
-## Fog Guard V2 test build for Lazara
+## Fog Guard V2 for Lazara
 
-[Download Fog Guard V2](https://raw.githubusercontent.com/alia-june/Lunar-Flower/fix/fog-guard-v2-delivery/downloads/Lazara-Fog-Guard-V2.zip).
+[Download Fog Guard V2](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Lazara-Fog-Guard-V2.zip).
 
 Use **Fog Guard (Capture) → Crystal Spider/other effects → Fog Guard (Restore)**,
 and set **Outside Shade to 0** in existing presets. This is a separate
 single-effect Lazara test package; the Crystal Spider package is unchanged.
 [Installation, patch provenance and validation](../development/fog-guard-v2/README.md).
-Native compilation and target-game acceptance remain pending.
+The user confirmed the fix works on November 10, 2026. Automated checks cover
+CPU behavior and package integrity; native compile logs and GPU timings have
+not been archived.

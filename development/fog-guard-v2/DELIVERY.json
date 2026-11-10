@@ -25,5 +25,10 @@
     "commits_applied": 3,
     "paths_byte_matched": 18,
     "result": "PASS"
+  },
+  "user_validation": {
+    "status": "reported_fixed",
+    "date": "2026-11-10",
+    "scope": "User confirmed the delivered build fixed the issue and requested publication; no compile log or GPU timings supplied"
   }
 }
