@@ -27,6 +27,7 @@ def package(output: Path) -> None:
         "FRONT_BIAS_NOTES.md": BUILD / "FRONT_BIAS_NOTES.md",
         "DEPTH_SHAPING_NOTES.md": BUILD / "DEPTH_SHAPING_NOTES.md",
         "DEFAULTS_FROM_PRESET.json": BUILD / "DEFAULTS_FROM_PRESET.json",
+        "TILE_ARTIFACT_FIX_NOTES.md": BUILD / "TILE_ARTIFACT_FIX_NOTES.md",
         "tools/install_twin_lantern_alpha.py": ROOT / "tools/install_twin_lantern_alpha.py",
     })
     effects = [name for name in payload if name.endswith(".fx")]

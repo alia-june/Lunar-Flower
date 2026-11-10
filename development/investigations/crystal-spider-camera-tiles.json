@@ -1,0 +1,77 @@
+{
+  "schema": "lunar-flower-investigation-v1",
+  "investigation": "camera-dependent-sparse-tile-admission",
+  "source_revision": "06ce6b60bed5bc7f8f89a47bbd6dacaa4306302e",
+  "reported_configuration": "Crystal Spider at defaults plus Lazara Fog / Light Guard at defaults",
+  "before": {
+    "source_revision": "06ce6b60bed5bc7f8f89a47bbd6dacaa4306302e",
+    "exit_code": 1,
+    "stderr": "FAIL: tile probe missed a valid fine-depth donor at default settings\n",
+    "scope": "CPU-extracted source at shipped defaults; not GPU/game reproduction"
+  },
+  "correction": "Fine-depth transport and surface diagnostics are independent of sparse atlas metadata; atlas build is diagnostic-only",
+  "defaults_preserved": 24,
+  "other_effects_changed": false,
+  "cpu_checks": {
+    "structural_passed": 53,
+    "regression_tests_passed": 17,
+    "new_camera_placements_per_resolution": 21,
+    "resolutions": [
+      [
+        1280,
+        720
+      ],
+      [
+        2560,
+        1440
+      ],
+      [
+        3840,
+        2160
+      ]
+    ],
+    "assertions_per_resolution": 127,
+    "historical_shader_fails_new_admission_case": true,
+    "fine_depth_mismatch_sky_bounds_self_hit_tests": "PASS"
+  },
+  "fog_guard_inspection": {
+    "repository": "https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package",
+    "path": "reshade-shaders/Shaders/vendor/occult_box/black_wand/effects/BlackWand_10_FogLight_Guard.fx",
+    "sha256": "9e886347e8cd630f703cccb8926661c409d484de6796c3d117698a6d5e7c6742",
+    "source_defaults": {
+      "BWBlackWandX_Guard_DebugView": "0",
+      "BWBlackWandX_Guard_Strength": "1.0",
+      "BWBlackWandX_Guard_ShadeOutside": "0.18",
+      "BWBlackWandX_Guard_ProtectAmount": "0.85",
+      "BWBlackWandX_Guard_FogSensitivity": "1.15",
+      "BWBlackWandX_Guard_LightThreshold": "0.78",
+      "BWBlackWandX_Guard_LightSoftness": "0.12",
+      "BWBlackWandX_Guard_ContrastReject": "0.90",
+      "BWBlackWandX_Guard_DepthStart": "0.25",
+      "BWBlackWandX_Guard_DepthEnd": "1.0"
+    },
+    "packaged_preset_values": {
+      "BWBlackWandX_Guard_ContrastReject": "0.900000",
+      "BWBlackWandX_Guard_DebugView": "0",
+      "BWBlackWandX_Guard_DepthEnd": "1.000000",
+      "BWBlackWandX_Guard_DepthStart": "0.250000",
+      "BWBlackWandX_Guard_FogSensitivity": "1.150000",
+      "BWBlackWandX_Guard_LightSoftness": "0.120000",
+      "BWBlackWandX_Guard_LightThreshold": "0.780000",
+      "BWBlackWandX_Guard_ProtectAmount": "0.850000",
+      "BWBlackWandX_Guard_ShadeOutside": "0.180000",
+      "BWBlackWandX_Guard_Strength": "0.672000"
+    },
+    "scope": "Source defaults and preset values recorded separately; Fog Guard effect and local contrast/depth-window helpers inspected; no live combined-stack reproduction"
+  },
+  "package": {
+    "path": "downloads/Crystal-Spider-Beta.zip",
+    "sha256": "b146fafde599a46bccb91e0cebb49a5eb3e0a4161e316b3102c1df1419a531c8",
+    "effect_count": 1,
+    "shader_include_bytes_match": true
+  },
+  "native_compile_performed": false,
+  "live_game_reproduction_performed": false,
+  "gpu_frame_time_measured": false,
+  "status": "CPU/source/package checks passed; target-game retest pending"
+}

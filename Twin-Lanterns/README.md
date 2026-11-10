@@ -90,7 +90,8 @@ are not included in the repository's MIT software grant.
 
 Stable 1.4 and Fidelity Overdrive use an ordered four-pass frame graph with
 three half-resolution working fields. Full Resolution Dual Ray Alpha is a separate
-five-pass candidate: it first builds a current-frame view-frustum voxel proxy,
+five-pass candidate: its first pass builds a current-frame diagnostic proxy
+only for voxel diagnostic views,
 then runs the same three working fields at full resolution with a variable
 opposing-ray schedule. All three builds retain the same surface-evidence and
 bounded-composite contracts.
@@ -98,7 +99,7 @@ bounded-composite contracts.
 ```mermaid
 flowchart TD
     A["Back buffer + depth"] --> B["Stable / Fidelity<br/>Pass 1: four cardinal rays<br/>half-resolution raw field"]
-    A --> V["Full Resolution Dual Ray Alpha<br/>Pass 1: build adaptive<br/>visible-depth surface hierarchy"]
+    A --> V["Full Resolution Dual Ray Alpha<br/>Pass 1: adaptive hierarchy<br/>diagnostic views only"]
     V --> R["Pass 2: 1-4 opposing ray pairs<br/>full-resolution raw field"]
     B --> C["Separable surface resolve"]
     R --> C
@@ -134,7 +135,8 @@ current-frame working fields, not temporal history.
 Full Resolution Dual Ray Alpha builds a bounded adaptive visible-depth hierarchy
 with `64 x 36` root tiles and two optional subdivision levels. A `64 x 36 x 21`
 `RGBA32F` atlas stores nodes with signed depth; Z indexes tree nodes rather than
-uniform depth bins. Tiles split on sampled depth/coverage/color changes. Ray
+uniform depth bins. Tiles split on sampled depth/coverage/color changes. This
+atlas is diagnostic data: sparse probe bounds cannot veto lighting. Ray
 candidates require full-resolution depth validation and fetch donor color at the
 accepted UV, instead of applying one coarse cell color to the whole tile.
 

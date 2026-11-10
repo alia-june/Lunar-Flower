@@ -20,7 +20,8 @@
     "Front Bias UI-only precision and tooltip correction; normalized-depth scale, preset values and ray math preserved",
     "receiver-depth fade and premultiplied, surface-gated indirect-light softening after edge fill; appended mask diagnostic; no new textures or passes",
     "fade/softening defaults off and explicit label; fade final bounded contribution after caps with updated diagnostics; preserve stored values",
-    "Alpha-only uniform defaults copied exactly from corrected user Lazara.ini: 24 matched values, seven changed initializers; shader functions and other effects preserved"
+    "Alpha-only uniform defaults copied exactly from corrected user Lazara.ini: 24 matched values, seven changed initializers; shader functions and other effects preserved",
+    "camera-dependent sparse tile rejection corrected: bounded transport and surface diagnostics use full-resolution depth without sampled atlas veto; atlas builds only for diagnostics; all 24 defaults preserved"
   ],
   "representation_boundary": "camera-visible depth shell only; not world voxels, hidden geometry, off-screen geometry, or complete GI",
   "pending": [

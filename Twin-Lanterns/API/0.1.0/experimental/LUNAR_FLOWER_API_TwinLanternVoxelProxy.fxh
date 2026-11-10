@@ -192,12 +192,10 @@ float LUNAR_FLOWER_API_TwinLanternVoxelDetailLevel(float2 uv)
 
 float4 LUNAR_FLOWER_API_LoadTwinLanternVoxelSurface(float2 uv)
 {
-    float level = 0.0;
-    float4 node = LUNAR_FLOWER_API_LoadTwinLanternVoxelNode(uv, level);
+    // The five construction probes do not bound every pixel in a tile.
+    // Fine surface evidence must remain valid even when those probes miss it.
     float depth = CAMERA_OBSCURA_LoadDepth(uv);
-    float slack = LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance(node.x);
-    float valid = CAMERA_OBSCURA_DepthConfidence(depth) * step(0.000001, node.z) *
-        step(node.x - slack, depth) * step(depth, node.y + slack);
+    float valid = CAMERA_OBSCURA_DepthConfidence(depth);
     float3 color = saturate(tex2Dlod(ReShade::BackBuffer, float4(uv, 0.0, 0.0)).rgb);
     return float4(color * valid, valid);
 }
@@ -239,30 +237,25 @@ LUNAR_FLOWER_API_TraceTwinLanternVoxelProxyWithReceiver(
             previousRayDepth = rayDepth;
             float distancePixels = length((requestedUv - ray.origin_uv) / pixel);
             if (distancePixels <= controls.self_hit_pixels) continue;
-            float level = 0.0;
-            float4 node = LUNAR_FLOWER_API_LoadTwinLanternVoxelNode(requestedUv, level);
-            float coarseSlack = LUNAR_FLOWER_API_TwinLanternVoxelDepthTolerance(node.x);
-            float coarseSupport = step(0.000001, node.z) *
-                CAMERA_OBSCURA_DepthConfidence(node.x) * CAMERA_OBSCURA_DepthConfidence(node.y) *
-                step(intervalMin - coarseSlack, node.y) * step(node.x, intervalMax + coarseSlack);
-            if (coarseSupport > 0.5)
+            // Sparse atlas bounds are not conservative: a narrow surface can
+            // fall between all five probes, then appear after a small camera
+            // movement. Never let sampled bounds/coverage veto fine evidence.
+            // Keep this bounded trace independent of the diagnostic atlas.
+            float sceneDepth = CAMERA_OBSCURA_LoadDepth(requestedUv);
+            float fineSupport = CAMERA_OBSCURA_DepthConfidence(sceneDepth) *
+                step(intervalMin, sceneDepth) * step(sceneDepth, intervalMax);
+            float distanceWeight = saturate(1.0 - distancePixels / max(rayLengthPixels, 0.000001));
+            float weight = fineSupport * distanceWeight * CAMERA_OBSCURA_HitConfidence(
+                sceneDepth - rayDepth, ray.front_bias, ray.back_thickness);
+            if (weight > 0.000001)
             {
-                float sceneDepth = CAMERA_OBSCURA_LoadDepth(requestedUv);
-                float fineSupport = CAMERA_OBSCURA_DepthConfidence(sceneDepth) *
-                    step(intervalMin, sceneDepth) * step(sceneDepth, intervalMax);
-                float distanceWeight = saturate(1.0 - distancePixels / max(rayLengthPixels, 0.000001));
-                float weight = fineSupport * distanceWeight * CAMERA_OBSCURA_HitConfidence(
-                    sceneDepth - rayDepth, ray.front_bias, ray.back_thickness);
-                if (weight > 0.000001)
-                {
-                    // Avoid implicit gradients in the varying traversal loop.
-                    evidence.radiance_rgb = saturate(tex2Dlod(
-                        ReShade::BackBuffer, float4(requestedUv, 0.0, 0.0)).rgb);
-                    evidence.evidence = saturate(weight);
-                    evidence.hit = 1.0;
-                    evidence.normalized_distance = saturate(distancePixels / max(rayLengthPixels, 0.000001));
-                    break;
-                }
+                // Avoid implicit gradients in the varying traversal loop.
+                evidence.radiance_rgb = saturate(tex2Dlod(
+                    ReShade::BackBuffer, float4(requestedUv, 0.0, 0.0)).rgb);
+                evidence.evidence = saturate(weight);
+                evidence.hit = 1.0;
+                evidence.normalized_distance = saturate(distancePixels / max(rayLengthPixels, 0.000001));
+                break;
             }
         }
     }

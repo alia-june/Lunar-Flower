@@ -4,6 +4,10 @@
 
 **[Download Crystal Spider - Beta — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package)
 
+Camera-dependent tile correction: full-resolution depth now controls donor
+admission; sparse voxel probes cannot mask valid light. The atlas builds only
+for diagnostics. Defaults are unchanged. [Fix details and retest steps](../Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/TILE_ARTIFACT_FIX_NOTES.md).
+
 ### Lazara + Twin Lanterns
 
 [![Elden Ring with Lazara + Twin Lanterns](../Twin-Lanterns/assets/twin-lanterns-gallery-04.png)](../Twin-Lanterns/assets/twin-lanterns-gallery-04.png)
@@ -14,8 +18,8 @@ original 2560×1440 resolution. Click the image to view the full frame.
 The Alpha defaults now match all 24 Twin Lanterns values in the corrected
 user-supplied `Lazara.ini` section. Seven defaults changed: Strength `0.272`,
 Front Bias `0.000052`, Ray Pairs `1`, Voxel Lighting `1`, Voxel Steps `24`,
-Fade Amount `0.355`, and Softening `1`. Other effects and shader functions
-are unchanged. The ZIP includes `DEFAULTS_FROM_PRESET.json` with the exact
+Fade Amount `0.355`, and Softening `1`. Those defaults are preserved in the tile
+correction; other effects are unchanged. The ZIP includes `DEFAULTS_FROM_PRESET.json` with the exact
 values and source hash; no other preset sections are copied into it.
 
 These are defaults for new/reset Alpha controls; saved preset values remain
@@ -24,9 +28,8 @@ provided preset. Zero still disables fade or softening. The fade scales final
 bounded contribution, and the source image is not blurred. Native compile/live
 acceptance remain separate from source, CPU and package checks.
 
-This is the download name for the existing Twin Lanterns Alpha package.
-Only the archive name changed; its contents, shader identity and saved preset
-compatibility are unchanged.
+Crystal Spider - Beta is the download name for the Twin Lanterns Alpha build.
+The rebrand retains its shader identity and saved preset compatibility.
 
 This package contains the corrected performance candidate, with explicit-LOD
 ray sampling and versioned adaptive atlas resources. It replaces the earlier
@@ -60,7 +63,7 @@ shader search path. The ZIP already includes the complete selected build.
 SHA-256:
 
 ```text
-4ddacb5b4e5775caa090978ad056cfcc9593ce84bf9c0040a6db691a1b3f350f
+b146fafde599a46bccb91e0cebb49a5eb3e0a4161e316b3102c1df1419a531c8
 ```
 
 The adjacent `.zip.sha256` file records the same archive checksum. It verifies
