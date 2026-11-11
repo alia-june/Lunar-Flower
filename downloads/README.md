@@ -53,7 +53,7 @@ and the instructions above.
 Bundle SHA-256:
 
 ```text
-f3192265117cae65e936368225ac3ba766df6b0da69c5e2ffd84612fdb6d17b2
+69884b754fe421c549d8f45b8608fc9455b405527522b8814d01416868e1269f
 ```
 
 The adjacent `.zip.sha256` file records the same archive checksum.

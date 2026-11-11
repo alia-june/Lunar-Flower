@@ -127,7 +127,7 @@ def package(output: Path) -> dict:
     for name, values in [(PurePosixPath(FOG_EFFECT).name, fog_defaults),
                          (PurePosixPath(CRYSTAL_EFFECT).name, selected)]:
         preset += f'[{name}]\n' + ''.join(f'{key}={value}\n' for key, value in sorted(values.items())) + '\n'
-    payload['Crystal-Spider-Beta.ini'] = preset.encode()
+    payload['Crystal-Spider-Beta.ini'] = (preset.rstrip() + '\n').encode()
     payload['README.md'] = (ROOT / 'docs/CRYSTAL_SPIDER_BUNDLE.md').read_bytes()
     payload['LICENSE'] = crystal['LICENSE']
     payload['DEFAULTS_FROM_PRESET.json'] = crystal['DEFAULTS_FROM_PRESET.json']
