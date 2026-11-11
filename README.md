@@ -2,16 +2,23 @@
 
 ### Crystal Spider - Beta · by Lunar Flower
 
-**[Download Crystal Spider - Beta — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package) · [Installation and package details](downloads/README.md#crystal-spider---beta) · [Gallery](Twin-Lanterns/README.md#gallery)
+**[Download Crystal Spider - Beta + Fog Guard — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package) · [Installation and package details](downloads/README.md#crystal-spider---beta) · [Gallery](Twin-Lanterns/README.md#gallery)
 
 [![Elden Ring with Lazara + Twin Lanterns](Twin-Lanterns/assets/twin-lanterns-gallery-04.png)](Twin-Lanterns/assets/twin-lanterns-gallery-04.png)
 
 *Elden Ring — [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package) + Twin Lanterns.*
 
-Download the ZIP, extract it outside ReShade's shader search folders, and merge
-only its `reshade-shaders` folder into your game installation. Keep your
-existing `ReShade.fxh`. Crystal Spider - Beta is the download name for the
-Twin Lanterns Alpha build; existing shader names and preset settings still work.
+The download now bundles Crystal Spider with Fog Guard V2 and a starter preset.
+Extract the ZIP outside ReShade's shader search folders, merge its
+`reshade-shaders` folder into your game, and select the included
+`Crystal-Spider-Beta.ini` in ReShade. Keep your installed `ReShade.fxh`.
+
+The preset enables **Fog Guard Capture → Crystal Spider → Fog Guard Restore**,
+with **Outside Shade = 0**. To retain an existing Lazara/custom stack, keep its
+preset and use that order around the effects you want protected.
+[Bundle setup and contents](docs/CRYSTAL_SPIDER_BUNDLE.md) ·
+[Crystal-only ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta-standalone.zip).
+Crystal Spider retains its Twin Lanterns Alpha technique/control identifiers.
 
 Lunar Flower is the public home of **Twin Lanterns**, a ReShade screen-space
 indirect-light project built around explicit surface evidence, bounded energy,
@@ -81,7 +88,7 @@ replacing it.
 All three builds now carry the accepted fine Strength (`0.001`) and Surface
 Depth Agreement (`0.00001`) drag controls. Stable and Fidelity received only
 those UI changes; their implementations and preset values remain intact.
-Single-effect packages are available in [downloads](downloads/).
+Combined and standalone packages are available in [downloads](downloads/).
 
 ## Public API
 

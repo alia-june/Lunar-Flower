@@ -2,72 +2,62 @@
 
 ## Crystal Spider - Beta
 
-**[Download Crystal Spider - Beta — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package)
+**[Download Crystal Spider - Beta + Fog Guard — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Crystal-only ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta-standalone.zip) · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package)
 
-Camera-dependent tile correction: full-resolution depth now controls donor
-admission; sparse voxel probes cannot mask valid light. The atlas builds only
-for diagnostics. Defaults are unchanged. [Fix details and retest steps](../Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/TILE_ARTIFACT_FIX_NOTES.md).
+The main ZIP now bundles Crystal Spider and Fog Guard V2, their complete matching
+includes, source notices and `Crystal-Spider-Beta.ini`. It contains **two effect
+files and three techniques**, ordered **Capture → Crystal Spider → Restore**.
+All 70 shader/include files are unchanged from the published standalone builds.
+
+### Setup
+
+1. Extract outside the shader search tree and merge only `reshade-shaders` into
+   the existing game installation. Keep its `ReShade.fxh`.
+2. Copy the included `Crystal-Spider-Beta.ini` into your preset folder and select
+   it in ReShade for a fresh three-technique setup.
+3. For an existing Lazara/custom stack, keep its preset and put Capture before
+   the effects to protect and Restore after them. Set **Outside Shade = 0**;
+   existing presets may retain an older `0.18` value.
+
+[Full bundle instructions](../docs/CRYSTAL_SPIDER_BUNDLE.md) ·
+[Inspect the starter preset](../presets/Crystal-Spider-Beta.ini).
 
 ### Lazara + Twin Lanterns
 
 [![Elden Ring with Lazara + Twin Lanterns](../Twin-Lanterns/assets/twin-lanterns-gallery-04.png)](../Twin-Lanterns/assets/twin-lanterns-gallery-04.png)
 
-*Elden Ring — Lazara + Twin Lanterns.* User-supplied capture, preserved at its
-original 2560×1440 resolution. Click the image to view the full frame.
+*Elden Ring — Lazara + Twin Lanterns.* Original user-supplied 2560×1440 capture.
 
-The Alpha defaults now match all 24 Twin Lanterns values in the corrected
-user-supplied `Lazara.ini` section. Seven defaults changed: Strength `0.272`,
-Front Bias `0.000052`, Ray Pairs `1`, Voxel Lighting `1`, Voxel Steps `24`,
-Fade Amount `0.355`, and Softening `1`. Those defaults are preserved in the tile
-correction; other effects are unchanged. The ZIP includes `DEFAULTS_FROM_PRESET.json` with the exact
-values and source hash; no other preset sections are copied into it.
+### Preserved controls and component evidence
 
-These are defaults for new/reset Alpha controls; saved preset values remain
-as saved. Start `0.005`, End `0.05`, and softening Radius `2 px` also match the
-provided preset. Zero still disables fade or softening. The fade scales final
-bounded contribution, and the source image is not blurred. Native compile/live
-acceptance remain separate from source, CPU and package checks.
+The starter retains all 24 Crystal Spider values from the corrected user
+`Lazara.ini`: Strength `0.272`, Front Bias `0.000052`, Ray Pairs `1`, Voxel
+Lighting `1`, Voxel Steps `24`, Fade `0.355`, and Softening `1`, with the other
+selected values unchanged. The original `DEFAULTS_FROM_PRESET.json` is included.
+Fog Guard's 13 controls use shader defaults, with Outside Shade `0` and Strength
+`1`; the separate curated Lazara preset has historically saved Strength `0.672`.
 
-Crystal Spider - Beta is the download name for the Twin Lanterns Alpha build.
-The rebrand retains its shader identity and saved preset compatibility.
+Crystal Spider's public identifiers and preset scales remain unchanged. The
+[camera-dependent tile correction](../Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/TILE_ARTIFACT_FIX_NOTES.md)
+uses fine-depth donor admission and a diagnostic-only atlas. The
+[Fog Guard update](../development/fog-guard-v2/README.md) has user-reported
+acceptance and CPU/package evidence. Packaging verifies include closure,
+nonconflicting texture names, component bytes and preset wiring; it does not
+claim a fresh native compile or combined GPU benchmark.
 
-This package contains the corrected performance candidate, with explicit-LOD
-ray sampling and versioned adaptive atlas resources. It replaces the earlier
-archive that failed with X3570/X3511 in ReShade. It contains exactly one Alpha
-`.fx` file, its required includes, installation repair tool and compiler notes.
-Native compilation, visual acceptance and GPU performance
-are still pending for this candidate. The package is available on `main`.
+The standalone Crystal-only ZIP retains the original single-effect package,
+notes and Crystal installation repair tool. Fog Guard remains separately
+available below. Bundle installation uses the complete `reshade-shaders` folder
+and the instructions above.
 
-Fine tuning update: Indirect Light Strength and Voxel Proxy Lighting use drag
-controls with `0.001` steps; Surface Depth Agreement uses `0.00001` steps.
-For 10-30% nominal strength, use `0.100-0.300`. Existing preset values, ranges,
-lighting math is preserved. Current defaults are recorded in the profile above.
-The included README records the
-depth-agreement brightness investigation and its CPU-only limits.
-
-Alpha Front Surface Bias now has `0.000001` drag steps (100× finer). Exact zero
-and stored preset values remain unchanged. The tooltip and included
-`FRONT_BIAS_NOTES.md` explain normalized-depth admission and confidence weighting;
-this control does not move the ray origin or replace pixel self-hit rejection.
-
-1. Close the game and extract the ZIP outside ReShade's shader search folders.
-2. Merge only its `reshade-shaders` directory into the existing game installation.
-   The extracted folder also contains the backup-preserving repair tool; see its
-   README if duplicate copies need cleanup.
-3. Reload ReShade and select the Alpha technique. Compare the entire technique
-   off, Output View = Source Image, and Final Image with voxel strength zero.
-
-Do not copy the entire repository or a second extracted build tree into the
-shader search path. The ZIP already includes the complete selected build.
-
-SHA-256:
+Bundle SHA-256:
 
 ```text
-b146fafde599a46bccb91e0cebb49a5eb3e0a4161e316b3102c1df1419a531c8
+f3192265117cae65e936368225ac3ba766df6b0da69c5e2ffd84612fdb6d17b2
 ```
 
-The adjacent `.zip.sha256` file records the same archive checksum. It verifies
-download identity, not native shader correctness or GPU performance.
+The adjacent `.zip.sha256` file records the same archive checksum.
+`BUNDLE_MANIFEST.json` records the input archive hashes and bundled file hashes.
 
 ## Stable and Fidelity fine controls
 
@@ -93,7 +83,8 @@ ReShade compile or visual acceptance of either backport.
 
 Use **Fog Guard (Capture) → Crystal Spider/other effects → Fog Guard (Restore)**,
 and set **Outside Shade to 0** in existing presets. This is a separate
-single-effect Lazara test package; the Crystal Spider package is unchanged.
+single-effect Lazara package. The main Crystal Spider download also includes
+this exact Fog Guard component.
 [Installation, patch provenance and validation](../development/fog-guard-v2/README.md).
 The user confirmed the fix works on November 10, 2026. Automated checks cover
 CPU behavior and package integrity; native compile logs and GPU timings have

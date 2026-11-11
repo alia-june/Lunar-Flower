@@ -87,10 +87,11 @@ compositing; that is a next step, not a current capability claim.
 ## Try the first step
 
 [Download Fog Guard V2](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Lazara-Fog-Guard-V2.zip)
-· [Download Crystal Spider - Beta](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)
+· [Download Crystal Spider + Fog Guard bundle](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)
 · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package)
 
-Use **Fog Guard Capture → Crystal Spider / other effects → Fog Guard Restore**.
+The main Crystal Spider download includes both effects and an ordered starter
+preset. Use **Fog Guard Capture → Crystal Spider / other effects → Fog Guard Restore**.
 For existing presets, set **Outside Shade to 0**. Follow the
 [installation and migration notes](../development/fog-guard-v2/README.md) when
 replacing the effect; the source and saved preset values can differ.
