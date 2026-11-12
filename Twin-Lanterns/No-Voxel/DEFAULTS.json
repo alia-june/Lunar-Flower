@@ -1,0 +1,33 @@
+{
+  "scope": "Twin Lanterns No Voxel only",
+  "source_profile": "../Full-Resolution-Dual-Ray-Alpha/DEFAULTS_FROM_PRESET.json",
+  "defaults": {
+    "LUNAR_FLOWER_TwinLanternsNoVoxelBackThickness": "0.003500",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelDepthFadeEnd": "0.050000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelDepthFadeStart": "0.005000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelDepthFadeStrength": "0.355000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelDepthSlope": "0.160000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelDepthTolerance": "0.005000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelEdgeFillRadiusPixels": "2.000000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelEdgeFillStrength": "0.200000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelEdgeInkStrength": "0.000000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelEdgeProtection": "1.000000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelEnabled": "1",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelFidelityGuard": "0.650000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelFrontBias": "0.000052",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelLightSoftening": "1.000000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelLightSofteningRadiusPixels": "2.000000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelMaximumContribution": "0.200000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelNormalMinimum": "0.800000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelOverdrive": "0.000000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelRayLengthPixels": "24.000000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelRayPairs": "1",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelStrength": "0.272000",
+    "LUNAR_FLOWER_TwinLanternsNoVoxelView": "0"
+  },
+  "removed_controls": [
+    "VoxelLightingStrength",
+    "VoxelTraceSteps"
+  ],
+  "depth_fade_mask_index": 14
+}

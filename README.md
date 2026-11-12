@@ -80,6 +80,7 @@ that imagery is not included in the repository's MIT software grant.
 | [Stable 1.4](Twin-Lanterns/Stable-1.4/) | Fixed baseline | A conservative, preset-compatible Twin Lanterns installation |
 | [Fidelity Overdrive](Twin-Lanterns/Fidelity-Overdrive/) | Public candidate; live acceptance pending | Independent color/highlight protection and stronger bounded transport |
 | [Full Resolution Dual Ray Alpha](Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/) | Public alpha; structural checks passed, compile and live gates pending | Full-resolution transport, 2-8 rays, and compute-built view-frustum voxel-proxy research |
+| [No Voxel](Twin-Lanterns/No-Voxel/) | Separate test build; native compile and live acceptance pending | Full-resolution dual screen tracing with voxel lighting, compute pass and 3D atlas removed |
 
 `Stable-1.4` is preserved as the user-designated fixed line. Fidelity
 Overdrive and Full Resolution Dual Ray Alpha are staged beside it rather than

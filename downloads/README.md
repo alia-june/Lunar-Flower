@@ -1,5 +1,18 @@
 # Twin Lanterns downloads
 
+## Twin Lanterns No Voxel
+
+[Download No-Voxel test build + Fog Guard — ZIP](Twin-Lanterns-No-Voxel.zip)
+· [Setup and scope](../Twin-Lanterns/No-Voxel/README.md)
+· [SHA-256](Twin-Lanterns-No-Voxel.zip.sha256)
+
+This separate build retains full-resolution DDA and parametric-march transport,
+depth fade, light-only softening and bounded added light. Voxel lighting,
+voxel controls/views, the compute pass and 3D atlas are removed. The starter
+preset orders **Fog Guard Capture → Twin Lanterns No Voxel → Fog Guard Restore**.
+Disable the original Crystal Spider technique when testing. Native ReShade
+compilation, appearance and FPS still require in-game testing.
+
 ## Crystal Spider - Beta
 
 **[Download Crystal Spider - Beta + Fog Guard — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Crystal-only ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta-standalone.zip) · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package)

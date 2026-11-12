@@ -6,6 +6,13 @@ Twin Lanterns is Lunar Flower's bounded screen-space indirect-light family for
 ReShade. The project favors visible evidence and controlled reconstruction over
 unbounded brightness or hidden temporal state.
 
+[Twin Lanterns No Voxel](No-Voxel/) is a separate screen-only test build.
+It retains dual screen tracing, depth fade and light softening while removing
+voxel lighting, its compute pass and 3D resources. The
+[test package](../downloads/Twin-Lanterns-No-Voxel.zip) includes unchanged Fog
+Guard V2 and a matching starter preset. Native compilation and game testing
+remain pending.
+
 Twin Lanterns is part of our beginning work on
 [fog- and light-aware shading](../docs/FOG_AND_LIGHT_AWARE_SHADING.md), informed
 by lessons from miXSR_hexer. The combined download includes Fog Guard V2 and an

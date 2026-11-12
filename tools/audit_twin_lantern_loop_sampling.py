@@ -28,7 +28,7 @@ def sources(directory: Path = SHADERS) -> dict[str, str]:
     return {str(p): p.read_text(encoding='utf-8') for p in directory.rglob('*') if p.suffix in {'.fx', '.fxh'}}
 
 
-def audit(texts: dict[str, str]) -> list[str]:
+def audit(texts: dict[str, str], entrypoints: tuple[str, ...] = ENTRYPOINTS) -> list[str]:
     functions = {}
     for filename, text in texts.items():
         text = re.sub(r'//[^\n]*|/\*[\s\S]*?\*/', '', text)
@@ -40,7 +40,7 @@ def audit(texts: dict[str, str]) -> list[str]:
                 end += 1
             functions[match[1]] = (filename, text[start:end - 1])
     failures = []
-    for root in ENTRYPOINTS:
+    for root in entrypoints:
         if root not in functions:
             failures.append(f'Missing loop entrypoint: {root}')
             continue
