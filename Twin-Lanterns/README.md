@@ -1,42 +1,32 @@
 # Twin Lanterns
 
-**[Download Crystal Spider - Beta + Fog Guard — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package) · [Installation and package details](../downloads/README.md#crystal-spider---beta)
+Lunar Flower’s bounded screen-space indirect-light family for ReShade.
 
-Twin Lanterns is Lunar Flower's bounded screen-space indirect-light family for
-ReShade. The project favors visible evidence and controlled reconstruction over
-unbounded brightness or hidden temporal state.
+## Kriegsspinne — Reference Build Candidate 1
 
-[Twin Lanterns No Voxel](No-Voxel/) is a separate screen-only test build.
-It retains dual screen tracing, depth fade and light softening while removing
-voxel lighting, its compute pass and 3D resources. The
-[test package](../downloads/Twin-Lanterns-No-Voxel.zip) includes unchanged Fog
-Guard V2 and a matching starter preset. Native compilation and game testing
-remain pending.
+**[Download Kriegsspinne RBC1 — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Kriegsspinne-Reference-Build-Candidate-1.zip)**
 
-[Direction Lab](Direction-Lab/) adds an isolated cardinal-versus-diagonal
-experiment with fixed per-provider sampling budgets, direction-independent
-depth travel, and DDA/march hit, donor and weighted-light views.
-[Download the test package](../downloads/Twin-Lanterns-DirectionLab.zip).
+[Installation and comparison presets](Provider-Performance/README.md)
+· [SHA-256](../downloads/Kriegsspinne-Reference-Build-Candidate-1.zip.sha256)
+· [All downloads](../downloads/README.md)
 
-[Bounce Lab](Bounce-Lab/) preserves that first-pass mix and tests one extra
-gather of its bounded light, with distance/bounce loss, an optional deterministic
-broken sampler, and a current-frame color anchor. It includes Reference, Bounce
-and BrokenSampler presets. [Download](../downloads/Twin-Lanterns-BounceLab.zip).
+The current reference candidate uses voxel-free DDA/march tracing and one bounded
+extra bounce, with cached first-light composition. Its 12 presets compare
+cardinal/diagonal directions, provider budgets, bounce cost and cached/recomputed
+composition. The installed effect retains the **Provider Performance** identity
+for preset compatibility. See the build guide for checks and validation limits.
 
-[Kriegsspinne — Reference Build Candidate 1](Provider-Performance/) is the
-current cached-bounce download identity. Its Provider Performance comparison
-profiles isolate the reported eight-versus-four
-direction cost. It includes equal-traversal cardinal/diagonal/mixed presets,
-matched single-provider tests, the original budget and a first-pass-only control.
-[Download Kriegsspinne](../downloads/Kriegsspinne-Reference-Build-Candidate-1.zip), the current
-probe with cached first-light final composition and matched recomputed controls.
-[Original benchmark ZIP](../downloads/Twin-Lanterns-ProviderPerf.zip).
+## Other builds
 
-Twin Lanterns is part of our beginning work on
-[fog- and light-aware shading](../docs/FOG_AND_LIGHT_AWARE_SHADING.md), informed
-by lessons from miXSR_hexer. The combined download includes Fog Guard V2 and an
-[ordered starter preset](../docs/CRYSTAL_SPIDER_BUNDLE.md) around Crystal Spider; native fog/light mask integration
-inside every shader remains future work.
+- **Crystal Spider - Beta + Fog Guard V2:** [download](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)
+  and [bundle setup](../docs/CRYSTAL_SPIDER_BUNDLE.md).
+- **Fixed baseline and fidelity candidate:** [Stable 1.4](Stable-1.4/)
+  and [Fidelity Overdrive](Fidelity-Overdrive/).
+- **Earlier experiments:** [No Voxel](No-Voxel/), [Direction Lab](Direction-Lab/),
+  [Bounce Lab](Bounce-Lab/) and [Full Resolution Dual Ray Alpha](Full-Resolution-Dual-Ray-Alpha/).
+
+[Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package)
+· [Fog- and light-aware shading](../docs/FOG_AND_LIGHT_AWARE_SHADING.md)
 
 ## Visual Comparison
 
