@@ -1,5 +1,23 @@
 # Twin Lanterns downloads
 
+## Bounce Lab
+
+[Download Bounce Lab — ZIP](Twin-Lanterns-BounceLab.zip)
+· [Controls, experiment sequence and limits](../Twin-Lanterns/Bounce-Lab/README.md)
+· [SHA-256](Twin-Lanterns-BounceLab.zip.sha256)
+
+An isolated voxel-free experiment with one extra gather of first-pass bounded
+light. Distance and bounce retention reduce energy. Optional deterministic
+direction dropout/diminishment simulates missing support without redistributing
+its energy. A current-frame color anchor changes hue without increasing signal
+luminance or peak. The source and first light remain when extra samples drop.
+
+Compare **Reference → Bounce → BrokenSampler** at the same camera position.
+The presets enable only Bounce Lab; keep other effects disabled. It has six
+passes and five full-resolution working textures (about 140.6 MiB at 1440p).
+Native ReShade compilation, appearance and GPU timing remain pending. There is
+no temporal color memory, measured hidden occlusion or claim of a vision model.
+
 ## Direction Lab
 
 [Download Direction Lab — ZIP](Twin-Lanterns-DirectionLab.zip)

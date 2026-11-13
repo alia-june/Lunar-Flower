@@ -1,0 +1,37 @@
+{
+  "status": "current-frame bounce/uncertainty experiment; native compile and live acceptance pending",
+  "new_tests_passed": 4,
+  "new_tests_failed": 0,
+  "bounce_lab_cpu_assertions": 32110,
+  "parent_direction_lab_tests_passed": 4,
+  "parent_direction_lab_cpu_assertions": 446,
+  "existing_no_voxel_tests_passed": 4,
+  "existing_no_voxel_cpu_assertions": 1938,
+  "checks": [
+    "parent first-pass comparison with extra bounce disabled",
+    "secondary gather reads first-light field without source/final-image color feedback",
+    "distance and bounce energy loss",
+    "deterministic direction dropout and diminishment",
+    "fixed denominator retains lost energy as loss",
+    "current-frame hue anchor cannot increase luminance or peak",
+    "source/first-pass priority and faded/channel/user ceilings across 4000 cases",
+    "diagnostic pass guards and display-only gain",
+    "explicit-LOD secondary sampling audit with regression fixture",
+    "reproducible archive and isolated presets"
+  ],
+  "scope": "shader-extracted C++ CPU vector/texture shims plus source/package checks; not native shader compilation or GPU proof",
+  "native_compile_performed": false,
+  "new_build_visual_test_performed": false,
+  "gpu_timing_measured": false,
+  "owner_reported_parent_visual_feedback": "OWNER_FEEDBACK.md",
+  "package": "Twin-Lanterns-BounceLab.zip",
+  "package_bytes": 40163,
+  "package_sha256": "b0669716ce957bf64685f33301392c33e512af23865caf8b27abceb64c65d736",
+  "preserved_downloads": [
+    "Twin-Lanterns-DirectionLab.zip",
+    "Twin-Lanterns-No-Voxel.zip",
+    "Crystal-Spider-Beta.zip",
+    "Crystal-Spider-Beta-standalone.zip",
+    "Lazara-Fog-Guard-V2.zip"
+  ]
+}

@@ -18,6 +18,11 @@ experiment with fixed per-provider sampling budgets, direction-independent
 depth travel, and DDA/march hit, donor and weighted-light views.
 [Download the test package](../downloads/Twin-Lanterns-DirectionLab.zip).
 
+[Bounce Lab](Bounce-Lab/) preserves that first-pass mix and tests one extra
+gather of its bounded light, with distance/bounce loss, an optional deterministic
+broken sampler, and a current-frame color anchor. It includes Reference, Bounce
+and BrokenSampler presets. [Download](../downloads/Twin-Lanterns-BounceLab.zip).
+
 Twin Lanterns is part of our beginning work on
 [fog- and light-aware shading](../docs/FOG_AND_LIGHT_AWARE_SHADING.md), informed
 by lessons from miXSR_hexer. The combined download includes Fog Guard V2 and an
