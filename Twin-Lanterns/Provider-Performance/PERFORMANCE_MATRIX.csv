@@ -1,0 +1,13 @@
+preset,directions,dda_per_direction,march_per_direction,compiled_provider,gathers,maximum_traversal_samples_per_pixel,cached_final_composite,measured_effect_gpu_ms,measured_total_frame_ms,measured_fps,notes
+Cardinal4-EqualTraversal,4,16,16,0,2,256,1,,,,not measured
+Diagonal4-EqualTraversal,4,16,16,0,2,256,1,,,,not measured
+Mixed8-EqualTraversal,8,8,8,0,2,256,1,,,,not measured
+Mixed8-FullDensity,8,16,16,0,2,512,1,,,,not measured
+DDA16-Only,4,16,16,1,2,128,1,,,,not measured
+March16-Only,4,16,16,2,2,128,1,,,,not measured
+Parent32-16,4,32,16,0,2,384,1,,,,not measured
+FirstPassOnly,4,16,16,0,1,128,0,,,,not measured
+Runtime32-16,4,32,16,-1,2,384,1,,,,not measured
+RecomputedComposite,4,16,16,0,2,256,0,,,,not measured
+Mixed8-FullDensity-Recomputed,8,16,16,0,2,512,0,,,,not measured
+Parent32-16-Recomputed,4,32,16,0,2,384,0,,,,not measured

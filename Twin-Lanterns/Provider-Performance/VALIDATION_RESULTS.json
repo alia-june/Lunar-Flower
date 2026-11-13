@@ -1,0 +1,74 @@
+{
+  "status": "cached first-light composition; native compilation, visual acceptance and GPU timings pending",
+  "new_tests_passed": 5,
+  "new_tests_failed": 0,
+  "compiled_cpu_configurations": 8,
+  "cpu_assertions": 130561,
+  "random_bounds_cases_per_configuration": 4000,
+  "near_black_anchor_cases_per_configuration": 100,
+  "maximum_observed_half_storage_contribution_error": 0.000142366,
+  "flat_depth_final_texture_calls": {
+    "recomputed": 57,
+    "cached": 4,
+    "saved_per_pixel": 53
+  },
+  "checks": [
+    "source/receiver/contribution/channel-room/fade bounds after half storage",
+    "cached/reference final output and Applied Light agreement",
+    "near-black anchor fallback and full-depth fade behavior",
+    "no extra cached reads with disabled effect, strength or bounce",
+    "final-pass sampling counts and unchanged traversal budgets/reach",
+    "parent-budget primary, secondary and unquantized composition equivalence",
+    "compile-time provider path removal",
+    "three preset pairs differing only by cache compilation definition",
+    "all display and ray-loop call graphs free of implicit gradients",
+    "deterministic package, includes, defaults, lineage and per-file integrity",
+    "reserved shader declaration guard reproduces C++-legal precise/sample/groupshared failures"
+  ],
+  "scope": "C++ vector/texture shims including IEEE half conversion, standard preprocessing and package validation; not native ReShade compilation or GPU timing",
+  "owner_reported_game": "Elden Ring",
+  "owner_reported_gpu": "AMD RX 7700 XT",
+  "owner_reported_fps": {
+    "bounce_off": 60,
+    "bounce_on": 40,
+    "vsync_enabled": true
+  },
+  "owner_fps_limit": "Displayed 8.33 ms frame-time increase is not isolated shader GPU time with VSync enabled",
+  "native_compile_performed": false,
+  "gpu_timing_measured": false,
+  "native_compiler_source_review": "ReShade v6.7.3 4a50d1eddace85734871d91792ff214f13f66c01",
+  "preset_count": 12,
+  "pass_count": 6,
+  "working_rgba16f_fields": 5,
+  "package": "Kriegsspinne-Reference-Build-Candidate-1.zip",
+  "package_bytes": 53289,
+  "package_sha256": "10e4395572aa45956c985a8196a567b2c55742259253d0704878738ef3253296",
+  "preserved_downloads": [
+    "Crystal-Spider-Beta-standalone.zip",
+    "Crystal-Spider-Beta.zip",
+    "Lazara-Fog-Guard-V2.zip",
+    "Twin-Lanterns-BounceLab.zip",
+    "Twin-Lanterns-CachedBounce.zip",
+    "Twin-Lanterns-DirectionLab.zip",
+    "Twin-Lanterns-Fidelity-Overdrive-fine-controls.zip",
+    "Twin-Lanterns-No-Voxel.zip",
+    "Twin-Lanterns-ProviderPerf.zip",
+    "Twin-Lanterns-Stable-1.4-fine-controls.zip"
+  ],
+  "cpp_fx_language_mismatch": {
+    "affected_commit": "db6f9ebba0661788f22bcc40c78e0104903b2380",
+    "native_user_log_error": "X3000: unexpected 'precise', expected 'identifier'",
+    "cause": "precise is legal as a C++ identifier but reserved as a shader qualifier",
+    "correction": "rename local variable to uncachedFirst; add a limited shader declaration-name guard",
+    "record": "ERROR_LOG.md",
+    "corrected_native_compile_verified": false
+  },
+  "release_name": "Kriegsspinne",
+  "release_status": "Reference Build Candidate 1",
+  "release_candidate": 1,
+  "branding_verification": {
+    "shader_and_preset_files_byte_identical_to_corrected_cached_bounce": 22,
+    "package_and_source_tests_passed": 2,
+    "shader_math_changed": false
+  }
+}

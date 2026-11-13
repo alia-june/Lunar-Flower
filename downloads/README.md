@@ -1,5 +1,89 @@
 # Twin Lanterns downloads
 
+## Kriegsspinne — Reference Build Candidate 1
+
+[Download Kriegsspinne — Reference Build Candidate 1](Kriegsspinne-Reference-Build-Candidate-1.zip)
+· [Install and matched comparison presets](../Twin-Lanterns/Provider-Performance/README.md)
+· [SHA-256](Kriegsspinne-Reference-Build-Candidate-1.zip.sha256)
+
+**Kriegsspinne** brands the corrected cached-bounce shader as **Reference Build
+Candidate 1**. Shader code, defaults and preset identifiers are preserved.
+
+Reuses captured first light in the production composite instead of rebuilding
+it twice. Includes cached/recomputed comparison pairs with identical ray budgets.
+Uses the Provider Performance effect identity: replace that folder rather than
+installing a second copy. Ray coverage and bounce gathering remain unchanged.
+CPU bounds/rounding and sampling checks pass; native compilation, visual quality
+and GPU timing still need in-game verification.
+
+
+[Previous corrected Cached Bounce ZIP](Twin-Lanterns-CachedBounce.zip) remains
+available with its original download identity.
+
+## Direction/Provider Performance Probe
+
+[Download Provider Performance — ZIP](Twin-Lanterns-ProviderPerf.zip)
+· [Preset sequence and measurement instructions](../Twin-Lanterns/Provider-Performance/README.md)
+· [SHA-256](Twin-Lanterns-ProviderPerf.zip.sha256)
+
+Based on Bounce Lab, this separates eight-versus-four direction cost from DDA
+sample density and provider compilation. Start with **Cardinal4-EqualTraversal**,
+**Diagonal4-EqualTraversal** and **Mixed8-EqualTraversal**. The mixed preset halves
+per-direction sampling density while preserving reach; all three have the same
+maximum traversal count. Full-density mixed, matched DDA-only/march-only, original
+budget and first-pass-only controls are also included. Presets recompile provider
+selection through ReShade preprocessor definitions.
+
+No previous build is replaced. DX11/DX12 paths remain supported by design;
+native compilation, image quality and GPU timing remain pending. The included
+measurement matrix has no fabricated performance results.
+
+## Bounce Lab
+
+[Download Bounce Lab — ZIP](Twin-Lanterns-BounceLab.zip)
+· [Controls, experiment sequence and limits](../Twin-Lanterns/Bounce-Lab/README.md)
+· [SHA-256](Twin-Lanterns-BounceLab.zip.sha256)
+
+An isolated voxel-free experiment with one extra gather of first-pass bounded
+light. Distance and bounce retention reduce energy. Optional deterministic
+direction dropout/diminishment simulates missing support without redistributing
+its energy. A current-frame color anchor changes hue without increasing signal
+luminance or peak. The source and first light remain when extra samples drop.
+
+Compare **Reference → Bounce → BrokenSampler** at the same camera position.
+The presets enable only Bounce Lab; keep other effects disabled. It has six
+passes and five full-resolution working textures (about 140.6 MiB at 1440p).
+Native ReShade compilation, appearance and GPU timing remain pending. There is
+no temporal color memory, measured hidden occlusion or claim of a vision model.
+
+## Direction Lab
+
+[Download Direction Lab — ZIP](Twin-Lanterns-DirectionLab.zip)
+· [Comparison instructions and diagnostic meanings](../Twin-Lanterns/Direction-Lab/README.md)
+· [SHA-256](Twin-Lanterns-DirectionLab.zip.sha256)
+
+An isolated voxel-free first-pass experiment: compare **four cardinal** with
+**four diagonal** directions at equal sampling budgets and depth travel. Test
+**eight mixed** directions separately. DDA and march can be selected individually;
+new views show hit coverage, admitted weight, raw donor color and weighted light.
+The three supplied presets differ only in Direction Set and enable only the lab
+technique. Existing effects and Fog Guard should stay disabled for the comparison.
+CPU/source/package checks are available; native ReShade compile and live testing
+remain pending. This package does not add a second bounce.
+
+## Twin Lanterns No Voxel
+
+[Download No-Voxel test build + Fog Guard — ZIP](Twin-Lanterns-No-Voxel.zip)
+· [Setup and scope](../Twin-Lanterns/No-Voxel/README.md)
+· [SHA-256](Twin-Lanterns-No-Voxel.zip.sha256)
+
+This separate build retains full-resolution DDA and parametric-march transport,
+depth fade, light-only softening and bounded added light. Voxel lighting,
+voxel controls/views, the compute pass and 3D atlas are removed. The starter
+preset orders **Fog Guard Capture → Twin Lanterns No Voxel → Fog Guard Restore**.
+Disable the original Crystal Spider technique when testing. Native ReShade
+compilation, appearance and FPS still require in-game testing.
+
 ## Crystal Spider - Beta
 
 **[Download Crystal Spider - Beta + Fog Guard — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)** · [Crystal-only ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta-standalone.zip) · [Lazara](https://github.com/dastardlyrat/Lazara-Reshade-Revival-Package)

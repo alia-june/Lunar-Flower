@@ -1,0 +1,33 @@
+{
+  "status": "local test build; native ReShade compile and live acceptance pending",
+  "tests": [
+    {
+      "command": "python -B -m unittest discover -s tools -p test_twin_lantern_no_voxel.py -v",
+      "passed": 4,
+      "failed": 0,
+      "cpu_assertions": 1938
+    },
+    {
+      "command": "python -B -m unittest discover -s tools -p test_twin_lantern_loop_sampling.py -v",
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "command": "python -B -m unittest discover -s tools -p test_crystal_spider_bundle.py -v",
+      "passed": 4,
+      "failed": 0
+    }
+  ],
+  "scope": "CPU shader-function fixtures, source/include/resource/loop checks and deterministic package integrity; not GPU compilation or visual/performance proof",
+  "package": "Twin-Lanterns-No-Voxel.zip",
+  "package_sha256": "16069650cc569402d832fad0f854d3137944d799647e5ef6b031340393a1dfb4",
+  "package_bytes": 108250,
+  "preserved_downloads": [
+    "Crystal-Spider-Beta.zip",
+    "Crystal-Spider-Beta-standalone.zip",
+    "Lazara-Fog-Guard-V2.zip"
+  ],
+  "native_compile_performed": false,
+  "visual_test_performed": false,
+  "fps_measured": false
+}

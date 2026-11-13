@@ -1,0 +1,81 @@
+{
+  "source_commit": "75280ac278a16a15d8e3504bf90b3f2b491caf93",
+  "source_effect": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/effects/LUNAR_FLOWER_TwinLanterns_FullResolutionDualRayAlpha.fx",
+  "source_effect_sha256": "1b45e4d87b60605d6e5ee93a61c79383201673fb97471bad8e9748b26310d556",
+  "new_effect_sha256": "5847b71ebb75f578ce403a8b89174ec9ad6338eee153956b6da1b3fa4050d44a",
+  "shared_and_local_includes": [
+    {
+      "source": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
+      "destination": "Twin-Lanterns/No-Voxel/reshade-shaders/Shaders/lunar_flower_no_voxel/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
+      "source_sha256": "e36a82a2506d3313b54e0e1fb0ba9dde11109c01e02a42177323c744fe1e2378",
+      "destination_sha256": "e36a82a2506d3313b54e0e1fb0ba9dde11109c01e02a42177323c744fe1e2378",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh",
+      "destination": "Twin-Lanterns/No-Voxel/reshade-shaders/Shaders/lunar_flower_no_voxel/api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh",
+      "source_sha256": "24e6c1c4fe58ff1b3d099a9e18957a408e6f4d0d67b0f7470e5fe17c7c834c45",
+      "destination_sha256": "24e6c1c4fe58ff1b3d099a9e18957a408e6f4d0d67b0f7470e5fe17c7c834c45",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternReconstruction.fxh",
+      "destination": "Twin-Lanterns/No-Voxel/reshade-shaders/Shaders/lunar_flower_no_voxel/api/CAMERA_OBSCURA_API_TwinLanternReconstruction.fxh",
+      "source_sha256": "3cb3606f4aedb02b745d4adced76df6768de2e651a102dc2825d66a457d15170",
+      "destination_sha256": "3cb3606f4aedb02b745d4adced76df6768de2e651a102dc2825d66a457d15170",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/api/CAMERA_OBSCURA_API_TwinLanternTransport.fxh",
+      "destination": "Twin-Lanterns/No-Voxel/reshade-shaders/Shaders/lunar_flower_no_voxel/api/CAMERA_OBSCURA_API_TwinLanternTransport.fxh",
+      "source_sha256": "939323e2a04b8b5eeb06f7dd2aab0b64cf283d9d76e637b2266df05f54dc5e13",
+      "destination_sha256": "939323e2a04b8b5eeb06f7dd2aab0b64cf283d9d76e637b2266df05f54dc5e13",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/api/LUNAR_FLOWER_TwinLanternScreenSurface.fxh",
+      "destination": "Twin-Lanterns/No-Voxel/reshade-shaders/Shaders/lunar_flower_no_voxel/api/LUNAR_FLOWER_TwinLanternScreenSurface.fxh",
+      "source_sha256": "fb154b4407afeaa2d6e9e868576eebf3e0b109acc92a7783c363b7fa176ffb98",
+      "destination_sha256": "9f61fa9d57681ef540a8124532e9b04152b7dbb264b7fa52d2679b47fa88be8d",
+      "byte_identical": false
+    },
+    {
+      "source": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_AtomicCommon.fxh",
+      "destination": "Twin-Lanterns/No-Voxel/reshade-shaders/Shaders/lunar_flower_no_voxel/header/CAMERA_OBSCURA_AtomicCommon.fxh",
+      "source_sha256": "caa8e32ba3f84262a605f63b5a24c2758c882d39efd9126bc87fedcc8d9b66e0",
+      "destination_sha256": "caa8e32ba3f84262a605f63b5a24c2758c882d39efd9126bc87fedcc8d9b66e0",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_AtomicDebug.fxh",
+      "destination": "Twin-Lanterns/No-Voxel/reshade-shaders/Shaders/lunar_flower_no_voxel/header/CAMERA_OBSCURA_AtomicDebug.fxh",
+      "source_sha256": "68ef49d68c664753375df0410dba34561cec805d3e519ee4290843c4b917527b",
+      "destination_sha256": "68ef49d68c664753375df0410dba34561cec805d3e519ee4290843c4b917527b",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_EntryCapability.fxh",
+      "destination": "Twin-Lanterns/No-Voxel/reshade-shaders/Shaders/lunar_flower_no_voxel/header/CAMERA_OBSCURA_EntryCapability.fxh",
+      "source_sha256": "d2c7a5d0c1040cc8783e76a492f838199bdacc294437b6940f207e8a9a8e885e",
+      "destination_sha256": "d2c7a5d0c1040cc8783e76a492f838199bdacc294437b6940f207e8a9a8e885e",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Full-Resolution-Dual-Ray-Alpha/reshade-shaders/Shaders/camera_obscura/header/CAMERA_OBSCURA_EntryTraversal.fxh",
+      "destination": "Twin-Lanterns/No-Voxel/reshade-shaders/Shaders/lunar_flower_no_voxel/header/CAMERA_OBSCURA_EntryTraversal.fxh",
+      "source_sha256": "53d65015779448b3f092d9c46cffb56b83011550104b6a32e2b9281933f106f3",
+      "destination_sha256": "53d65015779448b3f092d9c46cffb56b83011550104b6a32e2b9281933f106f3",
+      "byte_identical": true
+    }
+  ],
+  "changes": [
+    "Remove voxel provider, controls and output views",
+    "Remove compute build and all 3D resources by excluding the voxel include",
+    "Keep DDA and parametric march screen providers",
+    "Retain reconstruction, light shaping and bounded composite",
+    "Use independent effect, uniform, include-directory and render-target identities",
+    "Move Depth Fade Mask output from index 17 to 14"
+  ],
+  "native_compile_performed": false,
+  "visual_test_performed": false
+}
