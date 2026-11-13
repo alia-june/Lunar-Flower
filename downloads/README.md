@@ -1,5 +1,20 @@
 # Twin Lanterns downloads
 
+## Direction Lab
+
+[Download Direction Lab — ZIP](Twin-Lanterns-DirectionLab.zip)
+· [Comparison instructions and diagnostic meanings](../Twin-Lanterns/Direction-Lab/README.md)
+· [SHA-256](Twin-Lanterns-DirectionLab.zip.sha256)
+
+An isolated voxel-free first-pass experiment: compare **four cardinal** with
+**four diagonal** directions at equal sampling budgets and depth travel. Test
+**eight mixed** directions separately. DDA and march can be selected individually;
+new views show hit coverage, admitted weight, raw donor color and weighted light.
+The three supplied presets differ only in Direction Set and enable only the lab
+technique. Existing effects and Fog Guard should stay disabled for the comparison.
+CPU/source/package checks are available; native ReShade compile and live testing
+remain pending. This package does not add a second bounce.
+
 ## Twin Lanterns No Voxel
 
 [Download No-Voxel test build + Fog Guard — ZIP](Twin-Lanterns-No-Voxel.zip)

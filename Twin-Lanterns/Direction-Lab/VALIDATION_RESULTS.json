@@ -1,0 +1,35 @@
+{
+  "status": "experimental direction/provider comparison; native ReShade compile and live acceptance pending",
+  "new_tests_passed": 4,
+  "new_tests_failed": 0,
+  "direction_lab_cpu_assertions": 446,
+  "existing_no_voxel_tests_passed": 4,
+  "existing_no_voxel_cpu_assertions": 1938,
+  "existing_loop_sampling_tests_passed": 5,
+  "checks": [
+    "actual shader-extracted cardinal/diagonal/mixed schedules",
+    "32 DDA / 16 march per-direction no-hit sampling counts",
+    "direction-independent normalized depth travel and pixel reach",
+    "angular donor fixtures distinguishing cardinal/diagonal coverage",
+    "mixed and provider normalization",
+    "all new diagnostic mappings and working-pass bypass",
+    "valid black donors and invalid receiver rejection",
+    "final arithmetic bounds and exact source bypass",
+    "loop-reachable explicit-LOD sampling audit with regression fixture",
+    "reproducible ZIP, manifests and matched preset values"
+  ],
+  "scope": "CPU vector/texture shims plus source and package validation; not a native shader compiler or GPU parity result",
+  "native_compile_performed": false,
+  "native_compiler_tools_found": [],
+  "visual_test_performed": false,
+  "performance_measured": false,
+  "package": "Twin-Lanterns-DirectionLab.zip",
+  "package_bytes": 35688,
+  "package_sha256": "5de75e6c5891f8406b3a574eaccab5744960fb412336c8558001861356e182fa",
+  "preserved_downloads": [
+    "Twin-Lanterns-No-Voxel.zip",
+    "Crystal-Spider-Beta.zip",
+    "Crystal-Spider-Beta-standalone.zip",
+    "Lazara-Fog-Guard-V2.zip"
+  ]
+}

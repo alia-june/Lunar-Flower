@@ -13,6 +13,11 @@ voxel lighting, its compute pass and 3D resources. The
 Guard V2 and a matching starter preset. Native compilation and game testing
 remain pending.
 
+[Direction Lab](Direction-Lab/) adds an isolated cardinal-versus-diagonal
+experiment with fixed per-provider sampling budgets, direction-independent
+depth travel, and DDA/march hit, donor and weighted-light views.
+[Download the test package](../downloads/Twin-Lanterns-DirectionLab.zip).
+
 Twin Lanterns is part of our beginning work on
 [fog- and light-aware shading](../docs/FOG_AND_LIGHT_AWARE_SHADING.md), informed
 by lessons from miXSR_hexer. The combined download includes Fog Guard V2 and an
