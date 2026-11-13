@@ -24,6 +24,7 @@ available with its original download identity.
 
 [Download Depth Input Audit](Depth-Input-Audit.zip)
 · [Instructions and numeric-row legend](../development/depth-input-audit/README.md)
+· [Phantom Brigade findings](../development/depth-input-audit/PHANTOM_BRIGADE.md)
 · [SHA-256](Depth-Input-Audit.zip.sha256)
 
 Compares the installed framework depth with normal-Z and reversed-Z candidates.
