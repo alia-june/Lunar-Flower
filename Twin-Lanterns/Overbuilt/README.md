@@ -1,13 +1,16 @@
-# Kriegspinne — Overbuilt: withdrawn
+# Kriegspinne — Overbuilt: available again
 
-This package is withdrawn. The owner reports that it produces no visible effect
-in Elden Ring. The ZIP and checksum have been removed from this branch's current
-downloads, and the previous download link is no longer offered.
+The approved build is now presented as **Kriespinne — Phantom Brigade Special**.
 
-CPU fixtures and ReShade FX parsing did not establish that this package produced
-the intended lighting in-game. The earlier positive comparison is not sufficient
-validation for this release. Do not treat Overbuilt as a working or validated
-Elden Ring GI build.
+[Download Phantom Brigade Special](https://raw.githubusercontent.com/alia-june/Lunar-Flower/refs/heads/release/kriegspinne-overbuilt/downloads/Kriespinne-Phantom-Brigade-Special.zip)
+· [Setup and dependencies](../Phantom-Brigade-Special/README.md)
 
-The reference Kriegsspinne release is separate and unchanged. No replacement
-Overbuilt build is offered pending investigation and in-game verification.
+The earlier Elden Ring report was clarified: the effect is very faint rather
+than absent. The owner approves the build for Phantom Brigade. The shader and
+preset contents are preserved; the Special package changes the download identity
+and preset filenames. The previous Overbuilt download URL is also restored to
+its original package bytes.
+
+This is a game-specific presentation build. No equivalent lighting response
+across other games is claimed. The reference Kriegsspinne release is separate
+and unchanged.
