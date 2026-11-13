@@ -15,7 +15,7 @@ from zipfile import ZipFile
 
 from audit_twin_lantern_loop_sampling import FUNCTION
 from package_crystal_spider_bundle import texture_names
-from package_twin_lantern_provider_perf import BUILD, EFFECT, PREFIX, PROFILES, ROOT, SHADERS, matrix, package, presets, validate_source
+from package_twin_lantern_provider_perf import BUILD, EFFECT, PREFIX, PROFILES, ROOT, SHADERS, matrix, package, presets, validate_declaration_names, validate_source
 import test_twin_lantern_screen_surface as cpu
 import test_twin_lantern_bounce_lab as parent
 
@@ -230,6 +230,19 @@ int main(){try{
 
 
 class ProviderPerformanceTests(unittest.TestCase):
+    def test_cpp_legal_shader_keyword_declarations_are_rejected(self):
+        # This regression reproduces the user's FX parser error. C++ execution
+        # alone accepts it and therefore cannot validate shader-language syntax.
+        effect = (BUILD / EFFECT).read_bytes()
+        for keyword in ('precise', 'sample', 'groupshared'):
+            with self.subTest(keyword=keyword):
+                broken = effect.replace(b'uncachedFirst', keyword.encode())
+                with self.assertRaisesRegex(ValueError, 'reserved shader keyword used as identifier: ' + keyword):
+                    validate_declaration_names({EFFECT: broken})
+        validate_declaration_names({EFFECT: effect})
+        validate_declaration_names({'qualifiers.fx': b'precise float3 result; // float precise;\n'
+                                   b'float3 value; /* float sample; */\nconst char name[]="float sample";'})
+
     @unittest.skipUnless(shutil.which('c++'), 'requires C++17 CPU fixture compiler')
     def test_all_compiled_budget_variants(self):
         variants = sorted({(p[1], p[2], p[3], p[6]) for p in PROFILES})

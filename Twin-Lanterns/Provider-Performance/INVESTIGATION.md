@@ -94,3 +94,11 @@ composition, sweep the near-black anchor threshold, test source/channel/fade
 bounds and count actual shader-extracted sampling calls. The flat-depth final
 pass uses 4 rather than 57 texture calls, a reduction of 53 in that fixture;
 this is not a native compilation result or measured GPU speedup.
+
+## Target-language validation failure
+
+The owner's ReShade log rejected the first cached build with X3000 because
+`precise` was used as a local variable name. C++ allowed it, demonstrating that
+the passing CPU fixtures did not establish FX syntax validity. The identifier
+is corrected and a limited declaration-name guard is now part of packaging.
+See [ERROR_LOG.md](ERROR_LOG.md) for the evidence, validation mismatch and limits.

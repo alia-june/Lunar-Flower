@@ -1,6 +1,6 @@
 {
   "status": "cached first-light composition; native compilation, visual acceptance and GPU timings pending",
-  "new_tests_passed": 4,
+  "new_tests_passed": 5,
   "new_tests_failed": 0,
   "compiled_cpu_configurations": 8,
   "cpu_assertions": 130561,
@@ -22,7 +22,8 @@
     "compile-time provider path removal",
     "three preset pairs differing only by cache compilation definition",
     "all display and ray-loop call graphs free of implicit gradients",
-    "deterministic package, includes, defaults, lineage and per-file integrity"
+    "deterministic package, includes, defaults, lineage and per-file integrity",
+    "reserved shader declaration guard reproduces C++-legal precise/sample/groupshared failures"
   ],
   "scope": "C++ vector/texture shims including IEEE half conversion, standard preprocessing and package validation; not native ReShade compilation or GPU timing",
   "owner_reported_game": "Elden Ring",
@@ -40,8 +41,8 @@
   "pass_count": 6,
   "working_rgba16f_fields": 5,
   "package": "Twin-Lanterns-CachedBounce.zip",
-  "package_bytes": 51013,
-  "package_sha256": "0f2d3cacb0141eb0768ff2f4bd233b11168ed952bb1528e6d628d367dd23eaa0",
+  "package_bytes": 53034,
+  "package_sha256": "c92ba069893e40d881eb5d9059224a83c462665dee7e0e94cef46de53651eb2c",
   "preserved_downloads": [
     "Crystal-Spider-Beta-standalone.zip",
     "Crystal-Spider-Beta.zip",
@@ -52,5 +53,13 @@
     "Twin-Lanterns-No-Voxel.zip",
     "Twin-Lanterns-ProviderPerf.zip",
     "Twin-Lanterns-Stable-1.4-fine-controls.zip"
-  ]
+  ],
+  "cpp_fx_language_mismatch": {
+    "affected_commit": "db6f9ebba0661788f22bcc40c78e0104903b2380",
+    "native_user_log_error": "X3000: unexpected 'precise', expected 'identifier'",
+    "cause": "precise is legal as a C++ identifier but reserved as a shader qualifier",
+    "correction": "rename local variable to uncachedFirst; add a limited shader declaration-name guard",
+    "record": "ERROR_LOG.md",
+    "corrected_native_compile_verified": false
+  }
 }

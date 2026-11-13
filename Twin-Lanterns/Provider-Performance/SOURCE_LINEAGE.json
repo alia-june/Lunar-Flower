@@ -40,7 +40,7 @@
       "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/effects/LUNAR_FLOWER_TwinLanterns_BounceLab.fx",
       "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/effects/LUNAR_FLOWER_TwinLanterns_ProviderPerf.fx",
       "source_sha256": "985ba5f786ce199f6413dc5de26d67057f7372e19d0c3d38960f26aff8ef6a3b",
-      "destination_sha256": "9def8f029b8279d828b1ac7588926f3716cf247b44fd8f584d4a22fdb6341f6d",
+      "destination_sha256": "d800d8ed6aa8ae7fa5fb497ef0b3c641fe17161c71a856bca2e7576e589f0a71",
       "byte_identical": false
     },
     {
@@ -81,7 +81,8 @@
     "Reuse the existing first-light RGBA16F field in Final Image and Applied Light when bounce is active",
     "Reapply faded light and channel-room ceilings after half-precision cache reads",
     "Retain the original recomputed path behind a compile-time comparison definition and for metadata diagnostics",
-    "Explicit LOD-zero final/reconstruction sampling keeps the varying near-black fallback free of implicit gradients"
+    "Explicit LOD-zero final/reconstruction sampling keeps the varying near-black fallback free of implicit gradients",
+    "Fix FX parse failure: rename the C++-legal but shader-reserved identifier precise to uncachedFirst; add a limited shader declaration-name guard"
   ],
   "native_compile_performed": false,
   "gpu_timing_measured": false,

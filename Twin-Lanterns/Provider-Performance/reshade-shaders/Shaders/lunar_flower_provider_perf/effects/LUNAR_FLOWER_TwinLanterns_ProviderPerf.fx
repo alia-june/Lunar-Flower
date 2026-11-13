@@ -948,9 +948,9 @@ float3 LUNAR_FLOWER_TLPPCachedContribution(float2 uv, out float3 source)
         // exact first color only for this low-signal anchoring case.
         float target = 0.0, fidelity = 0.0, pressure = 0.0;
         float3 fill = float3(0.0, 0.0, 0.0);
-        CAMERA_OBSCURA_API_TL09CompositeEvidence precise = LUNAR_FLOWER_TLPPEvaluateFirstComposite(
+        CAMERA_OBSCURA_API_TL09CompositeEvidence uncachedFirst = LUNAR_FLOWER_TLPPEvaluateFirstComposite(
             uv, target, fill, fidelity, pressure);
-        firstLight = precise.bounded_contribution_rgb;
+        firstLight = uncachedFirst.bounded_contribution_rgb;
     }
     float3 signal = LUNAR_FLOWER_TLPPAnchorBounceColor(max(bounce.rgb, 0.0.xxx), firstLight);
     float3 extra = min(signal * fade, max(ceiling - firstLight, 0.0.xxx));

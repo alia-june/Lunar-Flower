@@ -37,12 +37,35 @@ PROFILES = (
 )
 
 
+# This is a declaration-name guard, not a ReShade FX parser or native compiler.
+# C++ fixtures accept identifiers such as `precise` that FX treats as keywords.
+SHADER_QUALIFIERS = frozenset('precise sample linear centroid nointerpolation noperspective '
+                              'groupshared uniform volatile const static extern in out inout '
+                              'row_major column_major snorm unorm register packoffset'.split())
+
+
+def validate_declaration_names(payload: dict[str, bytes]) -> None:
+    declaration = re.compile(
+        r'\b(?:(?:bool|int|uint|float|double)(?:[1-4](?:x[1-4])?)?|CAMERA_OBSCURA_\w+)\s+(\w+)\b')
+    for name, data in payload.items():
+        if not name.endswith(('.fx', '.fxh')):
+            continue
+        code = re.sub(r'//[^\n]*|/\*.*?\*/|"(?:\\.|[^"\\])*"',
+                      lambda m: '\n' * m.group(0).count('\n') + ' ', data.decode(), flags=re.S)
+        for match in declaration.finditer(code):
+            identifier = match.group(1)
+            if identifier in SHADER_QUALIFIERS:
+                line = code.count('\n', 0, match.start()) + 1
+                raise ValueError(f'{name}:{line}: reserved shader keyword used as identifier: {identifier}')
+
+
 def validate_source() -> dict[str, bytes]:
     payload = {p.relative_to(BUILD).as_posix(): p.read_bytes()
                for p in (BUILD / 'reshade-shaders').rglob('*') if p.is_file()}
     if sorted(n for n in payload if n.endswith('.fx')) != [EFFECT]:
         raise ValueError('Performance probe requires one isolated effect')
     validate_includes(payload)
+    validate_declaration_names(payload)
     effect = payload[EFFECT].decode()
     passes = re.findall(r'^\s*pass\s+(\w+)', effect, re.M)
     if passes != ['TwinLanternTransport', 'TwinLanternResolveHorizontal', 'TwinLanternResolveVertical',
@@ -102,7 +125,7 @@ def package(output: Path) -> dict:
     payload = validate_source()
     payload.update(presets())
     payload['PERFORMANCE_MATRIX.csv'] = matrix().encode()
-    for name in ('README.md', 'DEFAULTS.json', 'SOURCE_LINEAGE.json', 'INVESTIGATION.md'):
+    for name in ('README.md', 'DEFAULTS.json', 'SOURCE_LINEAGE.json', 'INVESTIGATION.md', 'ERROR_LOG.md'):
         payload[name] = (BUILD / name).read_bytes()
     payload['LICENSE'] = (ROOT / 'LICENSE').read_bytes()
     manifest = {

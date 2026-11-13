@@ -1,5 +1,10 @@
 # Twin Lanterns — Cached Bounce Composite
 
+The corrected package renames a local variable that used the reserved shader
+keyword `precise`. The original package failed ReShade FX parsing despite
+passing C++ fixtures. See [the error log and C++ validation mismatch](ERROR_LOG.md).
+The corrected build still needs native compilation and in-game verification.
+
 A separate Bounce Lab derivative for the reported eight-versus-four-direction
 cost in Elden Ring on an RX 7700 XT. It retains the bounce, decay, uncertainty,
 color and hard-bound controls. There are no new full-resolution textures or
