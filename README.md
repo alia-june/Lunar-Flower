@@ -83,6 +83,7 @@ that imagery is not included in the repository's MIT software grant.
 | [No Voxel](Twin-Lanterns/No-Voxel/) | Separate test build; native compile and live acceptance pending | Full-resolution dual screen tracing with voxel lighting, compute pass and 3D atlas removed |
 | [Direction Lab](Twin-Lanterns/Direction-Lab/) | Direction/provider experiment; native compile and live acceptance pending | Equal-budget four-cardinal versus four-diagonal testing, plus per-provider hit and light diagnostics |
 | [Bounce Lab](Twin-Lanterns/Bounce-Lab/) | Separate bounce/uncertainty experiment; native compile and live acceptance pending | One bounded extra gather, distance/bounce loss, deterministic direction dropout and current-frame color anchoring |
+| [Provider Performance](Twin-Lanterns/Provider-Performance/) | Separate benchmark probe; native compile and GPU timings pending | Four/eight direction comparisons at equal traversal budgets, matched DDA/march tests and compiled provider selection |
 
 `Stable-1.4` is preserved as the user-designated fixed line. Fidelity
 Overdrive and Full Resolution Dual Ray Alpha are staged beside it rather than

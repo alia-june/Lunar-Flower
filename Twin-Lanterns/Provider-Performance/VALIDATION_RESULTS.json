@@ -1,0 +1,37 @@
+{
+  "status": "controlled direction/provider performance probe; GPU measurements and native compilation pending",
+  "new_tests_passed": 4,
+  "new_tests_failed": 0,
+  "compiled_cpu_configurations": 6,
+  "cpu_assertions": 1004,
+  "checks": [
+    "matched per-direction sampling counts and unused-provider execution guards",
+    "full-schedule no-hit primary/secondary traversal counts",
+    "24-pixel reach and direction-independent depth travel at lower sampling densities",
+    "provider normalization and source/contribution bounds",
+    "parent 32/16 primary/secondary/composite CPU equivalence",
+    "preprocessor removal of unused provider call paths",
+    "equal-traversal matrix values and blank measurement columns",
+    "preset definitions and provider control mapping",
+    "source include and loop-gradient audit",
+    "reproducible ZIP and per-file manifests"
+  ],
+  "scope": "C++ vector/texture shims, standard preprocessing and source/package validation; not native ReShade compilation or GPU performance proof",
+  "owner_reported_game": "Elden Ring",
+  "owner_reported_gpu": "AMD RX 7700 XT",
+  "owner_clarification": "performance loss depends on 8 versus 4 directions; approximately 30 FPS may be coincidental",
+  "native_compile_performed": false,
+  "gpu_timing_measured": false,
+  "native_compiler_source_review": "ReShade v6.7.3 4a50d1eddace85734871d91792ff214f13f66c01",
+  "package": "Twin-Lanterns-ProviderPerf.zip",
+  "package_bytes": 45782,
+  "package_sha256": "06b00b1b4f7e11412fcc32d02b5aea1306b77b8661727a9f0e51ef9e3a7b3e2b",
+  "preserved_downloads": [
+    "Twin-Lanterns-BounceLab.zip",
+    "Twin-Lanterns-DirectionLab.zip",
+    "Twin-Lanterns-No-Voxel.zip",
+    "Crystal-Spider-Beta.zip",
+    "Crystal-Spider-Beta-standalone.zip",
+    "Lazara-Fog-Guard-V2.zip"
+  ]
+}

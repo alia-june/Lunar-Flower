@@ -1,0 +1,84 @@
+{
+  "source_commit": "4ee194d10f152a9251e4c651c0abc220f0531c0b",
+  "files": [
+    {
+      "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
+      "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh",
+      "source_sha256": "e36a82a2506d3313b54e0e1fb0ba9dde11109c01e02a42177323c744fe1e2378",
+      "destination_sha256": "e36a82a2506d3313b54e0e1fb0ba9dde11109c01e02a42177323c744fe1e2378",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh",
+      "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh",
+      "source_sha256": "24e6c1c4fe58ff1b3d099a9e18957a408e6f4d0d67b0f7470e5fe17c7c834c45",
+      "destination_sha256": "24e6c1c4fe58ff1b3d099a9e18957a408e6f4d0d67b0f7470e5fe17c7c834c45",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/api/CAMERA_OBSCURA_API_TwinLanternReconstruction.fxh",
+      "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/api/CAMERA_OBSCURA_API_TwinLanternReconstruction.fxh",
+      "source_sha256": "3cb3606f4aedb02b745d4adced76df6768de2e651a102dc2825d66a457d15170",
+      "destination_sha256": "3cb3606f4aedb02b745d4adced76df6768de2e651a102dc2825d66a457d15170",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/api/CAMERA_OBSCURA_API_TwinLanternTransport.fxh",
+      "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/api/CAMERA_OBSCURA_API_TwinLanternTransport.fxh",
+      "source_sha256": "939323e2a04b8b5eeb06f7dd2aab0b64cf283d9d76e637b2266df05f54dc5e13",
+      "destination_sha256": "939323e2a04b8b5eeb06f7dd2aab0b64cf283d9d76e637b2266df05f54dc5e13",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/api/LUNAR_FLOWER_TwinLanternScreenSurface.fxh",
+      "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/api/LUNAR_FLOWER_TwinLanternScreenSurface.fxh",
+      "source_sha256": "31d19aac8d891787a4dcdf0c81595e0885ca53f38ef297de77a407127294ca7d",
+      "destination_sha256": "141557062485a07f9d63df17469f6706293481211ca835c61f0e921a94ad5e3a",
+      "byte_identical": false
+    },
+    {
+      "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/effects/LUNAR_FLOWER_TwinLanterns_BounceLab.fx",
+      "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/effects/LUNAR_FLOWER_TwinLanterns_ProviderPerf.fx",
+      "source_sha256": "985ba5f786ce199f6413dc5de26d67057f7372e19d0c3d38960f26aff8ef6a3b",
+      "destination_sha256": "d413df593ea118e1905c98a19b473957028225de8cde87157a1bf9527ff52a75",
+      "byte_identical": false
+    },
+    {
+      "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/header/CAMERA_OBSCURA_AtomicCommon.fxh",
+      "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/header/CAMERA_OBSCURA_AtomicCommon.fxh",
+      "source_sha256": "caa8e32ba3f84262a605f63b5a24c2758c882d39efd9126bc87fedcc8d9b66e0",
+      "destination_sha256": "caa8e32ba3f84262a605f63b5a24c2758c882d39efd9126bc87fedcc8d9b66e0",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/header/CAMERA_OBSCURA_AtomicDebug.fxh",
+      "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/header/CAMERA_OBSCURA_AtomicDebug.fxh",
+      "source_sha256": "68ef49d68c664753375df0410dba34561cec805d3e519ee4290843c4b917527b",
+      "destination_sha256": "68ef49d68c664753375df0410dba34561cec805d3e519ee4290843c4b917527b",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/header/CAMERA_OBSCURA_EntryCapability.fxh",
+      "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/header/CAMERA_OBSCURA_EntryCapability.fxh",
+      "source_sha256": "d2c7a5d0c1040cc8783e76a492f838199bdacc294437b6940f207e8a9a8e885e",
+      "destination_sha256": "d2c7a5d0c1040cc8783e76a492f838199bdacc294437b6940f207e8a9a8e885e",
+      "byte_identical": true
+    },
+    {
+      "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/header/CAMERA_OBSCURA_EntryTraversal.fxh",
+      "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/header/CAMERA_OBSCURA_EntryTraversal.fxh",
+      "source_sha256": "b8108117de00080c52ff823d3968b4dc0261546591d2861916a183d7254682fa",
+      "destination_sha256": "45117671279c12ae25e94dfb90afdb39b40b50f8045e0adb56a01c61a1b2ad10",
+      "byte_identical": false
+    }
+  ],
+  "changes": [
+    "Independent 4-32 DDA/march budgets; default matched 16/16",
+    "Preserve 24-pixel travel and direction-independent depth travel when DDA budget drops",
+    "Compile-time both/DDA/march selection plus runtime comparison mode",
+    "Explicit loop hints and runtime provider branch hints",
+    "No API exclusion; no new textures or passes"
+  ],
+  "native_compile_performed": false,
+  "gpu_timing_measured": false
+}

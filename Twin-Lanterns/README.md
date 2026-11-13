@@ -23,6 +23,11 @@ gather of its bounded light, with distance/bounce loss, an optional deterministi
 broken sampler, and a current-frame color anchor. It includes Reference, Bounce
 and BrokenSampler presets. [Download](../downloads/Twin-Lanterns-BounceLab.zip).
 
+[Provider Performance](Provider-Performance/) isolates the reported eight-versus-four
+direction cost. It includes equal-traversal cardinal/diagonal/mixed presets,
+matched single-provider tests, the original budget and a first-pass-only control.
+[Download the benchmark probe](../downloads/Twin-Lanterns-ProviderPerf.zip).
+
 Twin Lanterns is part of our beginning work on
 [fog- and light-aware shading](../docs/FOG_AND_LIGHT_AWARE_SHADING.md), informed
 by lessons from miXSR_hexer. The combined download includes Fog Guard V2 and an

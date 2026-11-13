@@ -1,5 +1,23 @@
 # Twin Lanterns downloads
 
+## Direction/Provider Performance Probe
+
+[Download Provider Performance — ZIP](Twin-Lanterns-ProviderPerf.zip)
+· [Preset sequence and measurement instructions](../Twin-Lanterns/Provider-Performance/README.md)
+· [SHA-256](Twin-Lanterns-ProviderPerf.zip.sha256)
+
+Based on Bounce Lab, this separates eight-versus-four direction cost from DDA
+sample density and provider compilation. Start with **Cardinal4-EqualTraversal**,
+**Diagonal4-EqualTraversal** and **Mixed8-EqualTraversal**. The mixed preset halves
+per-direction sampling density while preserving reach; all three have the same
+maximum traversal count. Full-density mixed, matched DDA-only/march-only, original
+budget and first-pass-only controls are also included. Presets recompile provider
+selection through ReShade preprocessor definitions.
+
+No previous build is replaced. DX11/DX12 paths remain supported by design;
+native compilation, image quality and GPU timing remain pending. The included
+measurement matrix has no fabricated performance results.
+
 ## Bounce Lab
 
 [Download Bounce Lab — ZIP](Twin-Lanterns-BounceLab.zip)
