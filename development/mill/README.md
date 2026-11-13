@@ -137,3 +137,17 @@ The [user preset defaults run](experiments/preset-defaults.json) applies only
 the corrected `Lazara.ini` Twin Lanterns Alpha section. All 24 default values
 match; seven initializers changed, with shader functions and other effects
 preserved. The exact profile is shipped as `DEFAULTS_FROM_PRESET.json`.
+
+
+## ReShade FX language frontend
+
+The [Depth Input Audit tooling](../depth-input-audit/README.md#validation-scope-and-parser-tool)
+adds `tools/reshade_fx_frontend.cpp`, built against unmodified ReShade 6.7.3
+sources. It runs the actual FX preprocessor/parser and emits SM5 HLSL. This
+catches shader-language errors that C++ math fixtures can accept, including the
+reserved `precise` identifier. An actual-FX regression checks that failure.
+
+This is a language/type/code-generation check. It does not invoke FXC/DXC,
+produce DXBC/DXIL, run a graphics driver or satisfy an in-game acceptance gate.
+The earlier Mill batch and native-compilation gate records keep their original
+scope. Build instructions and source pinning are in the diagnostic guide.

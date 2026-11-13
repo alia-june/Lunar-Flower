@@ -20,6 +20,17 @@ and GPU timing still need in-game verification.
 [Previous corrected Cached Bounce ZIP](Twin-Lanterns-CachedBounce.zip) remains
 available with its original download identity.
 
+## Depth Input Audit — diagnostic
+
+[Download Depth Input Audit](Depth-Input-Audit.zip)
+· [Instructions and numeric-row legend](../development/depth-input-audit/README.md)
+· [SHA-256](Depth-Input-Audit.zip.sha256)
+
+Compares the installed framework depth with normal-Z and reversed-Z candidates.
+Shows actual probe values and receiver-range rejection colors. A separate
+single-pass display effect for diagnosing silent or reversed depth effects;
+it does not change global definitions or apply lighting.
+
 ## Direction/Provider Performance Probe
 
 [Download Provider Performance — ZIP](Twin-Lanterns-ProviderPerf.zip)

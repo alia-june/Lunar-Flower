@@ -1,0 +1,33 @@
+{
+  "status": "display-only diagnostic; target-game capture and driver compilation pending",
+  "tests_passed": 4,
+  "tests_failed": 0,
+  "fx_frontend": "unmodified ReShade v6.7.3 preprocessing/parser and HLSL generation",
+  "fx_frontend_configurations_passed": 5,
+  "actual_fx_reserved_keyword_regression_passed": true,
+  "kriegsspinne_current_source_frontend_passed": true,
+  "cpu_math_glyph_assertions": 17080,
+  "cpu_numeric_overlay_visually_inspected": true,
+  "dxbc_dxil_compilation_performed": false,
+  "gpu_execution_performed": false,
+  "diagnostic_changes_global_settings": false,
+  "automatic_depth_convention_detection": false,
+  "package": "Depth-Input-Audit.zip",
+  "package_bytes": 7973,
+  "package_sha256": "8798b3d7e45089dffd5688ce1f7fd158e01995ccb68812b6c2cea601d43c2c91",
+  "effect_sha256": "2cb1847dd332815c837464a61a73de560e8b5dfa00eaddb36ca4f3ed25f939a7",
+  "owner_report": "Phantom Brigade: combined black, rejection red, fade zero unchanged; third-party effects can also fail or appear reversed",
+  "preserved_downloads": [
+    "Crystal-Spider-Beta-standalone.zip",
+    "Crystal-Spider-Beta.zip",
+    "Kriegsspinne-Reference-Build-Candidate-1.zip",
+    "Lazara-Fog-Guard-V2.zip",
+    "Twin-Lanterns-BounceLab.zip",
+    "Twin-Lanterns-CachedBounce.zip",
+    "Twin-Lanterns-DirectionLab.zip",
+    "Twin-Lanterns-Fidelity-Overdrive-fine-controls.zip",
+    "Twin-Lanterns-No-Voxel.zip",
+    "Twin-Lanterns-ProviderPerf.zip",
+    "Twin-Lanterns-Stable-1.4-fine-controls.zip"
+  ]
+}

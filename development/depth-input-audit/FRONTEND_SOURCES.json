@@ -1,0 +1,24 @@
+{
+  "upstream": "https://github.com/crosire/reshade",
+  "ref": "v6.7.3",
+  "files": {
+    "effect_codegen.hpp": "5eab66de38d61b8cf8ef036085e2914a0d20c81691bd9691229d95532e3bc532",
+    "effect_codegen_hlsl.cpp": "e79cbd773ba2f9e7330468a5db7a633b59226dd3d2c9e216fe0eba4377fab9f2",
+    "effect_expression.cpp": "e41ac27190d9eb30e2227f5ae2d205e6b32708e08d0044e44937e4c757435662",
+    "effect_expression.hpp": "7f652ce4af688ef7c1a16bfda251a855ad8c0b9dbea5e85047a28bedf50d2c34",
+    "effect_lexer.cpp": "b549d920df8820e38fa732fdc8bc6ab099e979f8bba3cc47e373ed51f42fa465",
+    "effect_lexer.hpp": "80d464c306678c8029c4185a593f2d7d6261f135dbb5f892554b29625e896f10",
+    "effect_module.hpp": "383e91286d8351ebb62ed7b500aced349fbbfba205cb65917473842ced6a01c7",
+    "effect_parser.hpp": "c708941973667946c89de3e0f4f257badfc1e79f297edc5494de88b2729cabcd",
+    "effect_parser_exp.cpp": "5561c13f044a1f5d9d4641d56d04fed041948f8e27f273ae7a8658c2f73a659b",
+    "effect_parser_stmt.cpp": "5ebfa9ed1784ad6bd3f8eaeac88e0d6308d0777ba3ad3841e720a8f7fb86cfb3",
+    "effect_preprocessor.cpp": "cbf2ec1da27c5b56c17fa66ca1e3e9fd932d064046f2e9e94772965e3e1aaf18",
+    "effect_preprocessor.hpp": "265a25de71e6ed96db4fd1c8fc2831c588969dc5a57a8305a869b5dc85465357",
+    "effect_symbol_table.cpp": "d94dfbef056dad76043288f2e8894efc9b9c3bce3010720ccf6dada558442a49",
+    "effect_symbol_table.hpp": "ab1e4eaed12469b2aa3669375044f82c16efc5257b1e27d03b3796eb915e94ce",
+    "effect_symbol_table_intrinsics.inl": "5e49a5e74f0b9ee68ccb1d0dc92ba8d330bb378946e46cb3c22a7d83755846b3",
+    "effect_token.hpp": "695cff636c3b534fc90480032c6a1ffb03a4c75bf153842701a5727354d0c018"
+  },
+  "framework_url": "https://github.com/crosire/reshade-shaders/blob/slim/Shaders/ReShade.fxh",
+  "framework_sha256": "6dabfbbaf968c3871905d2ea17f96572ff7b1cec01310b5d0e5252b66b30174f"
+}
