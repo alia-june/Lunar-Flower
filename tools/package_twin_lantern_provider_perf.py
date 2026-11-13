@@ -20,6 +20,8 @@ SHADERS = BUILD / 'reshade-shaders/Shaders/lunar_flower_provider_perf'
 EFFECT = 'reshade-shaders/Shaders/lunar_flower_provider_perf/effects/LUNAR_FLOWER_TwinLanterns_ProviderPerf.fx'
 PREFIX = 'LUNAR_FLOWER_TwinLanternsProviderPerf'
 TECHNIQUE = PREFIX + '@LUNAR_FLOWER_TwinLanterns_ProviderPerf.fx'
+RELEASE_NAME = 'Kriegsspinne'
+RELEASE_STATUS = 'Reference Build Candidate 1'
 # label, DDA samples, march samples, compiled provider, direction set, bounce strength, cached composite
 PROFILES = (
     ('Cardinal4-EqualTraversal', 16, 16, 0, 0, '.5', 1),
@@ -130,6 +132,9 @@ def package(output: Path) -> dict:
     payload['LICENSE'] = (ROOT / 'LICENSE').read_bytes()
     manifest = {
         'schema': 'twin-lanterns-provider-performance-v2', 'effect_files': [EFFECT],
+        'release_name': RELEASE_NAME, 'release_status': RELEASE_STATUS,
+        'release_candidate': 1,
+        'shader_source_commit': '202d58729fb4e90a0f3bf0d121cd4c34e0076087',
         'technique': TECHNIQUE, 'compile_time_provider_selection': True,
         'independent_traversal_budgets': True, 'ray_reach_preserved': True,
         'pass_count': 6, 'working_texture_2d_count': 5,

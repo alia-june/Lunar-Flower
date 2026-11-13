@@ -1,4 +1,14 @@
-# Twin Lanterns — Cached Bounce Composite
+# Twin Lanterns — Kriegsspinne
+
+**Reference Build Candidate 1**
+
+[Download Kriegsspinne — Reference Build Candidate 1](../../downloads/Kriegsspinne-Reference-Build-Candidate-1.zip)
+
+Kriegsspinne is the download identity for the corrected cached-bounce build.
+Shader code, defaults, effect filenames, technique/uniform identifiers and the
+12 comparison presets are preserved from commit `202d587`. In ReShade, the
+effect remains **Lunar Flower - Twin Lanterns: Provider Performance** for
+installation and preset compatibility.
 
 The corrected package renames a local variable that used the reserved shader
 keyword `precise`. The original package failed ReShade FX parsing despite
@@ -55,7 +65,7 @@ There is no promised FPS recovery. The original ZIP remains downloadable.
 
 ## Install and start
 
-Extract `Twin-Lanterns-CachedBounce.zip` outside ReShade shader search paths and
+Extract `Kriegsspinne-Reference-Build-Candidate-1.zip` outside ReShade shader search paths and
 merge only `reshade-shaders` into the game. Keep the installed `ReShade.fxh`.
 Replace the existing `lunar_flower_provider_perf` folder if installed; this uses
 the same effect identity and should not be installed as a second copy.

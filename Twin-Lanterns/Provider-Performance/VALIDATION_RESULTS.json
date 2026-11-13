@@ -40,14 +40,15 @@
   "preset_count": 12,
   "pass_count": 6,
   "working_rgba16f_fields": 5,
-  "package": "Twin-Lanterns-CachedBounce.zip",
-  "package_bytes": 53034,
-  "package_sha256": "c92ba069893e40d881eb5d9059224a83c462665dee7e0e94cef46de53651eb2c",
+  "package": "Kriegsspinne-Reference-Build-Candidate-1.zip",
+  "package_bytes": 53289,
+  "package_sha256": "10e4395572aa45956c985a8196a567b2c55742259253d0704878738ef3253296",
   "preserved_downloads": [
     "Crystal-Spider-Beta-standalone.zip",
     "Crystal-Spider-Beta.zip",
     "Lazara-Fog-Guard-V2.zip",
     "Twin-Lanterns-BounceLab.zip",
+    "Twin-Lanterns-CachedBounce.zip",
     "Twin-Lanterns-DirectionLab.zip",
     "Twin-Lanterns-Fidelity-Overdrive-fine-controls.zip",
     "Twin-Lanterns-No-Voxel.zip",
@@ -61,5 +62,13 @@
     "correction": "rename local variable to uncachedFirst; add a limited shader declaration-name guard",
     "record": "ERROR_LOG.md",
     "corrected_native_compile_verified": false
+  },
+  "release_name": "Kriegsspinne",
+  "release_status": "Reference Build Candidate 1",
+  "release_candidate": 1,
+  "branding_verification": {
+    "shader_and_preset_files_byte_identical_to_corrected_cached_bounce": 22,
+    "package_and_source_tests_passed": 2,
+    "shader_math_changed": false
   }
 }

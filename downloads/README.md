@@ -1,10 +1,13 @@
 # Twin Lanterns downloads
 
-## Cached Bounce Composite
+## Kriegsspinne — Reference Build Candidate 1
 
-[Download Cached Bounce — ZIP](Twin-Lanterns-CachedBounce.zip)
+[Download Kriegsspinne — Reference Build Candidate 1](Kriegsspinne-Reference-Build-Candidate-1.zip)
 · [Install and matched comparison presets](../Twin-Lanterns/Provider-Performance/README.md)
-· [SHA-256](Twin-Lanterns-CachedBounce.zip.sha256)
+· [SHA-256](Kriegsspinne-Reference-Build-Candidate-1.zip.sha256)
+
+**Kriegsspinne** brands the corrected cached-bounce shader as **Reference Build
+Candidate 1**. Shader code, defaults and preset identifiers are preserved.
 
 Reuses captured first light in the production composite instead of rebuilding
 it twice. Includes cached/recomputed comparison pairs with identical ray budgets.
@@ -13,6 +16,9 @@ installing a second copy. Ray coverage and bounce gathering remain unchanged.
 CPU bounds/rounding and sampling checks pass; native compilation, visual quality
 and GPU timing still need in-game verification.
 
+
+[Previous corrected Cached Bounce ZIP](Twin-Lanterns-CachedBounce.zip) remains
+available with its original download identity.
 
 ## Direction/Provider Performance Probe
 

@@ -23,10 +23,12 @@ gather of its bounded light, with distance/bounce loss, an optional deterministi
 broken sampler, and a current-frame color anchor. It includes Reference, Bounce
 and BrokenSampler presets. [Download](../downloads/Twin-Lanterns-BounceLab.zip).
 
-[Provider Performance](Provider-Performance/) isolates the reported eight-versus-four
+[Kriegsspinne — Reference Build Candidate 1](Provider-Performance/) is the
+current cached-bounce download identity. Its Provider Performance comparison
+profiles isolate the reported eight-versus-four
 direction cost. It includes equal-traversal cardinal/diagonal/mixed presets,
 matched single-provider tests, the original budget and a first-pass-only control.
-[Download Cached Bounce](../downloads/Twin-Lanterns-CachedBounce.zip), the current
+[Download Kriegsspinne](../downloads/Kriegsspinne-Reference-Build-Candidate-1.zip), the current
 probe with cached first-light final composition and matched recomputed controls.
 [Original benchmark ZIP](../downloads/Twin-Lanterns-ProviderPerf.zip).
 
