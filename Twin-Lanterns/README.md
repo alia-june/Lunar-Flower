@@ -26,7 +26,9 @@ and BrokenSampler presets. [Download](../downloads/Twin-Lanterns-BounceLab.zip).
 [Provider Performance](Provider-Performance/) isolates the reported eight-versus-four
 direction cost. It includes equal-traversal cardinal/diagonal/mixed presets,
 matched single-provider tests, the original budget and a first-pass-only control.
-[Download the benchmark probe](../downloads/Twin-Lanterns-ProviderPerf.zip).
+[Download Cached Bounce](../downloads/Twin-Lanterns-CachedBounce.zip), the current
+probe with cached first-light final composition and matched recomputed controls.
+[Original benchmark ZIP](../downloads/Twin-Lanterns-ProviderPerf.zip).
 
 Twin Lanterns is part of our beginning work on
 [fog- and light-aware shading](../docs/FOG_AND_LIGHT_AWARE_SHADING.md), informed

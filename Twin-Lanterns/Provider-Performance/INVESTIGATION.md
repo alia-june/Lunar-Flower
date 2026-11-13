@@ -5,8 +5,11 @@
 The owner reports a large DDA-associated performance loss in the latest Bounce
 Lab build, in **Elden Ring on an AMD RX 7700 XT**. They subsequently clarified
 that the loss depends on **eight versus four directions**, and that roughly
-30 FPS may have been coincidental. This is a qualitative observation; no
-per-technique GPU timings or exact before/after captures have been provided.
+30 FPS may have been coincidental. The owner later isolated the bounce versions and reported **60 to 40 FPS with
+VSync enabled**: displayed frame time changes from 16.67 to 25 ms (8.33 ms).
+This is not an isolated GPU timing because the 60 FPS cap can hide headroom
+and synchronization affects presentation. No per-technique GPU timings have
+been supplied.
 
 The earlier “light adaptation” discussion was conceptual, not a request for an
 exposure feature. This probe adds no exposure or adaptation control.
@@ -66,3 +69,28 @@ to traversal density.
 
 No backend is dropped. No previous build/download is replaced, and the original
 cardinal/diagonal and bounce/uncertainty experiments remain available.
+
+## Cached first-light implementation
+
+The previous capture pass evaluated the shaped first composite, stored its
+bounded light in RGBA16F, and then the final pass evaluated the same first
+composite again. The optimized Final Image / Applied Light paths read that
+existing field and the completed bounce instead. A compile-time cache switch
+and three matched preset pairs retain the recomputed reference for comparison.
+Ray schedules, both gathers, strength/decay defaults and resource counts remain
+unchanged. This specifically targets duplicate composition; the full second
+ray gather remains an additional cost.
+
+After reading the cache, clamp first light to the faded per-channel ceiling.
+Apply the existing anchor and fade to the extra light and admit only remaining
+room. Do not multiply the first light by fade again or use own admission to
+suppress incoming bounce. Recover precise first light when its nonzero peak is
+below 0.0001 and color anchoring plus incoming bounce are active, preventing
+half-subnormal color/threshold artifacts. Other diagnostics retain full metadata
+computation, and zero bounce retains the original first-pass-only path.
+
+C++ fixtures emulate RGBA16F first-light storage, compare against full-precision
+composition, sweep the near-black anchor threshold, test source/channel/fade
+bounds and count actual shader-extracted sampling calls. The flat-depth final
+pass uses 4 rather than 57 texture calls, a reduction of 53 in that fixture;
+this is not a native compilation result or measured GPU speedup.

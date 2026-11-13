@@ -40,7 +40,7 @@
       "source": "Twin-Lanterns/Bounce-Lab/reshade-shaders/Shaders/lunar_flower_bounce_lab/effects/LUNAR_FLOWER_TwinLanterns_BounceLab.fx",
       "destination": "Twin-Lanterns/Provider-Performance/reshade-shaders/Shaders/lunar_flower_provider_perf/effects/LUNAR_FLOWER_TwinLanterns_ProviderPerf.fx",
       "source_sha256": "985ba5f786ce199f6413dc5de26d67057f7372e19d0c3d38960f26aff8ef6a3b",
-      "destination_sha256": "d413df593ea118e1905c98a19b473957028225de8cde87157a1bf9527ff52a75",
+      "destination_sha256": "9def8f029b8279d828b1ac7588926f3716cf247b44fd8f584d4a22fdb6341f6d",
       "byte_identical": false
     },
     {
@@ -77,8 +77,13 @@
     "Preserve 24-pixel travel and direction-independent depth travel when DDA budget drops",
     "Compile-time both/DDA/march selection plus runtime comparison mode",
     "Explicit loop hints and runtime provider branch hints",
-    "No API exclusion; no new textures or passes"
+    "No API exclusion; no new textures or passes",
+    "Reuse the existing first-light RGBA16F field in Final Image and Applied Light when bounce is active",
+    "Reapply faded light and channel-room ceilings after half-precision cache reads",
+    "Retain the original recomputed path behind a compile-time comparison definition and for metadata diagnostics",
+    "Explicit LOD-zero final/reconstruction sampling keeps the varying near-black fallback free of implicit gradients"
   ],
   "native_compile_performed": false,
-  "gpu_timing_measured": false
+  "gpu_timing_measured": false,
+  "optimization_parent_commit": "bfb43aed2d0b43510ecec6c95a5c083a95c29bb1"
 }

@@ -1,5 +1,19 @@
 # Twin Lanterns downloads
 
+## Cached Bounce Composite
+
+[Download Cached Bounce — ZIP](Twin-Lanterns-CachedBounce.zip)
+· [Install and matched comparison presets](../Twin-Lanterns/Provider-Performance/README.md)
+· [SHA-256](Twin-Lanterns-CachedBounce.zip.sha256)
+
+Reuses captured first light in the production composite instead of rebuilding
+it twice. Includes cached/recomputed comparison pairs with identical ray budgets.
+Uses the Provider Performance effect identity: replace that folder rather than
+installing a second copy. Ray coverage and bounce gathering remain unchanged.
+CPU bounds/rounding and sampling checks pass; native compilation, visual quality
+and GPU timing still need in-game verification.
+
+
 ## Direction/Provider Performance Probe
 
 [Download Provider Performance — ZIP](Twin-Lanterns-ProviderPerf.zip)

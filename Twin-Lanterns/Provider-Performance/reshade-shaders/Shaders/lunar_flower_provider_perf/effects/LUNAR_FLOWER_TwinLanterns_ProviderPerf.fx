@@ -9,6 +9,12 @@
 #ifndef LUNAR_FLOWER_TLPP_COMPILED_PROVIDER
 #define LUNAR_FLOWER_TLPP_COMPILED_PROVIDER 0
 #endif
+#ifndef LUNAR_FLOWER_TLPP_CACHE_FIRST_LIGHT
+#define LUNAR_FLOWER_TLPP_CACHE_FIRST_LIGHT 1
+#endif
+#if LUNAR_FLOWER_TLPP_CACHE_FIRST_LIGHT != 0 && LUNAR_FLOWER_TLPP_CACHE_FIRST_LIGHT != 1
+#error First-light cache selection must be 0 or 1.
+#endif
 #if LUNAR_FLOWER_TLPP_DDA_STEPS < 4 || LUNAR_FLOWER_TLPP_DDA_STEPS > 32
 #error DDA sample budget must be between 4 and 32.
 #endif
@@ -498,7 +504,7 @@ float4 LUNAR_FLOWER_TLPPFullResolutionReconstruct(float2 uv, CAMERA_OBSCURA_Surf
         return float4(0.0, 0.0, 0.0, 0.0);
     }
 
-    float4 resolved = tex2D(LUNAR_FLOWER_TLPPResolveVSampler, uv);
+    float4 resolved = tex2Dlod(LUNAR_FLOWER_TLPPResolveVSampler, float4(uv, 0.0, 0.0));
     float trustedEvidence = saturate(resolved.a) *
         saturate(centerGuide.depth_confidence);
     return float4(saturate(resolved.rgb), trustedEvidence);
@@ -522,8 +528,8 @@ void LUNAR_FLOWER_TLPPAccumulateEdgeFillTap(
         float normalSupport = CAMERA_OBSCURA_API_TL08NormalSupport(
             centerGuide, tapGuide, LUNAR_FLOWER_TwinLanternsProviderPerfNormalMinimum);
         float surfaceSupport = coverage * depthSupport * normalSupport;
-        float4 sampleValue = tex2D(
-            LUNAR_FLOWER_TLPPResolveVSampler, requestedUv);
+        float4 sampleValue = tex2Dlod(
+            LUNAR_FLOWER_TLPPResolveVSampler, float4(requestedUv, 0.0, 0.0));
         float sampleEvidence = saturate(sampleValue.a);
 
         signalSum += saturate(sampleValue.rgb) *
@@ -743,7 +749,7 @@ LUNAR_FLOWER_TLPPEvaluateFirstComposite(
     float4 reconstructed = LUNAR_FLOWER_TLPPApplyEdgeFill(
         uv, vertical, centerGuide, edgeFillTarget, edgeFillAdded);
     reconstructed = LUNAR_FLOWER_TLPPApplyDepthShaping(uv, reconstructed, centerGuide);
-    float3 source = saturate(tex2D(ReShade::BackBuffer, uv).rgb);
+    float3 source = saturate(tex2Dlod(ReShade::BackBuffer, float4(uv, 0.0, 0.0)).rgb);
     float effectiveStrength = 0.0;
     float4 intended = LUNAR_FLOWER_TLPPApplyRenderIntent(
         source,
@@ -916,6 +922,43 @@ CAMERA_OBSCURA_API_TL09CompositeEvidence LUNAR_FLOWER_TLPPEvaluateComposite(
     return LUNAR_FLOWER_TLPPAddBounce(first, bounce.rgb, CAMERA_OBSCURA_LoadDepth(uv));
 }
 
+float3 LUNAR_FLOWER_TLPPCachedContribution(float2 uv, out float3 source)
+{
+    source = saturate(tex2Dlod(ReShade::BackBuffer, float4(uv, 0.0, 0.0)).rgb);
+    float depth = CAMERA_OBSCURA_LoadDepth(uv);
+    // BuildSurfaceGuide uses this same center-depth validity rule. Its normal
+    // and four neighboring depths are unnecessary for an already shaped field.
+    if (CAMERA_OBSCURA_DepthConfidence(depth) < 0.5) return float3(0.0, 0.0, 0.0);
+    float fade = LUNAR_FLOWER_TLPPDepthFadeFactor(depth);
+    float maximumContribution = saturate(LUNAR_FLOWER_TwinLanternsProviderPerfMaximumContribution);
+    float3 ceiling = min(maximumContribution.xxx, max(1.0.xxx - source, 0.0.xxx)) * fade;
+    float4 captured = tex2Dlod(LUNAR_FLOWER_TLPPFirstLightSampler, float4(uv, 0.0, 0.0));
+    // Captured RGB already includes first-pass strength, shaping and fade.
+    // RGBA16F storage can round upward: restore the exact receiver ceiling.
+    float3 firstLight = min(max(captured.rgb, 0.0.xxx), ceiling);
+    float4 bounce = tex2Dlod(LUNAR_FLOWER_TLPPBounceSampler, float4(uv, 0.0, 0.0));
+    float firstPeak = max(max(firstLight.r, firstLight.g), firstLight.b);
+    float bouncePeak = max(max(bounce.x, bounce.y), bounce.z);
+    [branch]
+    if (LUNAR_FLOWER_TwinLanternsProviderPerfColorAnchor > 0.0 &&
+        firstPeak > 0.0 && firstPeak < 0.0001 && bouncePeak > 0.0)
+    {
+        // Half subnormals have poor relative color precision near black and
+        // can cross AnchorBounceColor's 1e-6 luminance threshold. Recover the
+        // exact first color only for this low-signal anchoring case.
+        float target = 0.0, fidelity = 0.0, pressure = 0.0;
+        float3 fill = float3(0.0, 0.0, 0.0);
+        CAMERA_OBSCURA_API_TL09CompositeEvidence precise = LUNAR_FLOWER_TLPPEvaluateFirstComposite(
+            uv, target, fill, fidelity, pressure);
+        firstLight = precise.bounded_contribution_rgb;
+    }
+    float3 signal = LUNAR_FLOWER_TLPPAnchorBounceColor(max(bounce.rgb, 0.0.xxx), firstLight);
+    float3 extra = min(signal * fade, max(ceiling - firstLight, 0.0.xxx));
+    // Own-pixel admission is not a gate on incoming bounce: a valid receiver
+    // with no first light may still receive light from admitted donor pixels.
+    return firstLight + extra;
+}
+
 float3 LUNAR_FLOWER_TLPPRejectionColor(float rejectionCode)
 {
     if (rejectionCode < 0.5) return float3(0.05, 0.95, 0.18);
@@ -933,7 +976,18 @@ float4 LUNAR_FLOWER_TLPPDisplay_PS(
     float2 uv : TEXCOORD) : SV_Target
 {
     if (LUNAR_FLOWER_TLPPSourceOnly())
-        return float4(saturate(tex2D(ReShade::BackBuffer, uv).rgb), 1.0);
+        return float4(saturate(tex2Dlod(ReShade::BackBuffer, float4(uv, 0.0, 0.0)).rgb), 1.0);
+#if LUNAR_FLOWER_TLPP_CACHE_FIRST_LIGHT
+    [branch]
+    if ((LUNAR_FLOWER_TwinLanternsProviderPerfView == 0 ||
+         LUNAR_FLOWER_TwinLanternsProviderPerfView == 4) && LUNAR_FLOWER_TLPPBounceActive())
+    {
+        float3 source = float3(0.0, 0.0, 0.0);
+        float3 contribution = LUNAR_FLOWER_TLPPCachedContribution(uv, source);
+        return float4(LUNAR_FLOWER_TwinLanternsProviderPerfView == 4 ? contribution :
+            source + contribution, 1.0);
+    }
+#endif
     if (LUNAR_FLOWER_TwinLanternsProviderPerfView == 14)
     {
         float depth = CAMERA_OBSCURA_LoadDepth(uv);

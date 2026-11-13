@@ -20,17 +20,20 @@ SHADERS = BUILD / 'reshade-shaders/Shaders/lunar_flower_provider_perf'
 EFFECT = 'reshade-shaders/Shaders/lunar_flower_provider_perf/effects/LUNAR_FLOWER_TwinLanterns_ProviderPerf.fx'
 PREFIX = 'LUNAR_FLOWER_TwinLanternsProviderPerf'
 TECHNIQUE = PREFIX + '@LUNAR_FLOWER_TwinLanterns_ProviderPerf.fx'
-# label, DDA samples, march samples, compiled provider, direction set, bounce strength
+# label, DDA samples, march samples, compiled provider, direction set, bounce strength, cached composite
 PROFILES = (
-    ('Cardinal4-EqualTraversal', 16, 16, 0, 0, '.5'),
-    ('Diagonal4-EqualTraversal', 16, 16, 0, 1, '.5'),
-    ('Mixed8-EqualTraversal', 8, 8, 0, 2, '.5'),
-    ('Mixed8-FullDensity', 16, 16, 0, 2, '.5'),
-    ('DDA16-Only', 16, 16, 1, 0, '.5'),
-    ('March16-Only', 16, 16, 2, 0, '.5'),
-    ('Parent32-16', 32, 16, 0, 0, '.5'),
-    ('FirstPassOnly', 16, 16, 0, 0, '0'),
-    ('Runtime32-16', 32, 16, -1, 0, '.5'),
+    ('Cardinal4-EqualTraversal', 16, 16, 0, 0, '.5', 1),
+    ('Diagonal4-EqualTraversal', 16, 16, 0, 1, '.5', 1),
+    ('Mixed8-EqualTraversal', 8, 8, 0, 2, '.5', 1),
+    ('Mixed8-FullDensity', 16, 16, 0, 2, '.5', 1),
+    ('DDA16-Only', 16, 16, 1, 0, '.5', 1),
+    ('March16-Only', 16, 16, 2, 0, '.5', 1),
+    ('Parent32-16', 32, 16, 0, 0, '.5', 1),
+    ('FirstPassOnly', 16, 16, 0, 0, '0', 1),
+    ('Runtime32-16', 32, 16, -1, 0, '.5', 1),
+    ('RecomputedComposite', 16, 16, 0, 0, '.5', 0),
+    ('Mixed8-FullDensity-Recomputed', 16, 16, 0, 2, '.5', 0),
+    ('Parent32-16-Recomputed', 32, 16, 0, 0, '.5', 0),
 )
 
 
@@ -47,7 +50,8 @@ def validate_source() -> dict[str, bytes]:
         raise ValueError('Unexpected performance-probe pass order')
     failures = audit(sources(SHADERS), entrypoints=(
         'LUNAR_FLOWER_TLPPRaw_PS', 'LUNAR_FLOWER_TLPPEvaluateDirections',
-        'LUNAR_FLOWER_TLPPTraceScreenDetailed', 'LUNAR_FLOWER_TLPPBounce_PS'))
+        'LUNAR_FLOWER_TLPPTraceScreenDetailed', 'LUNAR_FLOWER_TLPPBounce_PS',
+        'LUNAR_FLOWER_TLPPDisplay_PS'))
     if failures:
         raise ValueError('Unsafe loop sampling:\n' + '\n'.join(failures))
     selected = json.loads((BUILD / 'DEFAULTS.json').read_text())['defaults']
@@ -64,7 +68,7 @@ def validate_source() -> dict[str, bytes]:
 def presets() -> dict[str, bytes]:
     selected = json.loads((BUILD / 'DEFAULTS.json').read_text())['defaults']
     result = {}
-    for label, dda, march, provider, direction, bounce in PROFILES:
+    for label, dda, march, provider, direction, bounce, cache in PROFILES:
         values = dict(selected)
         values[PREFIX + 'DirectionSet'] = str(direction)
         values[PREFIX + 'BounceStrength'] = bounce
@@ -72,7 +76,7 @@ def presets() -> dict[str, bytes]:
             values.pop(PREFIX + 'ProviderMode')
         else:
             values[PREFIX + 'ProviderMode'] = '0'
-        definitions = f'LUNAR_FLOWER_TLPP_DDA_STEPS={dda},LUNAR_FLOWER_TLPP_MARCH_STEPS={march},LUNAR_FLOWER_TLPP_COMPILED_PROVIDER={provider}'
+        definitions = f'LUNAR_FLOWER_TLPP_DDA_STEPS={dda},LUNAR_FLOWER_TLPP_MARCH_STEPS={march},LUNAR_FLOWER_TLPP_COMPILED_PROVIDER={provider},LUNAR_FLOWER_TLPP_CACHE_FIRST_LIGHT={cache}'
         text = f'Techniques={TECHNIQUE}\nTechniqueSorting={TECHNIQUE}\nPreprocessorDefinitions={definitions}\n\n[{Path(EFFECT).name}]\n'
         text += ''.join(f'{k}={v}\n' for k, v in sorted(values.items()))
         result[f'Twin-Lanterns-ProviderPerf-{label}.ini'] = text.encode()
@@ -83,14 +87,14 @@ def matrix() -> str:
     stream = io.StringIO(newline='')
     writer = csv.writer(stream, lineterminator='\n')
     writer.writerow(['preset', 'directions', 'dda_per_direction', 'march_per_direction',
-                     'compiled_provider', 'gathers', 'maximum_traversal_samples_per_pixel',
+                     'compiled_provider', 'gathers', 'maximum_traversal_samples_per_pixel', 'cached_final_composite',
                      'measured_effect_gpu_ms', 'measured_total_frame_ms', 'measured_fps', 'notes'])
-    for label, dda, march, provider, direction, bounce in PROFILES:
+    for label, dda, march, provider, direction, bounce, cache in PROFILES:
         directions = 8 if direction == 2 else 4
         per_direction = (dda if provider != 2 else 0) + (march if provider != 1 else 0)
         gathers = 1 if Decimal(bounce) == 0 else 2
         writer.writerow([label, directions, dda, march, provider, gathers,
-                         directions * per_direction * gathers, '', '', '', 'not measured'])
+                         directions * per_direction * gathers, int(cache and gathers == 2), '', '', '', 'not measured'])
     return stream.getvalue()
 
 
@@ -102,10 +106,12 @@ def package(output: Path) -> dict:
         payload[name] = (BUILD / name).read_bytes()
     payload['LICENSE'] = (ROOT / 'LICENSE').read_bytes()
     manifest = {
-        'schema': 'twin-lanterns-provider-performance-v1', 'effect_files': [EFFECT],
+        'schema': 'twin-lanterns-provider-performance-v2', 'effect_files': [EFFECT],
         'technique': TECHNIQUE, 'compile_time_provider_selection': True,
         'independent_traversal_budgets': True, 'ray_reach_preserved': True,
         'pass_count': 6, 'working_texture_2d_count': 5,
+        'cached_first_light_final_composite': True,
+        'recomputed_composite_comparison_preset': True,
         'gpu_timing_measured': False, 'native_compile_performed': False,
         'dx11_excluded': False, 'dx12_excluded': False,
         'files': {n: digest(b) for n, b in sorted(payload.items())},
