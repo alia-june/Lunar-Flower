@@ -4,41 +4,47 @@ Lunar Flower’s ReShade screen-space indirect-light project. Twin Lanterns gath
 light from visible surfaces, reconstructs it across compatible geometry, and
 limits added light by the configured ceiling and remaining output-channel room.
 
-## Kriegsspinne — Reference Build Candidate 1
+## Current default — Kriespinne / Spoke Lab 2
 
-**[Download Kriegsspinne RBC1 — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Kriegsspinne-Reference-Build-Candidate-1.zip)**
+**[Download Twin Lanterns — Default ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Twin-Lanterns-Default.zip)**
 
-[Installation and comparison presets](Twin-Lanterns/Provider-Performance/README.md)
-· [SHA-256](downloads/Kriegsspinne-Reference-Build-Candidate-1.zip.sha256)
+[Install and controls](Twin-Lanterns/Spoke-Lab-2/README.md)
+· [Default preset](presets/Twin-Lanterns-Default.ini)
+· [SHA-256](downloads/Twin-Lanterns-Default.zip.sha256)
 · [All downloads](downloads/README.md)
 
-The current reference candidate combines voxel-free DDA/march tracing, cardinal
-and diagonal direction tests, one additional bounded bounce, distance decay,
-and cached first-light composition. It includes 12 presets for comparing ray
-budgets, providers, bounce cost and the cached/recomputed final pass.
+The default is the owner-preferred **preset 04** configuration: three fixed
+primary spokes, linear depth admission, cached donor normals, and two opposing
+cached-first-light taps. **Indirect Light Strength is 2.0**. Bounce strength
+remains 0.25, retention 0.5, and Maximum Added Light 0.20.
 
 ### Install
 
 1. Extract the ZIP outside ReShade’s shader search folders.
-2. Merge its `reshade-shaders` folder into your game. If already installed,
-   replace the existing `lunar_flower_provider_perf` folder. Keep your installed
-   `ReShade.fxh`.
-3. Load `Twin-Lanterns-ProviderPerf-Cardinal4-EqualTraversal.ini` from the ZIP.
-4. Use **Final Image** and enable only this Twin Lanterns technique for comparison.
+2. Merge its `reshade-shaders` folder into your game. Replace an existing
+   `lunar_flower_spoke_lab` folder rather than installing a second copy. Keep
+   your installed `ReShade.fxh`.
+3. Load **Kriespinne-Spoke-Lab-2.ini** from the ZIP. It selects preset 04 and
+   strength 2.0 automatically; old presets retain their saved values.
+4. Enable **Lunar Flower - Twin Lanterns: Spoke Lab 2**. Keep the game’s working
+   depth configuration and disable other Twin Lanterns techniques.
 
-The ReShade effect remains **Lunar Flower - Twin Lanterns: Provider Performance**
-so existing presets stay compatible. For the original 32/16 ray budgets, compare
-**Parent32-16** with **Parent32-16-Recomputed** at the same camera position.
+This uses six current-frame working fields and seven passes. The second stage
+reads calculated first light; it does not launch secondary ray marches. The
+planned third stage and temporal spoke cycling are not implemented. The owner
+prefers this configuration in Phantom Brigade; game response can differ.
 
-CPU/source/package checks cover light bounds, simulated sampling and package
-integrity. They do not establish native compilation or GPU performance; the
-[C++ / ReShade FX mismatch log](Twin-Lanterns/Provider-Performance/ERROR_LOG.md)
-records the corrected reserved-keyword failure and that validation boundary.
+The source and default values match the versioned
+[Spoke Lab 2 ZIP](downloads/Kriespinne-Spoke-Lab-2.zip). FX frontend checks and
+previous algorithm-level CPU checks are documented in the
+[validation record](Twin-Lanterns/Spoke-Lab-2/VALIDATION.json); they do not supply
+native driver compilation or controlled GPU timing.
 
 ## Other builds
 
 | Build | Purpose | Download or details |
 |---|---|---|
+| **Kriegsspinne — Reference Build Candidate 1** | Earlier reference with provider/budget comparisons and a marched extra gather | [ZIP](downloads/Kriegsspinne-Reference-Build-Candidate-1.zip) · [Setup](Twin-Lanterns/Provider-Performance/README.md) |
 | **Crystal Spider - Beta + Fog Guard V2** | Earlier voxel-lighting build with Fog Guard Capture → Crystal Spider → Restore and a starter preset | [ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip) · [Setup](docs/CRYSTAL_SPIDER_BUNDLE.md) |
 | **Stable 1.4** | Original fixed baseline | [Build](Twin-Lanterns/Stable-1.4/) |
 | **Fidelity Overdrive** | Independent fidelity and highlight-protection candidate | [Build](Twin-Lanterns/Fidelity-Overdrive/) |

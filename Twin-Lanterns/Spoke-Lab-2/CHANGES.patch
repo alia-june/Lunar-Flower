@@ -1,0 +1,20 @@
+--- spoke-lab-1/effects/LUNAR_FLOWER_TwinLanterns_SpokeLab.fx
++++ spoke-lab-2/effects/LUNAR_FLOWER_TwinLanterns_SpokeLab.fx
+@@ -78,7 +78,7 @@
+ < ui_type = "checkbox"; ui_category = "Lunar Flower / Twin Lanterns Spoke Lab / 01 Light"; ui_label = "Enable Indirect Light"; ui_tooltip = "Applies bounded reconstructed indirect light.\nOff returns the source image exactly while diagnostics remain available."; > = true;
+ 
+ uniform float LUNAR_FLOWER_TwinLanternsSpokeLabStrength
+-< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns Spoke Lab / 01 Light"; ui_label = "Indirect Light Strength"; ui_min = 0.00; ui_max = 4.00; ui_step = 0.001; ui_tooltip = "Scales admitted indirect light after transport normalization and reconstruction evidence.\nFine adjustment: 0.001 per step (0.1 percentage point of nominal strength).\nFor 10-30% strength, use 0.100-0.300; zero returns the source image exactly."; > = 0.272000;
++< ui_type = "drag"; ui_category = "Lunar Flower / Twin Lanterns Spoke Lab / 01 Light"; ui_label = "Indirect Light Strength"; ui_min = 0.00; ui_max = 4.00; ui_step = 0.001; ui_tooltip = "Scales admitted indirect light after transport normalization and reconstruction evidence.\nFine adjustment: 0.001 per step (0.1 percentage point of nominal strength).\nFor 10-30% strength, use 0.100-0.300; zero returns the source image exactly."; > = 2.000000;
+ 
+ uniform float LUNAR_FLOWER_TwinLanternsSpokeLabMaximumContribution
+ < ui_type = "slider"; ui_category = "Lunar Flower / Twin Lanterns Spoke Lab / 01 Light"; ui_label = "Maximum Added Light"; ui_min = 0.00; ui_max = 0.50; ui_step = 0.005; ui_tooltip = "Hard per-channel ceiling for added normalized SDR light.\nThe result is also limited by the remaining room in each source channel."; > = 0.20;
+@@ -1167,7 +1167,7 @@
+ }
+ 
+ technique LUNAR_FLOWER_TwinLanternsSpokeLab
+-< ui_label = "Lunar Flower - Twin Lanterns: Spoke Lab 1"; ui_tooltip = "Three fixed primary spokes, linear/cubic admission comparisons, and an optional two-tap opposing cached-light gather. Uses current-frame fields only. No third stage or temporal history is implemented. Six working fields and seven passes with the normal cache."; >
++< ui_label = "Lunar Flower - Twin Lanterns: Spoke Lab 2"; ui_tooltip = "Three fixed primary spokes, linear/cubic admission comparisons, and an optional two-tap opposing cached-light gather. Uses current-frame fields only. No third stage or temporal history is implemented. Six working fields and seven passes with the normal cache."; >
+ {
+ #if LUNAR_FLOWER_TLSL_CACHE_DONOR_NORMALS
+     pass TwinLanternDonorNormals

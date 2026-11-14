@@ -2,22 +2,30 @@
 
 Lunar Flower’s bounded screen-space indirect-light family for ReShade.
 
-## Kriegsspinne — Reference Build Candidate 1
+## Current default — Kriespinne / Spoke Lab 2
 
-**[Download Kriegsspinne RBC1 — ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Kriegsspinne-Reference-Build-Candidate-1.zip)**
+**[Download Twin Lanterns — Default ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Twin-Lanterns-Default.zip)**
 
-[Installation and comparison presets](Provider-Performance/README.md)
-· [SHA-256](../downloads/Kriegsspinne-Reference-Build-Candidate-1.zip.sha256)
+[Install and controls](Spoke-Lab-2/README.md)
+· [Default preset](../presets/Twin-Lanterns-Default.ini)
+· [SHA-256](../downloads/Twin-Lanterns-Default.zip.sha256)
 · [All downloads](../downloads/README.md)
 
-The current reference candidate uses voxel-free DDA/march tracing and one bounded
-extra bounce, with cached first-light composition. Its 12 presets compare
-cardinal/diagonal directions, provider budgets, bounce cost and cached/recomputed
-composition. The installed effect retains the **Provider Performance** identity
-for preset compatibility. See the build guide for checks and validation limits.
+The default is preset 04: **three primary spokes, linear depth admission, cached
+normals and two opposing cached-first-light taps**, with **Indirect Light
+Strength 2.0**. Load `Kriespinne-Spoke-Lab-2.ini` and enable **Lunar Flower - Twin
+Lanterns: Spoke Lab 2**. The shader reset defaults already match that preset.
+Replace the existing `lunar_flower_spoke_lab` folder when updating and preserve
+working depth settings. Other builds remain available below.
+
+The owner reports a preference for preset 04 with good performance in Phantom
+Brigade. Native driver compilation and controlled GPU timings are not archived;
+see the [validation record](Spoke-Lab-2/VALIDATION.json).
 
 ## Other builds
 
+- **Kriegsspinne RBC1:** [download](../downloads/Kriegsspinne-Reference-Build-Candidate-1.zip)
+  and [reference comparison guide](Provider-Performance/README.md).
 - **Crystal Spider - Beta + Fog Guard V2:** [download](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip)
   and [bundle setup](../docs/CRYSTAL_SPIDER_BUNDLE.md).
 - **Fixed baseline and fidelity candidate:** [Stable 1.4](Stable-1.4/)
@@ -108,7 +116,22 @@ An original 2560×1440 Elden Ring capture, also featured on the
 Like the comparison above, these captures contain third-party game imagery and
 are not included in the repository's MIT software grant.
 
-## Architecture
+## Default frame graph
+
+| Pass | Purpose |
+|---|---|
+| 1. Donor normals | Cache full-resolution current-frame normals and validity. |
+| 2. Primary gather | Sample three fixed spokes using linear depth admission. |
+| 3–4. Surface resolve | Resolve the light field horizontally and vertically. |
+| 5. First-light capture | Store bounded, shaped first-light contribution. |
+| 6. Cached second stage | Take two gated opposing taps from the first-light field. |
+| 7. Composite | Add the bounded fields while respecting source-channel room. |
+
+The intended **3 → 2 → 1** design is currently implemented as **3 → 2**.
+There is no temporal history, animated spoke cycling, or implemented third stage.
+[Implementation and remaining work](Spoke-Lab-2/DESIGN.md).
+
+## Architecture of earlier builds
 
 Stable 1.4 and Fidelity Overdrive use an ordered four-pass frame graph with
 three half-resolution working fields. Full Resolution Dual Ray Alpha is a separate

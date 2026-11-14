@@ -1,5 +1,24 @@
 # Twin Lanterns downloads
 
+## Current default — Kriespinne / Spoke Lab 2
+
+**[Download Twin Lanterns — Default ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Twin-Lanterns-Default.zip)**
+· [Install and controls](../Twin-Lanterns/Spoke-Lab-2/README.md)
+· [Default preset](../presets/Twin-Lanterns-Default.ini)
+· [SHA-256](Twin-Lanterns-Default.zip.sha256)
+
+Preset 04 is selected by default: three primary spokes, linear admission,
+cached donor normals and two opposing cached-light taps. **Indirect Light
+Strength is 2.0**; the 0.25 bounce strength and 0.20 added-light ceiling are
+preserved. Load `Kriespinne-Spoke-Lab-2.ini` from the archive when updating an
+existing preset.
+
+The stable default download is byte-identical to the
+[versioned Spoke Lab 2 ZIP](Kriespinne-Spoke-Lab-2.zip)
+([checksum](Kriespinne-Spoke-Lab-2.zip.sha256)). It includes the complete matching
+shader/include set, selected defaults and validation records. Older builds
+remain available below. The third stage and temporal history are not included.
+
 ## Kriegsspinne — Reference Build Candidate 1
 
 [Download Kriegsspinne — Reference Build Candidate 1](Kriegsspinne-Reference-Build-Candidate-1.zip)

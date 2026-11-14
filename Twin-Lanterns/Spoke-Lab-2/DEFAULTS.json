@@ -1,0 +1,46 @@
+{
+  "uniform_defaults": {
+    "LUNAR_FLOWER_TwinLanternsSpokeLabBackThickness": "0.003500",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabDepthFadeEnd": "0.050000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabDepthFadeStart": "0.005000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabDepthFadeStrength": "0.355000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabDepthSlope": "0.160000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabDepthTolerance": "0.005000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabEdgeFillRadiusPixels": "2.000000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabEdgeFillStrength": "0.200000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabEdgeInkStrength": "0.000000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabEdgeProtection": "1.000000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabEnabled": "1",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabFidelityGuard": "0.650000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabFrontBias": "0.000052",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabLightSoftening": "1.000000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabLightSofteningRadiusPixels": "2.000000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabMaximumContribution": "0.200000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabNormalMinimum": "0.800000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabOverdrive": "0.000000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabRayLengthPixels": "24.000000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabStrength": "2.000000",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabView": "0",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabSpokeMode": "1",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabSpokeRotation": "0",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabCheapBounceStrength": "0.250",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabCheapBounceRetention": "0.500",
+    "LUNAR_FLOWER_TwinLanternsSpokeLabCheapBounceRadius": "3.0"
+  },
+  "implemented_stages": [
+    3,
+    2
+  ],
+  "planned_stages": [
+    3,
+    2,
+    1
+  ],
+  "temporal_history_implemented": false,
+  "frame_cycling_implemented": false,
+  "linear_admission_default": true,
+  "release_name": "Kriespinne \u2014 Spoke Lab 2",
+  "default_preset": "Kriespinne-Spoke-Lab-2.ini",
+  "promoted_configuration": "04: three spokes, linear admission, two cached opposing taps",
+  "owner_feedback": "Preset 04 preferred, with good performance"
+}

@@ -1,0 +1,32 @@
+{
+  "release_name": "Kriespinne \u2014 Spoke Lab 2",
+  "parent_package_sha256": "345f19f3399e75cdfb6b71f43b7838c6d9ed980cc7b3ec4798e07f0cac3a13ae",
+  "default_configuration": "preset 04, Indirect Light Strength 2.0",
+  "shader_identifiers_preserved": true,
+  "algorithm_unchanged": true,
+  "working_fields": 6,
+  "passes": 7,
+  "third_stage_implemented": false,
+  "temporal_history_implemented": false,
+  "external_shader_code_bundled": false,
+  "files": {
+    "CHANGES.patch": "fa65902d05039471b92b1579bbf11a80e30761c787051ee546d4c46925fa3640",
+    "DEFAULTS.json": "4628d7c195441821ffb99477e203abeba9049e28b8f92bbc55729fb03d917155",
+    "DESIGN.md": "2abf8012d21dd1cb79ff5c4df751d8bc64206c91d37a1377ce509fde869170d1",
+    "Kriespinne-Spoke-Lab-2.ini": "c0b2efd7e989a1917621278ab8e005e35a844715c3752683b3f04e750354404c",
+    "LICENSE": "ee0b4e9add0f461371352f2650c8f6b693c1e658a3ea5a82ce82e0c408a05d09",
+    "README.md": "def111cb93e8e90b9354d1b58b60067b84d0d08c383493fc6c6c40e82b033a24",
+    "Spoke-Lab-04-Previous-Strength.ini": "e2eca6fe04c3e5efae4168c4423f7bd64d919f5e05d16958c62944004c3ae11d",
+    "VALIDATION.json": "e1e33c1aef2820d5561b27963f84a614e03a7554629a34a76d4135d309273b17",
+    "reshade-shaders/Shaders/lunar_flower_spoke_lab/api/CAMERA_OBSCURA_API_TwinLanternComposite.fxh": "e36a82a2506d3313b54e0e1fb0ba9dde11109c01e02a42177323c744fe1e2378",
+    "reshade-shaders/Shaders/lunar_flower_spoke_lab/api/CAMERA_OBSCURA_API_TwinLanternProviderProofCommon.fxh": "24e6c1c4fe58ff1b3d099a9e18957a408e6f4d0d67b0f7470e5fe17c7c834c45",
+    "reshade-shaders/Shaders/lunar_flower_spoke_lab/api/CAMERA_OBSCURA_API_TwinLanternReconstruction.fxh": "3cb3606f4aedb02b745d4adced76df6768de2e651a102dc2825d66a457d15170",
+    "reshade-shaders/Shaders/lunar_flower_spoke_lab/api/CAMERA_OBSCURA_API_TwinLanternTransport.fxh": "939323e2a04b8b5eeb06f7dd2aab0b64cf283d9d76e637b2266df05f54dc5e13",
+    "reshade-shaders/Shaders/lunar_flower_spoke_lab/api/LUNAR_FLOWER_TwinLanternScreenSurface.fxh": "76c48db3aaa48fa4c3d9faf0948fb90f83c3fdd3853c8032ac93e05b2ee84248",
+    "reshade-shaders/Shaders/lunar_flower_spoke_lab/effects/LUNAR_FLOWER_TwinLanterns_SpokeLab.fx": "bc3105df47d78fe719c27fbde5c0298917955596195f7abac63d26d13116a2b9",
+    "reshade-shaders/Shaders/lunar_flower_spoke_lab/header/CAMERA_OBSCURA_AtomicCommon.fxh": "caa8e32ba3f84262a605f63b5a24c2758c882d39efd9126bc87fedcc8d9b66e0",
+    "reshade-shaders/Shaders/lunar_flower_spoke_lab/header/CAMERA_OBSCURA_AtomicDebug.fxh": "68ef49d68c664753375df0410dba34561cec805d3e519ee4290843c4b917527b",
+    "reshade-shaders/Shaders/lunar_flower_spoke_lab/header/CAMERA_OBSCURA_EntryCapability.fxh": "d2c7a5d0c1040cc8783e76a492f838199bdacc294437b6940f207e8a9a8e885e",
+    "reshade-shaders/Shaders/lunar_flower_spoke_lab/header/CAMERA_OBSCURA_EntryTraversal.fxh": "145a699649edaec7a19318f4a4287b8c6fb3f418d55d6b85f824e53275237e33"
+  }
+}
