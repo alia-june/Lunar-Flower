@@ -1,5 +1,7 @@
 # Kriespinne — Spoke Lab 1
 
+**Preset 04 is now the default in [Spoke Lab 2](../Spoke-Lab-2/README.md), with Indirect Light Strength set to 2.0.**
+
 [Download Spoke Lab 1](https://raw.githubusercontent.com/alia-june/Lunar-Flower/refs/heads/lab/phantom-spokes/downloads/Kriespinne-Spoke-Lab-1.zip)
 · [SHA-256](../../downloads/Kriespinne-Spoke-Lab-1.zip.sha256)
 
