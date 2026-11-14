@@ -2,25 +2,25 @@
 
 Lunar Flower’s bounded screen-space indirect-light family for ReShade.
 
-## Current default — Kriespinne / Spoke Lab 2
+## Twin Lantern — Cracked Crystal (default)
 
-**[Download Twin Lanterns — Default ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Twin-Lanterns-Default.zip)**
+**[Download Twin Lantern — Cracked Crystal](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Twin-Lantern-Cracked-Crystal.zip)**
 
-[Install and controls](Spoke-Lab-2/README.md)
+[Install and controls](Cracked-Crystal/README.md)
 · [Default preset](../presets/Twin-Lanterns-Default.ini)
-· [SHA-256](../downloads/Twin-Lanterns-Default.zip.sha256)
+· [SHA-256](../downloads/Twin-Lantern-Cracked-Crystal.zip.sha256)
 · [All downloads](../downloads/README.md)
 
 The default is preset 04: **three primary spokes, linear depth admission, cached
 normals and two opposing cached-first-light taps**, with **Indirect Light
-Strength 2.0**. Load `Kriespinne-Spoke-Lab-2.ini` and enable **Lunar Flower - Twin
+Strength 2.0**. Load `Twin-Lantern-Cracked-Crystal.ini` and enable **Lunar Flower - Twin
 Lanterns: Spoke Lab 2**. The shader reset defaults already match that preset.
 Replace the existing `lunar_flower_spoke_lab` folder when updating and preserve
 working depth settings. Other builds remain available below.
 
 The owner reports a preference for preset 04 with good performance in Phantom
 Brigade. Native driver compilation and controlled GPU timings are not archived;
-see the [validation record](Spoke-Lab-2/VALIDATION.json).
+see the [validation record](Cracked-Crystal/VALIDATION.json).
 
 ## Other builds
 
@@ -129,7 +129,7 @@ are not included in the repository's MIT software grant.
 
 The intended **3 → 2 → 1** design is currently implemented as **3 → 2**.
 There is no temporal history, animated spoke cycling, or implemented third stage.
-[Implementation and remaining work](Spoke-Lab-2/DESIGN.md).
+[Implementation and remaining work](Cracked-Crystal/DESIGN.md).
 
 ## Architecture of earlier builds
 

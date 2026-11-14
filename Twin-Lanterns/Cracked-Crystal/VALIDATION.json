@@ -1,5 +1,5 @@
 {
-  "build": "Kriespinne \u2014 Spoke Lab 2",
+  "build": "Twin Lantern \u2014 Cracked Crystal",
   "promoted_configuration": "preset 04",
   "indirect_light_strength": 2.0,
   "all_other_preset_04_values_preserved": true,
@@ -12,5 +12,6 @@
   "fxc_dxc_driver_compilation": false,
   "gpu_timing_measured": false,
   "game_visuals_verified_in_environment": false,
-  "owner_feedback_for_preset_04": "preferred, good performance"
+  "owner_feedback_for_preset_04": "preferred, good performance",
+  "branding_only_shader_and_preset_equivalence_verified": true
 }

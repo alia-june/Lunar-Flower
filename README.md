@@ -1,16 +1,16 @@
-# Twin Lanterns
+# Twin Lantern — Cracked Crystal
 
 Lunar Flower’s ReShade screen-space indirect-light project. Twin Lanterns gathers
 light from visible surfaces, reconstructs it across compatible geometry, and
 limits added light by the configured ceiling and remaining output-channel room.
 
-## Current default — Kriespinne / Spoke Lab 2
+## Twin Lantern — Cracked Crystal (default)
 
-**[Download Twin Lanterns — Default ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Twin-Lanterns-Default.zip)**
+**[Download Twin Lantern — Cracked Crystal](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Twin-Lantern-Cracked-Crystal.zip)**
 
-[Install and controls](Twin-Lanterns/Spoke-Lab-2/README.md)
+[Install and controls](Twin-Lanterns/Cracked-Crystal/README.md)
 · [Default preset](presets/Twin-Lanterns-Default.ini)
-· [SHA-256](downloads/Twin-Lanterns-Default.zip.sha256)
+· [SHA-256](downloads/Twin-Lantern-Cracked-Crystal.zip.sha256)
 · [All downloads](downloads/README.md)
 
 The default is the owner-preferred **preset 04** configuration: three fixed
@@ -24,7 +24,7 @@ remains 0.25, retention 0.5, and Maximum Added Light 0.20.
 2. Merge its `reshade-shaders` folder into your game. Replace an existing
    `lunar_flower_spoke_lab` folder rather than installing a second copy. Keep
    your installed `ReShade.fxh`.
-3. Load **Kriespinne-Spoke-Lab-2.ini** from the ZIP. It selects preset 04 and
+3. Load **Twin-Lantern-Cracked-Crystal.ini** from the ZIP. It selects preset 04 and
    strength 2.0 automatically; old presets retain their saved values.
 4. Enable **Lunar Flower - Twin Lanterns: Spoke Lab 2**. Keep the game’s working
    depth configuration and disable other Twin Lanterns techniques.
@@ -34,16 +34,17 @@ reads calculated first light; it does not launch secondary ray marches. The
 planned third stage and temporal spoke cycling are not implemented. The owner
 prefers this configuration in Phantom Brigade; game response can differ.
 
-The source and default values match the versioned
-[Spoke Lab 2 ZIP](downloads/Kriespinne-Spoke-Lab-2.zip). FX frontend checks and
-previous algorithm-level CPU checks are documented in the
-[validation record](Twin-Lanterns/Spoke-Lab-2/VALIDATION.json); they do not supply
+Cracked Crystal preserves the shader code and settings of the tested
+[Spoke Lab 2 build](downloads/Kriespinne-Spoke-Lab-2.zip). The release name and
+preset filename changed. FX frontend and previous CPU checks are documented in the
+[validation record](Twin-Lanterns/Cracked-Crystal/VALIDATION.json); they do not supply
 native driver compilation or controlled GPU timing.
 
 ## Other builds
 
 | Build | Purpose | Download or details |
 |---|---|---|
+| **Spoke Lab 2** | Previous download identity for the current shader and settings | [ZIP](downloads/Kriespinne-Spoke-Lab-2.zip) · [Current setup](Twin-Lanterns/Cracked-Crystal/README.md) |
 | **Kriegsspinne — Reference Build Candidate 1** | Earlier reference with provider/budget comparisons and a marched extra gather | [ZIP](downloads/Kriegsspinne-Reference-Build-Candidate-1.zip) · [Setup](Twin-Lanterns/Provider-Performance/README.md) |
 | **Crystal Spider - Beta + Fog Guard V2** | Earlier voxel-lighting build with Fog Guard Capture → Crystal Spider → Restore and a starter preset | [ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Crystal-Spider-Beta.zip) · [Setup](docs/CRYSTAL_SPIDER_BUNDLE.md) |
 | **Stable 1.4** | Original fixed baseline | [Build](Twin-Lanterns/Stable-1.4/) |

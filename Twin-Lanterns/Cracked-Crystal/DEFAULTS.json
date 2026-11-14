@@ -39,8 +39,9 @@
   "temporal_history_implemented": false,
   "frame_cycling_implemented": false,
   "linear_admission_default": true,
-  "release_name": "Kriespinne \u2014 Spoke Lab 2",
-  "default_preset": "Kriespinne-Spoke-Lab-2.ini",
+  "release_name": "Twin Lantern \u2014 Cracked Crystal",
+  "default_preset": "Twin-Lantern-Cracked-Crystal.ini",
   "promoted_configuration": "04: three spokes, linear admission, two cached opposing taps",
-  "owner_feedback": "Preset 04 preferred, with good performance"
+  "owner_feedback": "Preset 04 preferred, with good performance",
+  "shader_build_identity": "Spoke Lab 2; unchanged for compatibility"
 }

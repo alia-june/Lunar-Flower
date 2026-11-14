@@ -1,23 +1,31 @@
 # Twin Lanterns downloads
 
-## Current default — Kriespinne / Spoke Lab 2
+## Twin Lantern — Cracked Crystal (default)
 
-**[Download Twin Lanterns — Default ZIP](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Twin-Lanterns-Default.zip)**
-· [Install and controls](../Twin-Lanterns/Spoke-Lab-2/README.md)
+**[Download Twin Lantern — Cracked Crystal](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Twin-Lantern-Cracked-Crystal.zip)**
+· [Install and controls](../Twin-Lanterns/Cracked-Crystal/README.md)
 · [Default preset](../presets/Twin-Lanterns-Default.ini)
-· [SHA-256](Twin-Lanterns-Default.zip.sha256)
+· [SHA-256](Twin-Lantern-Cracked-Crystal.zip.sha256)
 
 Preset 04 is selected by default: three primary spokes, linear admission,
 cached donor normals and two opposing cached-light taps. **Indirect Light
 Strength is 2.0**; the 0.25 bounce strength and 0.20 added-light ceiling are
-preserved. Load `Kriespinne-Spoke-Lab-2.ini` from the archive when updating an
+preserved. Load `Twin-Lantern-Cracked-Crystal.ini` from the archive when updating an
 existing preset.
 
-The stable default download is byte-identical to the
-[versioned Spoke Lab 2 ZIP](Kriespinne-Spoke-Lab-2.zip)
-([checksum](Kriespinne-Spoke-Lab-2.zip.sha256)). It includes the complete matching
+The [stable default alias](Twin-Lanterns-Default.zip) is byte-identical to the
+[Cracked Crystal ZIP](Twin-Lantern-Cracked-Crystal.zip)
+([checksum](Twin-Lantern-Cracked-Crystal.zip.sha256)). It includes the complete matching
 shader/include set, selected defaults and validation records. Older builds
 remain available below. The third stage and temporal history are not included.
+
+## Previous identity — Spoke Lab 2
+
+[Previous Spoke Lab 2 ZIP](Kriespinne-Spoke-Lab-2.zip)
+· [SHA-256](Kriespinne-Spoke-Lab-2.zip.sha256)
+
+Cracked Crystal preserves this build's shader code and preset values. The
+current package has the new public name and preset filename.
 
 ## Kriegsspinne — Reference Build Candidate 1
 
