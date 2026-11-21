@@ -98,3 +98,9 @@ substantial portions of the software.
 
 Project direction and authorship: **alia june**. Documentation and validation
 tooling were prepared with AI assistance under the author’s direction.
+
+## Related alia-june repositories
+
+- [ethical-and-intellectual-theory](https://github.com/alia-june/ethical-and-intellectual-theory) — Research ethics, consent, attribution, AI collaboration, and programming doctrine.
+- [xOSG-prototype](https://github.com/alia-june/xOSG-prototype) — AI instrumentation, orchestration research, durable workspaces, language tooling, and deterministic computation.
+- [this-repository-machine-interface](https://github.com/alia-june/this-repository-machine-interface) — Machine-readable repository orientation, JSON landing pads, ingress, launch, and egress.
