@@ -4,6 +4,8 @@ Lunar Flower’s ReShade screen-space indirect-light project. Twin Lanterns gath
 light from visible surfaces, reconstructs it across compatible geometry, and
 limits added light by the configured ceiling and remaining output-channel room.
 
+**Public cross-repository research catalog:** [human research map](https://alia-june.github.io/research.html) · [machine-oriented discovery](https://alia-june.github.io/machine.html) · [structured public index](https://alia-june.github.io/research-index.json). This dated, read-only directory points to public entry points; it is not a runtime control, a substitute for current source verification, or permission to mine personal methodological profiles.
+
 ## Twin Lantern — Cracked Crystal (default)
 
 **[Download Twin Lantern — Cracked Crystal](https://raw.githubusercontent.com/alia-june/Lunar-Flower/main/downloads/Twin-Lantern-Cracked-Crystal.zip)**
