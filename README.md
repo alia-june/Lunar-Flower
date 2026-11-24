@@ -83,9 +83,12 @@ shader performance or compilation success.
 - [Public API 0.1.0](Twin-Lanterns/API/0.1.0/): versioned ReShade FX include
   contract, [surface registry](Twin-Lanterns/API/0.1.0/PUBLIC_API.json) and
   [declaration reference](Twin-Lanterns/API/0.1.0/REFERENCE.md).
-- [Lunar Flower AI Seed](theory/README.md): a separate proposed AI architecture;
-  [canonical theory](https://github.com/alia-june/ethical-and-intellectual-theory/blob/main/blue-prints/LUNAR_FLOWER_AI_SEED_EXPERT_SYSTEM_CONTRACT.md).
-  It does not describe a capability implemented by these shaders.
+- [Lunar Flower AI Seed — theory index](theory/README.md): separate proposed
+  AI architecture and six standing gates; [canonical contract](https://github.com/alia-june/ethical-and-intellectual-theory/blob/main/blue-prints/LUNAR_FLOWER_AI_SEED_EXPERT_SYSTEM_CONTRACT.md).
+  The [complete Gate 0 research](https://github.com/alia-june/ethical-and-intellectual-theory/tree/main/blue-prints/gates/gate-0)
+  includes the eight accepted theoretical axioms, opt-in modular catalog, source
+  ledgers, deferrals and unknowns. None is an implemented shader capability or
+  an activated security control.
 
 Twin Lanterns works with current-frame screen evidence. It cannot recover hidden
 or off-screen geometry, and its depth-based lighting is an approximation rather
