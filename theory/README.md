@@ -6,6 +6,7 @@ The **Lunar Flower AI Seed** is a separate, proposed expert-system architecture.
 
 | Resource | Scope |
 | --- | --- |
+| **[Complete Gates Framework — One-Shot Edition](https://github.com/alia-june/ethical-and-intellectual-theory/blob/main/blue-prints/gates/GATES_COMPLETE_ONE_SHOT.md)** | All governing distinctions, Gate Zero and 27 modular items, Gates One through Six, conditions, tests, ledgers and known limits in one self-contained document; no internal links required. |
 | [Standing gates contract](https://github.com/alia-june/ethical-and-intellectual-theory/blob/main/blue-prints/LUNAR_FLOWER_AI_SEED_EXPERT_SYSTEM_CONTRACT.md) | The six proposed numbered Gates 1–6 |
 | [Gate framework index](https://github.com/alia-june/ethical-and-intellectual-theory/blob/main/blue-prints/gates/README.md) | Gate overview and correct entry points |
 | **[Gate Zero — Complete research](https://github.com/alia-june/ethical-and-intellectual-theory/tree/main/blue-prints/gates/gate-0)** | Gate Zero Foundational Theory v0.4, Gate Zero Modular Catalog v0.2, closure-stage audit/decision ledgers, deferrals and unknowns |
