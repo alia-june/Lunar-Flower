@@ -8,7 +8,9 @@ The **Lunar Flower AI Seed** is a separate, proposed expert-system architecture.
 | --- | --- |
 | [Standing gates contract](https://github.com/alia-june/ethical-and-intellectual-theory/blob/main/blue-prints/LUNAR_FLOWER_AI_SEED_EXPERT_SYSTEM_CONTRACT.md) | The six proposed numbered Gates 1–6 |
 | [Gate framework index](https://github.com/alia-june/ethical-and-intellectual-theory/blob/main/blue-prints/gates/README.md) | Gate overview and correct entry points |
-| **[Gate 0 — Complete research](https://github.com/alia-june/ethical-and-intellectual-theory/tree/main/blue-prints/gates/gate-0)** | G0 v0.4 axioms; G0-MOD v0.2 opt-in catalog; full C2/C3 research, ledgers, deferrals and unknowns |
+| **[Gate Zero — Complete research](https://github.com/alia-june/ethical-and-intellectual-theory/tree/main/blue-prints/gates/gate-0)** | Gate Zero Foundational Theory v0.4, Gate Zero Modular Catalog v0.2, closure-stage audit/decision ledgers, deferrals and unknowns |
+| [Tranches — All 27 named items](https://github.com/alia-june/ethical-and-intellectual-theory/blob/main/blue-prints/gates/gate-0/TRANCHES.md) | Tranches 0–3, item names, stable identifiers and dispositions |
+| [Readable code glossary](https://github.com/alia-june/ethical-and-intellectual-theory/blob/main/blue-prints/gates/gate-0/IDENTIFIER_GLOSSARY.md) | Distinguishes Tranches, closure stages, consequence classes and programming invariants |
 
 ## Distinguishing the gates
 
